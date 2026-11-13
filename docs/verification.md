@@ -12,6 +12,24 @@ Verified through the written hardware suites:
 - Shell/build failure reporting and preservation of the previous executable.
 - Quit/reopen with last-workspace restoration.
 - About opening from the editor, closing/reopening, and all three Amiga version tags.
+- Native menu order and command keys, ghosted Copy/Paste states, and menu shortcuts.
+- Clipboard output is an IFF FORM FTXT with the expected CHRS text; pasting into
+  task instructions and saving produces exact plain text without colour codes.
+- Preferences Use leaves saved defaults unchanged; Cancel discards edits; Save
+  persists the restored effective values. Tests use synthetic models and no key.
+- Help launches the 18-node AmigaGuide manual in MultiView; Shift-Help opens About.
+  Keyboard link navigation reached the Installation and dependencies chapter.
+
+The `accept_style.py` suite uses a fresh temporary installation and restores the
+previous clipboard and production app afterwards. Native menus were inspected
+while MagicMenu and ToolsDaemon were already running. Mouse popup appearance and
+new ToolsDaemon launcher entries have not been separately exercised.
+Single-line MUI fields consume some application keys: Tab to a button or use the
+mouse menus. Buttons in this setup activate with Return, not Space.
+
+Portable checks validate the manual's node/link graph, packaging inclusion and
+preference precedence alongside the existing protocol, agent, syntax and file tests.
+See [Amiga interface conventions](amiga-interface.md) for the implemented scope.
 
 The worker's stale-output regression failed before its fix and passed afterward.
 Verified HTTPS returned the expected unauthenticated HTTP 401.
@@ -23,6 +41,11 @@ creation by `TermicStorage --create` has not been hardware-tested.
 No ARM compute payload or firmware change is part of this application.
 Automated checks and screenshots do not replace human interaction testing.
 
-The API key is stored in plaintext in the local installation's Config drawer.
+The API key is stored in plaintext in the local installation's Config drawer
+and, when applied through preferences, in ENV:Termic until reboot.
 It is excluded from this repository and installation kits. Source and requested
 compiler output are sent to the selected cloud API when an agent runs.
+
+The installed GUI, worker and guide were checked against the host-built files
+using CRC32 after transfer. Previous executables and changed source files were
+retained in the installation's Backup drawer before promotion.

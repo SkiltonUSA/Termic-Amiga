@@ -136,8 +136,8 @@ int run_agent(void)
     cJSON *input = NULL;
     FILE *transcript = NULL;
     int round, success = 0;
-    key = read_text(TERMIC_CONFIG "api-key", 512);
-    model = read_text(TERMIC_CONFIG "model", 128);
+    key = read_preference("api-key", 512);
+    model = read_preference("model", 128);
     task = read_text(TERMIC_PROJECT "task.txt", 8192);
     if (key)
         trim(key);

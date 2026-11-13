@@ -44,7 +44,7 @@ Copy Projects.hdf, then run Termic:TermicStorage to mount it again.
 VERSION AND ABOUT
 The native Amiga version is defined in Source/version.h, independently of
 the desktop Termic version. The workspace header shows the native version.
-Choose About in the toolbar or press Help for the version, build date,
+Choose Project > About..., About in the toolbar or press Shift-Help for the version, build date,
 credits, licence and source/support links. Escape, Return or Close dismiss
 that window. About can be reopened without restarting the workspace.
 All three executables support --version and AmigaDOS Version FILE FULL:
@@ -134,6 +134,9 @@ Enter executes the shell command or commits from those fields.
 Shift+F5 initializes Git; Shift+F6 shows status; Shift+F7 shows the diff;
 Shift+F8 marks done; Shift+F9 creates a project; Shift+F10 cancels a job.
 Text editing and clipboard keys follow TextEditor.mcc preferences.
+Right-Amiga-1/2/3/4 select Agent/Editor/Build/Changes; Right-Amiga-comma
+opens Settings. A single-line MUI field consumes some application keys;
+Tab to a button first or choose a command using the mouse menu.
 
 BOUNDARIES
 This native implementation does not run the React/Tauri frontend or desktop
@@ -160,7 +163,7 @@ VERIFICATION
 Host: python3 scripts/amiga/test_native.py (synthetic API, ASan/UBSan).
 Hardware: scripts/amiga/accept_mui.py through the existing DevBench MCP.
 The hardware suite uses isolated fixtures and never submits a model request
-or reads credentials. See docs/amiga-development.md for verified scope.
+or reads credentials. See docs/verification.md in the source repository for verified scope.
 
 LICENSES
 Termic: GNU AGPLv3 (LICENSE). cJSON: MIT (Source/vendor/LICENSE.cJSON).
@@ -170,3 +173,15 @@ muimaster ABI bindings are in Source/mui_compat.h. TextEditor is LGPL:
 https://github.com/amiga-mui/texteditor/tree/15.56
 amiga-git is freeware; its unmodified archive includes licences and libgit2
 patches. VBCC/NDK/MUI SDKs retain their own redistribution conditions.
+
+HELP AND AMIGA CONVENTIONS
+Press Help or choose Help > Contents... for the linked Termic.guide manual.
+Keep it beside TermicNative. MultiView and the AmigaGuide datatype are required.
+Project/Edit menus provide Right-Amiga-N/O/S/Q and X/C/V/Z. Edit commands
+use the focused text editor, with unavailable actions ghosted. MUI handles
+single-line field shortcuts; TextEditor uses the shared IFF text clipboard.
+Settings > Preferences has Save, Use and Cancel. Save writes Config and
+ENV:Termic; Use writes ENV:Termic until reboot; Cancel discards unapplied
+edits. Restart for a changed project drawer. Build commands save separately.
+Keys saved with Use are plaintext in ENV:Termic/api-key.
+MagicMenu is optional; no system menu patch is installed by Termic.

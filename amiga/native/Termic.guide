@@ -1,0 +1,432 @@
+@DATABASE Termic.guide
+@INDEX Index
+@NODE MAIN "Termic Amiga - User Guide"
+@{b}Termic Amiga 0.1.0 Beta@{ub}
+Native MUI development workspace for AmigaOS 3.2 / 68020+.
+
+  @{"Getting started" LINK Start}       @{"Installation" LINK Install}
+  @{"Projects and tasks" LINK Projects}    @{"Source editor" LINK Editor}
+  @{"Build and run" LINK Build}         @{"AmigaDOS commands" LINK Shell}
+  @{"Git review" LINK Git}            @{"Cloud agent" LINK Agent}
+  @{"Preferences" LINK Prefs}           @{"Menus and keys" LINK Menus}
+  @{"Clipboard sharing" LINK Sharing}     @{"Storage and backup" LINK Storage}
+  @{"Troubleshooting" LINK Trouble}       @{"Limits and hardware" LINK Limits}
+  @{"Workbench launchers" LINK Workbench}  @{"Version and credits" LINK About}
+  @{"Alphabetical index" LINK Index}
+
+Use Contents to return here, Index for topics, Retrace to go back,
+and the Browse arrows to move between chapters. Links open local topics.
+This manual does not execute commands. Type examples in an Amiga Shell.
+@ENDNODE
+
+@NODE Start "Getting started"
+1. Start TermicNative from its Workbench icon or the Shell.
+2. Type a name in the project field; choose New project. A clean
+   template is copied into a managed project drawer.
+3. Select main.c in Files, or press F2 for the Editor.
+4. Edit the program and press F8 (or Right-Amiga-S) to save.
+5. Press F6 to build. Read the diagnostics in Build / Shell.
+6. After a successful build, press F7 to run Program.
+
+New task makes an independent copy of the selected workspace's source.
+The left pane selects projects and tasks. The right pane selects files.
+Drag the pane dividers to adjust widths. F1-F5 select centre tabs.
+
+You can build and edit locally without a cloud account. An API key is
+needed only for Start agent. Review generated changes before running them.
+
+Next: @{"Projects" LINK Projects}  @{"Editor" LINK Editor}  @{"Build" LINK Build}
+@ENDNODE
+
+@NODE Install "Installation and dependencies"
+Requirements: AmigaOS 3.2, a 68020 or newer CPU, Fast RAM, MUI 3.8+
+and TextEditor.mcc 15.56. Builds require VBCC, vasm, vlink and the NDK.
+MultiView and the AmigaGuide datatype display this manual.
+
+A complete local installation kit contains the executables, Source,
+Template, SDK archives and installation scripts. The GitHub repository
+contains source; no AmiPkg release is published at present.
+
+Unpack a kit into a new drawer. In an Amiga Shell, for example:
+
+  Assign Termic: Work:TermicNative
+  Execute Termic:InstallSDK
+  Execute Termic:InstallUI
+  Execute Termic:BuildNative
+  Termic:TermicNative --icon Termic:TermicNative
+
+Replace Work:TermicNative with your installation drawer. Double-click
+TermicNative afterwards. It assigns Termic: to its own program drawer.
+Use one installation at a time. InstallUI does not replace the MUI core.
+Source files belong in Source; Termic.guide belongs beside TermicNative.
+
+Cloud use needs a TCP/IP stack, AmiSSL and its CA certificates, a correct
+clock and an OpenAI API key. Native Git was tested with AmiSSL 5.27.
+Use the upstream AmiSSL installer. SDK checksums are in sdk-lock.json.
+
+Read @{"Storage" LINK Storage} before selecting a drawer for Git projects.
+@ENDNODE
+
+@NODE Projects "Projects and independent tasks"
+New project copies the clean Template into a managed project. The name
+field supplies its label. Open... in the Project menu opens the source
+import requester: choose a drawer to copy supported source into Termic.
+This does not edit the original imported drawer.
+
+New task copies the selected workspace's source and build command into
+its own Tasks/task-NNNN drawer. It does not copy Git internals, credentials
+or cloud conversation IDs. Tasks are source snapshots, not Git worktrees.
+
+Select a task to switch its editor, instructions, logs and Git view.
+Pending source/instruction edits are saved before switching or quitting.
+A failed save prevents the switch. Rename changes the displayed label.
+Mark done sets task status; it does not delete files or stop a worker.
+
+Each task permits one worker. Up to 16 tasks can run workers concurrently.
+A running task's editors are read-only. Other tasks remain available.
+The last selected workspace is restored when Termic starts again.
+
+See @{"Build" LINK Build}, @{"Agent" LINK Agent} and @{"Backup" LINK Storage}.
+@ENDNODE
+
+@NODE Editor "Source editor"
+Select .c, .h, .txt or .md files in the Files pane. Create file uses the
+filename field; use a simple name with one of these extensions.
+
+C and header files have syntax colours on a black editor background.
+Colours are applied when a file loads, not continuously while typing.
+Saved files are plain source without display style codes. Ordinary Save
+retains undo history and keeps the previous file as filename.bak.
+
+Use Edit for Cut, Copy, Paste, Erase, Select All, Undo and Redo.
+Menu actions target the focused text editor, including task instructions
+and read-only logs (Copy only). Click in the intended text before editing.
+String fields use their normal MUI editing keys. Unavailable editor menu
+commands are ghosted. Find searches from the start; Next finds a later hit.
+
+Source files have a 32 KiB limit. Files containing literal ESC bytes or
+unreadable/binary/oversize content are not editable. Instructions have an
+8 KiB limit. A failed save leaves the previous file available.
+
+See @{"Clipboard" LINK Sharing} and @{"Keyboard shortcuts" LINK Menus}.
+@ENDNODE
+
+@NODE Build "Build and run"
+Build (F6 or Right-Amiga-B) saves pending edits and invokes the native
+worker in the selected workspace. Diagnostics appear in Build / Shell.
+The default command compiles main.c with VBCC.
+
+Settings contains a per-workspace build command. For several sources:
+
+  vc +aos68k -cpu=68020 main.c helper.c -o Program.new -lamiga
+
+Choose Save build command to store it. This is project data, separate
+from application preferences. It must produce Program.new. BuildProject
+promotes that output to Program only after the command succeeds.
+
+A failed build preserves the last successful Program. Run after a failure
+would therefore run the older executable. Check diagnostics before Run.
+Run (F7 or Right-Amiga-R) explicitly launches Program. Generated programs
+are not automatically run by the cloud agent's build tool.
+
+Cancel job signals the worker; a running child application may need its
+own Quit action before the worker can finish. See @{"Troubleshooting" LINK Trouble}.
+@ENDNODE
+
+@NODE Shell "AmigaDOS commands"
+Build / Shell provides a command field. Enter a command and choose Execute
+or press Return in that field. Shift-F3 focuses it directly. Commands run
+in the selected workspace and their output is captured in the log.
+
+For example:
+  List
+  Version
+
+This is a command runner, not an interactive terminal or PTY. Interactive
+programs needing console input should be opened from a separate Shell.
+Commands have the normal access of AmigaOS programs; there is no sandbox.
+
+Use @{"Git" LINK Git} for local repository commands and @{"Build" LINK Build} for compilation.
+@ENDNODE
+
+@NODE Git "Git review and commits"
+Git requires a filesystem supporting long filenames. Changes provides
+Init repository, Status and Diff. Configure Git identity in the shell
+before the first commit, using your own details:
+
+  git config user.name "Your Name"
+  git config user.email "user@example.com"
+
+Enter a message and choose Stage source and commit. Return in the commit
+field also submits it. Termic commits supported source; generated output
+and task metadata are excluded in newly initialized repositories.
+Existing .gitignore files are retained.
+
+Tasks are independent snapshots, not branches/worktrees. Native Git's
+other commands can be run explicitly in Build / Shell. Termic does not
+push, fetch, publish a PR or contact a remote automatically.
+
+See @{"Storage" LINK Storage} and @{"Limits" LINK Limits}.
+@ENDNODE
+
+@NODE Agent "Cloud agent"
+In Settings choose a model available to your account and enter an API key.
+Save persists preferences; Use applies them until reboot. A blank key
+field retains the effective key and never displays it.
+
+Enter instructions in the Agent tab and choose Start agent. The worker
+sends the instructions and requested source/compiler output to OpenAI.
+It can list, read and write bounded C/header files and invoke a build.
+It has no general shell-command tool. File paths reject devices and
+traversal. Each run makes at most eight requests.
+
+Conversation IDs persist per task. New conversation clears the continuation
+ID while retaining the transcript. Cancel requests a stop; network and
+child-process cleanup can take time. API access and billing are required.
+
+Keys are plaintext on classic AmigaOS: Config/api-key for saved defaults,
+ENV:Termic/api-key for temporary use. Do not share these files or include
+them in backups intended for publication. Keys are not command arguments.
+TLS verifies certificates and hostnames. Test verified HTTPS checks the
+unauthenticated connection (HTTP 401), not account or model access.
+
+Authenticated cloud use still needs verification with your own account.
+See @{"Preferences" LINK Prefs}, @{"Troubleshooting" LINK Trouble} and @{"Limits" LINK Limits}.
+@ENDNODE
+
+@NODE Prefs "Application preferences"
+Open Settings > Preferences or press F5. Set the cloud model, optional
+API key and project drawer. The key field is always blank when restored.
+The project drawer accepts letters, digits, colon, slash, underscore and
+hyphen. Restart Termic after changing the project drawer.
+
+The bottom buttons are ordered Save, Use, Cancel:
+
+Save   Applies values and writes defaults in Termic:Config plus the
+       current ENV:Termic overrides. New workers use the new values.
+Use    Writes ENV:Termic only; saved defaults remain unchanged. The
+       values survive restarting Termic but disappear at system reboot.
+Cancel Discards unapplied preference edits and returns to the Agent tab.
+       It cannot undo a build command already saved for the workspace.
+
+Temporary ENV values are read first, then the installation Config drawer.
+When absent, the UI supplies its built-in model and project drawer.
+A blank API key preserves the effective key; Save also persists a key
+previously applied using Use. A failure may leave some settings written;
+check storage and retry if Termic reports a preference write failure.
+
+Build commands have their own Save build command button because they are
+workspace data. Settings > MUI Settings... opens MUI's appearance editor.
+Other panels use MUI colours; source text retains the requested black
+background and readable syntax palette. System preferences are not changed.
+
+Preset files and SETTINGS ToolTypes/CLI overrides are not implemented.
+@ENDNODE
+
+@NODE Menus "Menus and keyboard shortcuts"
+Hold the right mouse button to access the normal Amiga menu strip.
+Project and Edit come first; Settings is next to the rightmost Help menu.
+Separators group commands and unavailable actions are ghosted.
+
+Project: New, Open... (import source drawer), Save, About..., Quit.
+Edit: Cut, Copy, Paste, Erase, Select All, Undo, Redo.
+Workspace: New Task, Mark Done, Build, Run, Start Agent, Cancel Job,
+           Git Status, Git Diff.
+View: Agent, Editor, Build / Shell, Changes.
+Settings: Preferences, MUI Settings..., Save Settings, Use Settings,
+          Cancel Edits (the last three apply while Settings is open).
+Help: Contents... opens this AmigaGuide manual in MultiView.
+
+Right-Amiga + N New project     O Open/import    S Save
+Right-Amiga + X Cut             C Copy           V Paste
+Right-Amiga + Z Undo            Q Quit           B Build
+Right-Amiga + R Run             , Preferences
+Right-Amiga + 1 Agent           2 Editor         3 Build / Shell
+Right-Amiga + 4 Changes
+
+F1 Agent; F2 Editor; F3 Build / Shell; F4 Changes; F5 Settings.
+F6 Build; F7 Run; F8 Save; F9 New task; F10 Quit.
+Shift-F1 Start agent; Shift-F2 New filename; Shift-F3 Shell field;
+Shift-F4 Commit field; Shift-F5 Git init; Shift-F6 Git status;
+Shift-F7 Git diff; Shift-F8 Mark done; Shift-F9 New project;
+Shift-F10 Cancel job. Return submits filename, command or commit fields.
+Help opens the manual; Shift-Help opens About. Escape closes About.
+MUI single-line fields consume some shortcuts for text editing. Tab out
+to a button before using application keys; mouse menus remain available.
+
+MagicMenu is an optional system menu enhancer. Termic uses standard MUI
+menu strips and does not embed, configure or require MagicMenu. Its
+runtime interaction has not yet been verified. Workbench's Tools menu
+is separate from this application's menu strip.
+@ENDNODE
+
+@NODE Workbench "Workbench menus: ToolsDaemon and MagicMenu"
+Termic's Project/Edit menus belong to its application window. Workbench's
+Tools menu and additional ToolsDaemon menus belong to Workbench.
+
+For an existing ToolsDaemon installation, open ToolsPrefs and add a
+Development menu title (Menu checkbox). Drag the TermicNative Workbench
+icon into its window to create a launcher, then move it under that title.
+A Workbench command uses the stack size from Termic's generated icon
+(262144 bytes). Choose an unused key if you want a launcher shortcut.
+
+To add a User guide entry, create a Shell/CLI command such as:
+
+  SYS:Utilities/MultiView Work:TermicNative/Termic.guide
+
+Use the real installation path for both entries. Termic: is assigned when
+Termic starts; an absolute path lets a Workbench launcher work before it
+has started. ToolsPrefs supports menu items, sub-items and separators.
+Use its editor to merge entries into your own configuration, then save.
+Do not replace your existing menu file with an example configuration.
+
+ToolsDaemon 2.1a is a separate optional commodity, with ToolsPrefs and
+ToolsDaemon-handler. Its supplied documentation explains installation.
+Termic does not install it into WBStartup or modify S:ToolsDaemon.menu.
+Its behavior on this Workbench 3.2.3 system is not yet verified.
+
+MagicMenu is a different optional tool: it changes how native menus look
+and appear. Termic uses MUI's native Intuition menu strip, without a custom
+menu renderer or an embedded MagicMenu patch. Configure appearance in
+MagicMenu itself if already installed. Runtime compatibility is unverified.
+
+Upstream references:
+https://aminet.net/package/util/boot/ToolsDaemon21a
+https://github.com/jens-maus/magicmenu
+
+@{"Application menus" LINK Menus}  @{"Preferences" LINK Prefs}
+@ENDNODE
+
+@NODE Sharing "Clipboard and data sharing"
+Termic uses TextEditor.mcc's normal Amiga clipboard for Cut, Copy and
+Paste. TextEditor exchanges IFF FTXT text through clipboard.device,
+allowing text to move between Termic and other clipboard-aware apps.
+It is not a private Termic-only copy buffer.
+
+Select text in an editor or log, then Edit > Copy (Right-Amiga-C).
+Switch to a writable editor and Paste (Right-Amiga-V). Cut is available
+only for writable text. In single-line fields use MUI's normal keys.
+Pasted source does not inherit clipboard colours; saved source is plain
+text. Compilers continue to consume ordinary .c/.h files.
+
+Use source-drawer import to copy external source into a managed project.
+There is no IFF project container, live file notification/reload service,
+ARexx application port, AppWindow drop target or clipboard unit selector.
+The internal TextEditor ARexx command interface is not an application port.
+@ENDNODE
+
+@NODE Storage "Storage and backups"
+Select a long-filename filesystem (PFS3/SFS or suitable FFS) for Git.
+The optional TermicStorage helper can create a fresh 64 MiB image:
+
+  Termic:TermicStorage --create
+
+It refuses an existing Projects.hdf or a device unit owned by another
+image. It initializes only its new image, never a physical partition.
+This optional fresh-create path has not yet been hardware-tested.
+Unit 7 of diskimage.device is reserved for it. If already in use, select
+a different long-filename project drawer in Settings.
+
+To back up an existing image, finish jobs and leave all TMGIT: directories
+in other applications and Shells. From a Shell outside TMGIT:, run:
+
+  Termic:TermicStorage --eject
+
+After successful ejection, copy Projects.hdf to backup storage. Remount:
+
+  Termic:TermicStorage
+
+Do not force eject a busy volume. Also back up application preferences
+privately; Config/api-key contains a secret. Source saves keep one .bak
+copy. A .bak is not a substitute for a separate disk backup.
+@ENDNODE
+
+@NODE Trouble "Troubleshooting"
+No main window: check MUI 3.8+ and TextEditor.mcc installation. Run from
+Shell for startup messages. Keep executable and supporting files together.
+
+Help fails: install Termic.guide beside TermicNative, and ensure
+SYS:Utilities/MultiView and the AmigaGuide datatype are installed.
+
+Cannot save: check free space, protection, file size and active jobs.
+Never overwrite the original with the explanatory read-only error text.
+
+Build fails: inspect Build / Shell, VBCC setup and the workspace command.
+It must write Program.new. The previous successful Program is retained.
+
+Git fails: check long-filename support, AmiSSL runtime and Git identity.
+
+HTTPS fails: check network, DNS, system clock, CA files and AmiSSL.
+HTTP 401 in the unauthenticated test is expected. Authentication/model
+access and billing are separate checks for an actual agent run.
+
+Workspace remains busy: inspect job.log and running tasks. A child program
+may need its own Quit action. Remove a stale .busy drawer only after
+confirming its worker has stopped. Never remove an active worker's lock.
+
+Preference changes disappear: Use is temporary until reboot. Choose Save
+for persistent defaults. A changed project drawer requires app restart.
+
+Source colours look old: colours refresh when a file loads; saving does
+not recolour and preserves undo. Syntax highlighting is not live.
+@ENDNODE
+
+@NODE Limits "Limits and hardware"
+Source file: 32 KiB. Task instructions: 8 KiB. HTTP response: 256 KiB.
+Agent compiler output: 16 KiB. File list: 128 files, six directory levels.
+Workers: 16 per application, one per task. Agent rounds: eight maximum.
+Network deadline: 120 seconds after DNS; DNS timing belongs to the stack.
+Large imports copy synchronously and can delay the interface.
+
+Test hardware: A4000TX, TF4060/68060, Workbench 3.2.3, MUI 3.8,
+TextEditor.mcc 15.56, AmiSSL 5.27 and a ZZ9000 RTG display.
+Compilation, TLS and file processing run on the 68k. The ZZ9000 supplies
+RTG graphics; ARM compute offload is not implemented. Termic does not
+change firmware, display mode or ownership of ARM applications.
+
+This is a native MUI implementation, not the React/Tauri desktop app.
+No desktop agent CLIs, interactive PTY, streamed tokens, worktrees,
+queue/broadcast/race modes or integrated remote PR controls are provided.
+Classic AmigaOS has no process isolation: review code before running it.
+@ENDNODE
+
+@NODE About "Version, support and credits"
+Termic Amiga 0.1.0 Beta. Native version source: Source/version.h.
+Project > About... and the About toolbar button show version and credits.
+AmigaDOS can inspect all three executable version tags:
+
+  Version Termic:TermicNative FILE FULL
+  Termic:TermicNative --version
+
+Source and support: https://github.com/SkiltonUSA/Termic-Amiga
+Original desktop project: https://github.com/simion/termic
+Amiga adaptation: Dominic Skilton; development assistance: Codex.
+Original Termic: Simion Agavriloaei and contributors.
+
+Thanks to MUI, TextEditor.mcc, VBCC, vasm, vlink, NDK, AmiSSL, cJSON,
+native Git and Amiga MCP contributors. GNU AGPL v3 or later applies to
+Termic; third-party components retain their licences. See LICENSE.
+
+Manual structure follows AmigaGuide 101. Interface conventions draw on
+the AmigaOS UI Style Guide's Menus, Preferences and Data Sharing chapters:
+https://wiki.amigaos.net/wiki/AmigaGuide_101
+https://wiki.amigaos.net/wiki/UI_Style_Guide_Menus
+https://wiki.amigaos.net/wiki/UI_Style_Guide_Preferences
+https://wiki.amigaos.net/wiki/UI_Style_Guide_Data_Sharing
+@ENDNODE
+
+@NODE Index "Alphabetical index"
+  @{"About / version" LINK About}       @{"Agent / API key" LINK Agent}
+  @{"AmigaDOS" LINK Shell}              @{"Backups" LINK Storage}
+  @{"Build command" LINK Build}         @{"Cancel / busy jobs" LINK Trouble}
+  @{"Clipboard / IFF" LINK Sharing}      @{"Colours" LINK Editor}
+  @{"Dependencies" LINK Install}        @{"Git" LINK Git}
+  @{"Help / navigation" LINK MAIN}      @{"Import" LINK Projects}
+  @{"Installation" LINK Install}        @{"Keyboard" LINK Menus}
+  @{"Limits" LINK Limits}               @{"MagicMenu" LINK Menus}
+  @{"Preferences" LINK Prefs}           @{"Projects / tasks" LINK Projects}
+  @{"Run" LINK Build}                   @{"Save / Use / Cancel" LINK Prefs}
+  @{"Source editing" LINK Editor}       @{"Storage" LINK Storage}
+  @{"ToolsDaemon / Workbench" LINK Workbench}
+  @{"Troubleshooting" LINK Trouble}     @{"ZZ9000" LINK Limits}
+@ENDNODE

@@ -20,6 +20,23 @@ char *read_text(const char *path, size_t limit)
     return text;
 }
 
+char *read_preference(const char *name, size_t limit)
+{
+    char path[512], *text;
+    if (strcmp(name, "model") && strcmp(name, "api-key") && strcmp(name, "projects-drawer"))
+        return NULL;
+    if (sizeof(TERMIC_ENV) + strlen(name) > sizeof(path)) return NULL;
+    strcpy(path, TERMIC_ENV); strcat(path, name);
+    text = read_text(path, limit);
+    if (!text)
+    {
+        if (sizeof(TERMIC_CONFIG) + strlen(name) > sizeof(path)) return NULL;
+        strcpy(path, TERMIC_CONFIG); strcat(path, name);
+        text = read_text(path, limit);
+    }
+    return text;
+}
+
 int replace_source(const char *text)
 {
     FILE *f;

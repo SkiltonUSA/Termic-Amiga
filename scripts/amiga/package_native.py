@@ -26,6 +26,7 @@ SCRIPTS = [
     "StartRun",
     "TestHTTPS",
     "ReadMe",
+    "Termic.guide",
     "InstallUI",
 ]
 

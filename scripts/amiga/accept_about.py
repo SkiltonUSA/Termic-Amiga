@@ -31,14 +31,22 @@ async def main():
                     raise RuntimeError(text)
                 return text
 
-            async def key(raw, title="Termic Amiga Workspace"):
+            async def key(raw, title="Termic Amiga Workspace", shift=False):
                 windows = await call("amiga_list_screen_windows", {})
                 first = windows.split("\n\n", 1)[-1].splitlines()[0].strip()
                 assert first.startswith(title + "  pos="), first
-                for direction in ["down", "up"]:
-                    await call(
-                        "amiga_input_key", {"rawkey": raw, "direction": direction}
-                    )
+                try:
+                    if shift:
+                        await call(
+                            "amiga_input_key", {"rawkey": "0x60", "direction": "down"}
+                        )
+                    await call("amiga_input_key", {"rawkey": raw, "direction": "down"})
+                finally:
+                    await call("amiga_input_key", {"rawkey": raw, "direction": "up"})
+                    if shift:
+                        await call(
+                            "amiga_input_key", {"rawkey": "0x60", "direction": "up"}
+                        )
                 await asyncio.sleep(0.7)
 
             async def capture(title, name):
@@ -97,7 +105,9 @@ async def main():
             )
             await asyncio.sleep(2)
             await key("0x51")  # Focus the embedded editor first
-            await key("0x5f")  # Help opens About, even from the embedded editor
+            await key(
+                "0x5f", shift=True
+            )  # Shift-Help opens About, even from the embedded editor
             windows = await call("amiga_list_screen_windows", {})
             assert windows.count("About Termic Amiga  pos=") == 1, windows
             await capture("About Termic Amiga", "about.png")
@@ -107,7 +117,7 @@ async def main():
                 "About Termic Amiga  pos=" not in windows
                 and "Termic Amiga Workspace  pos=" in windows
             )
-            await key("0x5f")
+            await key("0x5f", shift=True)
             windows = await call("amiga_list_screen_windows", {})
             assert windows.count("About Termic Amiga  pos=") == 1, windows
             await key("0x44", "About Termic Amiga")  # Return closes the reused window

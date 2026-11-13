@@ -11,6 +11,7 @@
 #include <dos/dostags.h>
 #include <exec/memory.h>
 #include <libraries/asl.h>
+#include <libraries/gadtools.h>
 #include <mui/TextEditor_mcc.h>
 #include <proto/asl.h>
 #include <proto/diskfont.h>
@@ -89,7 +90,19 @@ enum
     FOCUSCOMMIT,
     FOCUSCOMMAND,
     ABOUT,
-    ABOUTCLOSE
+    ABOUTCLOSE,
+    HELP,
+    USECONFIG,
+    CANCELCONFIG,
+    MUIPREFS,
+    UPDATE_MENUS,
+    SELECTALL,
+    ERASE,
+    SOURCE_UNDO,
+    SOURCE_REDO,
+    SOURCE_CUT,
+    SOURCE_COPY,
+    SOURCE_PASTE
 };
 struct Job
 {
@@ -121,6 +134,13 @@ static Object *button(const char *s, int id)
            MUIA_InnerTop, 4, MUIA_InnerBottom, 4, MUIA_Background, MUII_ButtonBack, MUIA_InputMode,
            MUIV_InputMode_RelVerify, MUIA_Text_Contents, s, MUIA_Text_PreParse, "\33c",
            MUIA_CycleChain, 1, End;
+    if (id == CUT || id == COPY || id == PASTE || id == UNDO || id == REDO)
+        id = SOURCE_UNDO + id - UNDO;
+    if (id == SAVECONFIG || id == USECONFIG || id == CANCELCONFIG)
+    {
+        char key = id == SAVECONFIG ? 's' : id == USECONFIG ? 'u' : 'c';
+        SetAttrs(o, MUIA_ControlChar, key, MUIA_Text_HiChar, key, TAG_DONE);
+    }
     notify(o, MUIA_Pressed, FALSE, id);
     return o;
 }
@@ -144,9 +164,9 @@ static Object *editor(Object **o, int readonly)
            o == &source ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
            MUIA_TextEditor_ReadOnly, readonly, MUIA_TextEditor_ImportHook,
            MUIV_TextEditor_ImportHook_Plain, MUIA_TextEditor_ExportHook,
-           MUIV_TextEditor_ExportHook_Plain, MUIA_TextEditor_WrapMode,
-           MUIV_TextEditor_WrapMode_NoWrap, MUIA_CycleChain, 1, End, Child,
-           slider = ScrollbarObject, End, End;
+           MUIV_TextEditor_ExportHook_NoStyle, MUIA_TextEditor_PasteColors, FALSE,
+           MUIA_TextEditor_WrapMode, MUIV_TextEditor_WrapMode_NoWrap, MUIA_CycleChain, 1, End,
+           Child, slider = ScrollbarObject, End, End;
     set(*o, MUIA_TextEditor_Slider, slider);
     return g;
 }
@@ -788,34 +808,104 @@ static void cancel(void)
     message(port ? "Cancellation requested. Compiler or network operation will finish unwinding."
                  : "No worker is currently registered for this workspace.");
 }
-static void configure(void)
+static void restore_preferences(void)
 {
-    char *s = (char *)value(model, MUIA_String_Contents);
-    char *k = (char *)value(keyfield, MUIA_String_Contents);
-    char *drawer = (char *)value(projectdrawer, MUIA_String_Contents);
+    char *s = read_preference("model", 128);
+    if (s)
+        s[strcspn(s, "\r\n")] = 0;
+    set(model, MUIA_String_Contents, s ? s : "gpt-5-mini");
+    free(s);
+    s = read_preference("projects-drawer", 180);
+    if (s)
+        s[strcspn(s, "\r\n")] = 0;
+    set(projectdrawer, MUIA_String_Contents, s ? s : project_root);
+    free(s);
+    set(keyfield, MUIA_String_Contents, "");
+}
+static int write_preference(const char *base, const char *name, const char *text, unsigned limit)
+{
+    char path[PATH_SIZE];
+    int ok;
+    join(path, base, name);
+    ok = save_text(path, text, limit);
+    if (ok && !strcmp(name, "api-key"))
+    {
+        strcat(path, ".bak");
+        DeleteFile((STRPTR)path);
+    }
+    return ok;
+}
+static void configure(int permanent)
+{
+    const char *s = (char *)value(model, MUIA_String_Contents);
+    const char *k = (char *)value(keyfield, MUIA_String_Contents);
+    const char *drawer = (char *)value(projectdrawer, MUIA_String_Contents);
+    char *retained = NULL;
     unsigned i;
-    int ok = save_text("Termic:Config/model", s, 128), valid = *drawer != 0;
+    int ok = 1, valid = *drawer && *s;
     for (i = 0; drawer[i]; i++)
         if (!isalnum((unsigned char)drawer[i]) && !strchr(":/_-", drawer[i]))
             valid = 0;
-    if (!valid || !save_text("Termic:Config/projects-drawer", drawer, 180))
-        ok = 0;
-    if (*k)
+    for (i = 0; s[i]; i++)
+        if (isspace((unsigned char)s[i]))
+            valid = 0;
+    if (!valid)
     {
-        FILE *f = fopen("Termic:Config/api-key", "wb");
-        if (!f)
-            ok = 0;
-        else
-        {
-            if (fwrite(k, 1, strlen(k), f) != strlen(k))
-                ok = 0;
-            if (fclose(f))
-                ok = 0;
-        }
-        set(keyfield, MUIA_String_Contents, "");
+        message(
+            "Enter a model without spaces and a project drawer using letters, digits, : / _ -.");
+        return;
     }
-    message(ok ? "Settings saved. Existing key is retained when the key field is blank."
-               : "Settings could not be saved.");
+    if (!*k)
+        k = retained = read_preference("api-key", 512);
+    mkdir_safe("ENV:Termic");
+    /* Validate all fields before writing. Report partial I/O failures honestly. */
+    if (permanent)
+    {
+        ok = write_preference("Termic:Config", "model", s, 128);
+        if (!write_preference("Termic:Config", "projects-drawer", drawer, 180))
+            ok = 0;
+        if (k && !write_preference("Termic:Config", "api-key", k, 512))
+            ok = 0;
+    }
+    if (!write_preference("ENV:Termic", "model", s, 128))
+        ok = 0;
+    if (!write_preference("ENV:Termic", "projects-drawer", drawer, 180))
+        ok = 0;
+    if (k && !write_preference("ENV:Termic", "api-key", k, 512))
+        ok = 0;
+    free(retained);
+    set(keyfield, MUIA_String_Contents, "");
+    if (ok)
+    {
+        set(pages, MUIA_Group_ActivePage, 0);
+        set(win, MUIA_Window_ActiveObject, prompt);
+    }
+    message(
+        !ok ? "Some preferences could not be written. Check free space and protection, then retry."
+        : permanent
+            ? "Preferences saved. Restart Termic to use a changed project drawer."
+            : "Preferences in use until reboot. Restart Termic for a changed project drawer.");
+}
+static void open_help(void)
+{
+    BPTR in, out;
+    if (!exists("Termic:Termic.guide") || !exists("SYS:Utilities/MultiView"))
+    {
+        message("Install Termic.guide beside TermicNative and MultiView in SYS:Utilities.");
+        return;
+    }
+    in = Open((STRPTR) "NIL:", MODE_OLDFILE);
+    out = Open((STRPTR) "NIL:", MODE_NEWFILE);
+    if (!in || !out ||
+        SystemTags((STRPTR) "SYS:Utilities/MultiView Termic:Termic.guide", SYS_Input, in,
+                   SYS_Output, out, SYS_Asynch, TRUE, TAG_DONE) == -1)
+    {
+        if (in)
+            Close(in);
+        if (out)
+            Close(out);
+        message("Unable to open AmigaGuide manual.");
+    }
 }
 static int icon(const char *p)
 {
@@ -880,10 +970,113 @@ static void open_about(void)
     set(about_window, MUIA_Window_Open, TRUE);
     set(about_window, MUIA_Window_Activate, TRUE);
 }
+static Object *menu_items[ERASE + 1];
+static Object *edit_target(void)
+{
+    Object *active = (Object *)value(win, MUIA_Window_ActiveObject);
+    if (active == source || active == prompt || active == output || active == review ||
+        active == transcript)
+        return active;
+    return NULL;
+}
+static void menu_enabled(int id, int enabled)
+{
+    enabled = !!enabled;
+    if (value(menu_items[id], MUIA_Menuitem_Enabled) != enabled)
+        set(menu_items[id], MUIA_Menuitem_Enabled, enabled);
+}
+static void update_menus(void)
+{
+    Object *o = edit_target();
+    int writable = o && !value(o, MUIA_TextEditor_ReadOnly);
+    int marked = o && value(o, MUIA_TextEditor_AreaMarked);
+    int running = *current && busy(current);
+    int editable = *current && !running;
+    menu_enabled(CUT, writable && marked);
+    menu_enabled(COPY, marked);
+    menu_enabled(PASTE, writable);
+    menu_enabled(ERASE, writable && marked);
+    menu_enabled(SELECTALL, o != NULL);
+    menu_enabled(UNDO, writable && value(o, MUIA_TextEditor_UndoAvailable));
+    menu_enabled(REDO, writable && value(o, MUIA_TextEditor_RedoAvailable));
+    menu_enabled(SAVE, editable);
+    menu_enabled(BUILD, editable);
+    menu_enabled(RUN, editable);
+    menu_enabled(AGENT, editable);
+    menu_enabled(CANCEL, running);
+    menu_enabled(SAVECONFIG, value(pages, MUIA_Group_ActivePage) == 4);
+    menu_enabled(USECONFIG, value(pages, MUIA_Group_ActivePage) == 4);
+    menu_enabled(CANCELCONFIG, value(pages, MUIA_Group_ActivePage) == 4);
+}
+static void menu_item(Object *menu, const char *title, const char *shortcut, int id)
+{
+    Object *item = MenuitemObject, MUIA_Menuitem_Title, title, MUIA_Menuitem_Shortcut, shortcut,
+           End;
+    DoMethod(menu, OM_ADDMEMBER, item);
+    if (id)
+    {
+        menu_items[id] = item;
+        notify(item, MUIA_Menuitem_Trigger, MUIV_EveryTime, id);
+    }
+}
+static Object *new_menu(Object *strip, const char *title)
+{
+    Object *menu = MenuObject, MUIA_Menu_Title, title, End;
+    DoMethod(strip, OM_ADDMEMBER, menu);
+    return menu;
+}
+static Object *build_menus(void)
+{
+    Object *strip = MenustripObject, End;
+    Object *menu = new_menu(strip, "Project");
+    menu_item(menu, "New", "N", NEWPROJECT);
+    menu_item(menu, "Open...", "O", IMPORTPROJECT);
+    menu_item(menu, NM_BARLABEL, NULL, 0);
+    menu_item(menu, "Save", "S", SAVE);
+    menu_item(menu, NM_BARLABEL, NULL, 0);
+    menu_item(menu, "About...", "?", ABOUT);
+    menu_item(menu, NM_BARLABEL, NULL, 0);
+    menu_item(menu, "Quit", "Q", QUIT);
+    menu = new_menu(strip, "Edit");
+    menu_item(menu, "Cut", "X", CUT);
+    menu_item(menu, "Copy", "C", COPY);
+    menu_item(menu, "Paste", "V", PASTE);
+    menu_item(menu, NM_BARLABEL, NULL, 0);
+    menu_item(menu, "Erase", NULL, ERASE);
+    menu_item(menu, "Select All", NULL, SELECTALL);
+    menu_item(menu, NM_BARLABEL, NULL, 0);
+    menu_item(menu, "Undo", "Z", UNDO);
+    menu_item(menu, "Redo", NULL, REDO);
+    menu = new_menu(strip, "Workspace");
+    menu_item(menu, "New Task", NULL, NEWTASK);
+    menu_item(menu, "Mark Done", NULL, MARKDONE);
+    menu_item(menu, NM_BARLABEL, NULL, 0);
+    menu_item(menu, "Build", "B", BUILD);
+    menu_item(menu, "Run", "R", RUN);
+    menu_item(menu, "Start Agent", NULL, AGENT);
+    menu_item(menu, "Cancel Job", NULL, CANCEL);
+    menu_item(menu, NM_BARLABEL, NULL, 0);
+    menu_item(menu, "Git Status", NULL, GITSTATUS);
+    menu_item(menu, "Git Diff", NULL, DIFF);
+    menu = new_menu(strip, "View");
+    menu_item(menu, "Agent", "1", PAGE_AGENT);
+    menu_item(menu, "Editor", "2", PAGE_EDITOR);
+    menu_item(menu, "Build / Shell", "3", PAGE_OUTPUT);
+    menu_item(menu, "Changes", "4", PAGE_CHANGES);
+    menu = new_menu(strip, "Settings");
+    menu_item(menu, "Preferences", ",", SETTINGS);
+    menu_item(menu, "MUI Settings...", NULL, MUIPREFS);
+    menu_item(menu, NM_BARLABEL, NULL, 0);
+    menu_item(menu, "Save Settings", NULL, SAVECONFIG);
+    menu_item(menu, "Use Settings", NULL, USECONFIG);
+    menu_item(menu, "Cancel Edits", NULL, CANCELCONFIG);
+    menu = new_menu(strip, "Help");
+    menu_item(menu, "Contents...", NULL, HELP);
+    return strip;
+}
 static int build_ui(void)
 {
     Object *body, *left, *right, *center;
-    char *s;
     app = ApplicationObject, MUIA_Application_Title, "Termic", MUIA_Application_Base, "TERMIC",
     MUIA_Application_Version, version_tag + 1, MUIA_Application_SingleTask, TRUE,
     MUIA_Application_Description, "Native Amiga development workspace", End;
@@ -915,8 +1108,8 @@ static int build_ui(void)
     label("\33bCLOUD AGENT"), Child, label("Model"), Child, model = entry(128), Child,
     label("API key (blank preserves existing key; never displayed)"), Child,
     keyfield = StringObject, StringFrame, MUIA_String_Secret, TRUE, MUIA_String_MaxLen, 512,
-    MUIA_CycleChain, 1, End, Child, button("Save settings", SAVECONFIG), Child,
-    button("Test verified HTTPS", PROBE), Child, label("\33bNATIVE DEVELOPMENT"), Child,
+    MUIA_CycleChain, 1, End, Child, button("Test verified HTTPS", PROBE), Child,
+    label("\33bNATIVE DEVELOPMENT"), Child,
     label("Project drawer (restart required after changing)"), Child, projectdrawer = entry(180),
     Child, label("Build command for this workspace (must produce Program.new)"), Child,
     buildcommand = entry(512), Child, button("Save build command", SAVEBUILD), Child,
@@ -925,7 +1118,8 @@ static int build_ui(void)
           "panes.\nZZ9000 "
           "provides the RTG display. ARM jobs require an exclusive core lease.\nCloud inference "
           "needs an API key and an internet connection."),
-    Child, HVSpace, End, End, End;
+    Child, HVSpace, Child, HGroup, Child, button("Save", SAVECONFIG), Child,
+    button("Use", USECONFIG), Child, button("Cancel", CANCELCONFIG), End, End, End, End;
     right = VGroup, MUIA_Group_Spacing, 6, MUIA_Weight, 23, Child, label("\33bFILES"), Child,
     list(&files), Child, newname = entry(180), Child, button("Create file", NEWFILE), Child,
     button("Refresh files", REFRESH), Child,
@@ -937,13 +1131,15 @@ static int build_ui(void)
     Child, HGroup, Child, left, Child, BalanceObject, End, Child, center, Child, BalanceObject, End,
     Child, right, End, Child, status = label("Ready"), End;
     win = WindowObject, MUIA_Window_Title, "Termic Amiga Workspace", MUIA_Window_ID,
-    MAKE_ID('T', 'R', 'M', 'C'), MUIA_Window_Width, 1400, MUIA_Window_Height, 650, WindowContents,
-    body, End;
+    MAKE_ID('T', 'R', 'M', 'C'), MUIA_Window_Width, 1400, MUIA_Window_Height, 650,
+    MUIA_Window_Menustrip, build_menus(), WindowContents, body, End;
     if (!win)
         return 0;
     DoMethod(app, OM_ADDMEMBER, win);
     notify(win, MUIA_Window_CloseRequest, TRUE, QUIT);
-    notify(win, MUIA_Window_InputEvent, (ULONG) "-repeat help", ABOUT);
+    notify(win, MUIA_Window_InputEvent, (ULONG) "-repeat help", HELP);
+    notify(win, MUIA_Window_InputEvent, (ULONG) "shift help", ABOUT);
+    notify(win, MUIA_Window_ActiveObject, MUIV_EveryTime, UPDATE_MENUS);
     notify(projects, MUIA_List_Active, MUIV_EveryTime, PROJECT);
     notify(tasks, MUIA_List_Active, MUIV_EveryTime, TASK);
     notify(files, MUIA_List_Active, MUIV_EveryTime, FILESEL);
@@ -969,16 +1165,19 @@ static int build_ui(void)
     notify(newname, MUIA_String_Acknowledge, MUIV_EveryTime, NEWFILE);
     notify(commit, MUIA_String_Acknowledge, MUIV_EveryTime, GITCOMMIT);
     notify(command, MUIA_String_Acknowledge, MUIV_EveryTime, SHELL);
-    s = read_text("Termic:Config/model", 128);
-    if (s)
+    restore_preferences();
     {
-        s[strcspn(s, "\r\n")] = 0;
-        set(model, MUIA_String_Contents, s);
-        free(s);
+        Object *editors[] = {source, prompt, transcript, output, review};
+        int i;
+        for (i = 0; i < 5; i++)
+        {
+            notify(editors[i], MUIA_TextEditor_AreaMarked, MUIV_EveryTime, UPDATE_MENUS);
+            notify(editors[i], MUIA_TextEditor_UndoAvailable, MUIV_EveryTime, UPDATE_MENUS);
+            notify(editors[i], MUIA_TextEditor_RedoAvailable, MUIV_EveryTime, UPDATE_MENUS);
+        }
     }
     set(source, MUIA_TextEditor_ExportHook, MUIV_TextEditor_ExportHook_NoStyle);
     set(source, MUIA_TextEditor_PasteColors, FALSE);
-    set(projectdrawer, MUIA_String_Contents, project_root);
     set(transcript, MUIA_Weight, 75);
     set(prompt, MUIA_Weight, 25);
     return 1;
@@ -1019,7 +1218,9 @@ int main(int argc, char **argv)
         codefont = OpenDiskFont(&b);
     }
     {
-        char *configured = read_value("Termic:Config/projects-drawer", 180);
+        char *configured = read_preference("projects-drawer", 180);
+        if (configured)
+            configured[strcspn(configured, "\r\n")] = 0;
         if (configured && *configured)
         {
             unsigned i;
@@ -1093,13 +1294,23 @@ int main(int argc, char **argv)
         goto cleanup;
     while (!done)
     {
+        update_menus();
         signals = 0;
-        while ((id = DoMethod(app, MUIM_Application_NewInput, &signals)) != 0)
+        while (!done && (id = DoMethod(app, MUIM_Application_NewInput, &signals)) != 0)
         {
             int n;
             char *name;
             switch (id)
             {
+            case UPDATE_MENUS:
+                update_menus();
+                break;
+            case HELP:
+                open_help();
+                break;
+            case MUIPREFS:
+                DoMethod(app, MUIM_Application_OpenConfigWindow, 0);
+                break;
             case ABOUT:
                 open_about();
                 break;
@@ -1129,8 +1340,12 @@ int main(int argc, char **argv)
             case PAGE_SETTINGS:
                 set(win, MUIA_Window_ActiveObject, NULL);
                 set(pages, MUIA_Group_ActivePage, id - PAGE_AGENT);
+                if (id == PAGE_AGENT)
+                    set(win, MUIA_Window_ActiveObject, prompt);
                 if (id == PAGE_EDITOR)
                     set(win, MUIA_Window_ActiveObject, source);
+                if (id == PAGE_SETTINGS)
+                    set(win, MUIA_Window_ActiveObject, model);
                 break;
             case QUIT:
             case MUIV_Application_ReturnID_Quit:
@@ -1297,9 +1512,18 @@ int main(int argc, char **argv)
                 break;
             case SETTINGS:
                 set(pages, MUIA_Group_ActivePage, 4);
+                set(win, MUIA_Window_ActiveObject, model);
                 break;
             case SAVECONFIG:
-                configure();
+            case USECONFIG:
+                configure(id == SAVECONFIG);
+                break;
+            case CANCELCONFIG:
+                restore_preferences();
+                set(pages, MUIA_Group_ActivePage, 0);
+                set(win, MUIA_Window_ActiveObject, prompt);
+                message(
+                    "Preference edits discarded. Saved workspace build commands are unchanged.");
                 break;
             case PROBE:
                 launch("--probe", 2);
@@ -1327,18 +1551,31 @@ int main(int argc, char **argv)
                 else
                     message("Enter a commit message and wait for running jobs.");
                 break;
+            case SOURCE_UNDO:
+            case SOURCE_REDO:
+            case SOURCE_CUT:
+            case SOURCE_COPY:
+            case SOURCE_PASTE:
             case UNDO:
             case REDO:
             case CUT:
             case COPY:
             case PASTE:
+            case SELECTALL:
+            case ERASE:
             {
-                const char *cmd = id == UNDO   ? "UNDO"
-                                  : id == REDO ? "REDO"
-                                  : id == CUT  ? "CUT"
-                                  : id == COPY ? "COPY"
-                                               : "PASTE";
-                DoMethod(source, MUIM_TextEditor_ARexxCmd, cmd);
+                Object *target = id >= SOURCE_UNDO ? source : edit_target();
+                if (id >= SOURCE_UNDO)
+                    id = UNDO + id - SOURCE_UNDO;
+                const char *cmd = id == UNDO        ? "UNDO"
+                                  : id == REDO      ? "REDO"
+                                  : id == CUT       ? "CUT"
+                                  : id == COPY      ? "COPY"
+                                  : id == SELECTALL ? "SELECTALL"
+                                  : id == ERASE     ? "DELETE"
+                                                    : "PASTE";
+                if (target)
+                    DoMethod(target, MUIM_TextEditor_ARexxCmd, cmd);
                 break;
             }
             case RENAMEPROJECT:

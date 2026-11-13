@@ -9,7 +9,12 @@
 #ifndef TERMIC_CONFIG
 #define TERMIC_CONFIG "Termic:Config/"
 #endif
+#ifndef TERMIC_ENV
+#define TERMIC_ENV "ENV:Termic/"
+#endif
 char *read_text(const char *path, size_t limit);
+/* Session preferences override the installation defaults. */
+char *read_preference(const char *name, size_t limit);
 int replace_source(const char *text);
 /* 1 complete, 0 incomplete, -1 malformed/unsupported. Allocates body. */
 int decode_http(const char *raw, size_t size, int eof, int *status, char **body);

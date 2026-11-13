@@ -11,6 +11,33 @@ SOURCE = ROOT / "amiga/native"
 
 
 class NativeProtocolTests(unittest.TestCase):
+    def test_preferences(self):
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            (work / "Config").mkdir()
+            (work / "Env").mkdir()
+            binary = work / "prefs"
+            subprocess.run(
+                [
+                    "cc",
+                    "-std=c99",
+                    "-Wall",
+                    "-Wextra",
+                    "-Werror",
+                    "-fsanitize=address,undefined",
+                    "-I",
+                    str(SOURCE),
+                    '-DTERMIC_CONFIG="Config/"',
+                    '-DTERMIC_ENV="Env/"',
+                    str(SOURCE / "files.c"),
+                    str(SOURCE / "tests/test_preferences.c"),
+                    "-o",
+                    str(binary),
+                ],
+                check=True,
+            )
+            subprocess.run([str(binary)], cwd=work, check=True)
+
     def test_syntax_colours(self):
         with tempfile.TemporaryDirectory() as directory:
             binary = str(Path(directory) / "syntax")

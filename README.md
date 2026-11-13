@@ -17,8 +17,16 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 - Native Git initialization, status, diffs and source commits.
 - OpenAI agent conversations with bounded C/header file tools and local builds.
 - Persistent workspace selection, task status, model settings and an About window.
+- Native Project/Edit/Workspace/View/Settings/Help menus and Right-Amiga shortcuts.
+- Save/Use/Cancel preferences and shared Amiga IFF text clipboard.
+- Linked AmigaGuide manual available with Help or Help > Contents... .
 
 ![About Termic Amiga](docs/screenshots/about.png)
+
+![Amiga preferences with Save, Use and Cancel](docs/screenshots/preferences.png)
+
+[Amiga interface conventions](docs/amiga-interface.md) describes the menu,
+preferences and clipboard behavior and its remaining limitations.
 
 ## Requirements and installation
 
@@ -26,6 +34,13 @@ AmigaOS 3.2, 68020 or newer, Fast RAM, MUI 3.8+ and TextEditor.mcc 15.56.
 Development uses VBCC and NDK3.2. Native Git requires long filenames and was
 verified with AmiSSL 5.27. Cloud access additionally needs a compatible TCP/IP
 stack, CA certificates, an accurate clock and your own OpenAI API key.
+
+Press **Help** for the [AmigaGuide manual](amiga/native/Termic.guide), with linked
+chapters, an index and optional ToolsDaemon Workbench launcher instructions.
+Install `Termic.guide` beside `TermicNative`; it opens in MultiView.
+**Shift-Help** opens About. MagicMenu and ToolsDaemon are optional and unbundled.
+
+![AmigaGuide contents on Workbench](docs/screenshots/guide.png)
 
 See the [native installation guide](amiga/native/ReadMe) for installation layout,
 SDK setup, builds, project storage, shortcuts and limits. Dependency archives
@@ -45,7 +60,8 @@ Run portable tests on a host with a C compiler and AddressSanitizer:
 python3 -m unittest discover -s scripts/amiga -p 'test_*.py'
 ```
 
-The opt-in `accept_mui.py`, `accept_colours.py` and `accept_about.py` scripts
+The opt-in `accept_mui.py`, `accept_colours.py`, `accept_about.py` and
+`accept_style.py` scripts
 exercise a physical Amiga through an already-running DevBench MCP server.
 They require its Python MCP environment and create synthetic test fixtures.
 Do not run keyboard-injection tests while someone is using the Amiga.
