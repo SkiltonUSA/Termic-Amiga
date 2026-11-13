@@ -1,0 +1,38 @@
+{
+  "vbcc-bin.lha": {
+    "url": "https://aminet.net/dev/c/vbcc_bin_amigaos68k.lha",
+    "sha256": "0a75cf9da15d1613554e43b09c6db59e0a05d945e358f1b95d5b32d9c637b7be"
+  },
+  "vbcc-target.lha": {
+    "url": "https://aminet.net/dev/c/vbcc_target_m68k-amiga.lha",
+    "sha256": "ec734d7115359cdb5d1c70349284ecbd5712ef47e8bc28d4150117c6f8c73289"
+  },
+  "ndk.lha": {
+    "url": "https://aminet.net/dev/misc/NDK3.2.lha",
+    "sha256": "96cabd4ad683dced632e147bf86dee0f50dcb1254386216c25c362916a6409bb"
+  },
+  "amissl-sdk.lha": {
+    "url": "https://github.com/jens-maus/amissl/releases/download/5.23/AmiSSL-5.23-SDK.lha",
+    "sha256": "3eabab3119e00590ac18ff914b5a7a281764f18fa26cf0db7dd95c661b14e367"
+  },
+  "mui38dev.lha": {
+    "url": "https://github.com/amiga-mui/muidev/releases/download/3.8/mui38dev.lha",
+    "sha256": "8d28b0262fa6f43a9a8e114da368a9309256bbc2f99fa1c23d8e4c105d565722"
+  },
+  "texteditor.lha": {
+    "url": "https://github.com/amiga-mui/texteditor/releases/download/15.56/MCC_TextEditor-15.56.lha",
+    "sha256": "d239a8324684233c09999354399f25595996c7ba52b2f44627263eb9676abfe9"
+  },
+  "amiga-git.lha": {
+    "url": "https://aminet.net/dev/misc/amiga-git.lha",
+    "sha256": "d391f44bcc9cfe04561cd84d0f71ab05af2532d97730baf19dba9aa45973c22f"
+  },
+  "amissl527.lha": {
+    "url": "https://github.com/jens-maus/amissl/releases/download/5.27/AmiSSL-5.27-OS3.lha",
+    "sha256": "722476cfbf21c0caf6ff4a77e32ee8baf67d3045db0e9ff2ccce6c782bed5847"
+  },
+  "diskimage.lha": {
+    "url": "https://aminet.net/disk/misc/diskimage.lha",
+    "sha256": "c7dbc8d05a20b90328539e66bf59664e7621af0bca33dfb91e179bf2738d6abb"
+  }
+}
