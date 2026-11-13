@@ -272,3 +272,16 @@ test passed. Live inference for the two new providers remains unverified.
 The packaged macOS application also passed written Start, Stop, restart and
 window-close tests against a synthetic HTTP MCP bridge. These use actual
 GUI button handlers and worker processes, with no cloud or Amiga dependency.
+
+Both platform jobs in [desktop build 43522993207](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43522993207)
+passed their portable suite, packaging, bundled GUI/MCP smoke test and written
+Start/Stop/restart/close test. Windows ran on a GitHub-hosted Windows runner;
+a physical Windows 11 PC connected to this Amiga has not been tested.
+The Windows artifact ZIP was downloaded and its integrity and executable /
+_internal layout checked. No model credentials were used in CI.
+
+The tested native build was installed with checksum verification and backup
+at `SD032G:Dev/Termic/Backup/agents-1794610294`. GUI CRC32 4FBA275C,
+worker 0EE89984, MCP B3344EDF. Installed MCP handshake, 15 tools and the
+default-disabled gate passed. Production geometry and settings were restored.
+The Mac desktop app was installed and its running relay connection verified.

@@ -7,6 +7,10 @@ DevBench bridge are separate prerequisites.
 
 ![Termic AI Proxy with synthetic account status](screenshots/ai-proxy.png)
 
+Verified build downloads (GitHub sign-in required; retained for 30 days):
+[Windows](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43522993207/artifacts/14084735251)
+and [macOS](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43522993207/artifacts/14083079243).
+
 ## Start the app
 
 On macOS, open **Termic AI Proxy.app** from Applications. On Windows 11,
