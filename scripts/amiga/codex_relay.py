@@ -120,10 +120,16 @@ class Bridge:
     async def __aenter__(self):
         from mcp import ClientSession
         from mcp.client.streamable_http import streamablehttp_client
-        read, write, _ = await self.stack.enter_async_context(streamablehttp_client(self.url))
-        self.session = await self.stack.enter_async_context(ClientSession(read, write))
-        await self.session.initialize()
-        return self
+        try:
+            read, write, _ = await self.stack.enter_async_context(streamablehttp_client(self.url))
+            self.session = await self.stack.enter_async_context(ClientSession(read, write))
+            await self.session.initialize()
+            return self
+        except BaseException:
+            # __aexit__ is not called when __aenter__ fails. Close partially
+            # entered MCP task groups in this same task before reconnecting.
+            await self.stack.__aexit__(*sys.exc_info())
+            raise
 
     async def __aexit__(self, *args):
         await self.stack.__aexit__(*args)
@@ -434,6 +440,75 @@ async def dispatch_job(bridge, job, args):
     return await run_cli_job(bridge, job, getattr(args, provider), args.state_dir)
 
 
+def connection_failure(error):
+    """Classify transport failures without exposing server response bodies."""
+    from anyio import BrokenResourceError, ClosedResourceError, EndOfStream
+    from httpx import TransportError, HTTPStatusError
+    from mcp.shared.exceptions import McpError
+    if isinstance(error, BaseExceptionGroup):
+        leaves = [e for e in error.exceptions if not isinstance(e, asyncio.CancelledError)]
+        return bool(leaves) and all(connection_failure(e) for e in leaves)
+    if isinstance(error, HTTPStatusError):
+        return error.response.status_code in (404, 408, 429) or error.response.status_code >= 500
+    if isinstance(error, McpError):
+        return error.error.code in (-32000, -32001, 408)  # closed session / request timeout
+    return isinstance(error, (ConnectionError, TimeoutError, TransportError,
+                              BrokenResourceError, ClosedResourceError, EndOfStream))
+
+
+def connection_reason(error):
+    if isinstance(error, BaseExceptionGroup):
+        reasons = [connection_reason(e) for e in error.exceptions if not isinstance(e, asyncio.CancelledError)]
+        return ', '.join(dict.fromkeys(reasons)) or 'connection closed'
+    name = type(error).__name__
+    if isinstance(error, TimeoutError) or 'Timeout' in name: return 'bridge timed out'
+    if name == 'ConnectError': return 'cannot reach the bridge'
+    if name == 'HTTPStatusError': return 'bridge HTTP status ' + str(error.response.status_code)
+    if name == 'ConnectionError': return 'Amiga bridge operation failed'
+    return 'MCP connection closed (' + name + ')'
+
+
+async def serve(args):
+    # A lost connection must never reset the consumed job ID and replay an
+    # edit/build whose acknowledgement may have been lost.
+    last = None
+    retry_delay = 2
+    while True:
+        try:
+            async with Bridge(args.bridge, args.relay_drawer) as bridge:
+                connected = False
+                while True:
+                    raw = await bridge.read('request.json')
+                    if not connected:
+                        print('AI proxy ready for Codex, Claude and Cursor. Stop closes the connection.', flush=True)
+                        connected = True
+                        retry_delay = 2
+                    if raw:
+                        job = validate_job(json.loads(raw))
+                        if job['id'] != last:
+                            last = job['id']
+                            print('Processing ' + job.get('provider', 'codex') + ' task.', flush=True)
+                            try:
+                                ok = await dispatch_job(bridge, job, args)
+                            except Exception as error:
+                                if connection_failure(error): raise
+                                print('Provider unavailable: ' + type(error).__name__, flush=True)
+                                box = Mailbox(bridge, job)
+                                await box.text('[Host agent unavailable. Open AI Proxy and check sign-in.]\n')
+                                await box.send('done', status='failed')
+                                ok = False
+                            print('Task completed.' if ok else 'Task failed or stopped.', flush=True)
+                            if args.once: return 0 if ok else 1
+                    await asyncio.sleep(2)
+        except Exception as error:
+            if not connection_failure(error): raise
+            print('Bridge unavailable: ' + connection_reason(error) +
+                  '. Reconnecting in ' + str(retry_delay) + ' seconds. Interrupted tasks will not be replayed.', flush=True)
+            if args.once: return 1
+            await asyncio.sleep(retry_delay)
+            retry_delay = min(retry_delay * 2, 30)
+
+
 async def main(args):
     lock = RelayLock(args.state_dir)
     try:
@@ -448,27 +523,7 @@ async def main(args):
                 finally: await codex.close()
             print(args.check.title() + ' saved login detected. No model request or credential transfer.', flush=True)
             return
-        async with Bridge(args.bridge, args.relay_drawer) as bridge:
-            print('AI proxy ready for Codex, Claude and Cursor. Stop closes the connection.', flush=True)
-            last = None
-            while True:
-                raw = await bridge.read('request.json')
-                if raw:
-                    job = validate_job(json.loads(raw))
-                    if job['id'] != last:
-                        last = job['id']
-                        print('Processing ' + job.get('provider', 'codex') + ' task.', flush=True)
-                        try:
-                            ok = await dispatch_job(bridge, job, args)
-                        except Exception as error:
-                            print('Provider unavailable: ' + type(error).__name__, flush=True)
-                            box = Mailbox(bridge, job)
-                            await box.text('[Host agent unavailable. Open AI Proxy and check sign-in.]\n')
-                            await box.send('done', status='failed')
-                            ok = False
-                        print('Task completed.' if ok else 'Task failed or stopped.', flush=True)
-                        if args.once: return 0 if ok else 1
-                await asyncio.sleep(2)
+        return await serve(args)
     finally:
         lock.close()
 

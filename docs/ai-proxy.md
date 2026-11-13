@@ -28,12 +28,17 @@ notarized releases. The Mac app is built for its runner's architecture.
 The window provides:
 
 - Start and Stop, with task progress and connection errors.
+- Automatic reconnection after temporary bridge failures, with a visible
+  Reconnecting status and retries capped at one every 30 seconds.
 - Automatic connection when the app opens (enabled initially).
 - A configurable DevBench MCP URL.
 - Executable paths, Browse, Check and Sign in for each provider.
 
 Closing the app stops its relay and requests cancellation of the active host
 agent. It waits for cleanup; a synchronous native build can delay stopping.
+Reconnection preserves the last consumed task ID for the running proxy; it
+does not replay a task after a lost acknowledgement. Send a new task from the
+Amiga after a failed or timed-out request. Stop remains available during retry.
 It does not install a login item, service or background startup task.
 Only one proxy can own the relay at a time. Stop the old Terminal-based relay
 before opening this application.
@@ -41,7 +46,8 @@ before opening this application.
 ## Host sign-in
 
 Install the vendor CLI on the host. Use **Browse** if it is not on PATH.
-Use **Sign in** to complete the provider's browser authentication. **Check**
+If the proxy is running, click **Stop** first. Use **Sign in** to complete
+the provider's browser authentication, then click **Start proxy**. **Check**
 checks stored login state without running a model; a saved login can still be
 expired, or have no remaining usage. A real request is the final authentication
 check.

@@ -85,7 +85,7 @@ def worker_entry():
             sys.stdout = sys.stderr = output
             try: asyncio.run(relay_worker(state))
             except Exception as error:
-                print('Proxy stopped: ' + str(error), flush=True)
+                print('Proxy stopped: ' + (codex_relay.connection_reason(error) if isinstance(error, BaseExceptionGroup) else str(error)), flush=True)
                 return 1
         return True
     if sys.argv[1] == '--self-test':
@@ -206,9 +206,13 @@ def gui():
                 stream.seek(self.offset); text = stream.read(); self.offset = stream.tell()
             if text:
                 self.log.appendPlainText(text.rstrip())
-                if 'AI proxy ready' in text: self.status.setText('Connected, waiting for Amiga')
-                elif 'Processing ' in text: self.status.setText('Running task')
-                elif 'Task completed.' in text or 'Task failed or stopped.' in text: self.status.setText('Connected, waiting for Amiga')
+                if self.status.text() != 'Stopping...':
+                    for line in text.splitlines():
+                        if line.startswith('AI proxy ready'): self.status.setText('Connected, waiting for Amiga')
+                        elif line.startswith('Bridge unavailable:'): self.status.setText('Reconnecting to Amiga bridge...')
+                        elif line.startswith('Processing '): self.status.setText('Running task')
+                        elif line in ('Task completed.', 'Task failed or stopped.'): self.status.setText('Connected, waiting for Amiga')
+
 
         def account(self, provider, login):
             if self.fixture: return
@@ -276,20 +280,27 @@ def gui():
             if time.monotonic() > deadline[0]:
                 failed.append('Desktop lifecycle timeout at phase ' + str(phase[0]))
                 window.stop(); timer.stop(); app.exit(1); return
+            connected = window.status.text().startswith('Connected')
+            reconnecting = window.status.text().startswith('Reconnecting')
             if phase[0] == 0:
                 window.start_button.click(); phase[0] = 1
-            elif phase[0] in (1, 3) and window.status.text().startswith('Connected'):
+            elif phase[0] == 1 and reconnecting:
+                (state / 'test-bridge-down').unlink(); phase[0] = 2
+            elif phase[0] == 2 and connected:
+                (state / 'test-bridge-down').touch(); phase[0] = 3
+            elif phase[0] == 3 and reconnecting:
+                (state / 'test-bridge-down').unlink(); phase[0] = 4
+            elif phase[0] in (4, 6) and connected:
                 assert not window.start_button.isEnabled() and window.stop_button.isEnabled()
-                if phase[0] == 1: window.stop_button.click(); phase[0] = 2
-                else: phase[0] = 4; window.close()
-            elif phase[0] == 2 and window.relay.state() == QProcess.NotRunning:
+                if phase[0] == 4: window.stop_button.click(); phase[0] = 5
+                else: phase[0] = 7; window.close()
+            elif phase[0] == 5 and window.relay.state() == QProcess.NotRunning:
                 assert window.start_button.isEnabled() and not window.stop_button.isEnabled()
-                window.start_button.click(); phase[0] = 3
-            deadline[0] = max(deadline[0], time.monotonic() + 1)
+                window.start_button.click(); phase[0] = 6
         timer.timeout.connect(exercise); timer.start(200)
         result = app.exec()
-        if result or failed or phase[0] != 4: return 1
-        (state / 'ui-passed.json').write_text(json.dumps({'start':True,'stop':True,'restart':True,'close':True}))
+        if result or failed or phase[0] != 7: return 1
+        (state / 'ui-passed.json').write_text(json.dumps({'start':True,'stop':True,'restart':True,'close':True,'startup_retry':True,'disconnect_retry':True}))
         return 0
     return app.exec()
 

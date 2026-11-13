@@ -94,9 +94,12 @@ between operations. The Mac sends keepalives while Codex works. A turn has a
 inside synchronous native tool calls. An interrupted build may take time to
 return from the native compiler before cancellation is observed.
 
-If the relay stops or the bridge disconnects, the worker fails with a visible
-status and preserves source backups. Restart the relay and send again; it does
-not automatically replay a failed task. A stale conversation that cannot resume
+If the relay stops or the bridge disconnects, the worker fails or times out
+and preserves source backups. The desktop proxy reconnects after transient
+bridge errors, using delays from 2 to 30 seconds. It retains the consumed job
+ID across reconnects, so a lost acknowledgement cannot repeat an edit or build.
+Send a new task after connection returns. An explicitly stopped proxy needs
+Start or a relaunch. It does not automatically replay a failed task. A stale conversation that cannot resume
 needs **New conversation**. There is no automatic fallback to a different model
 or a new conversation.
 

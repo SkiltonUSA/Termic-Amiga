@@ -285,3 +285,20 @@ at `SD032G:Dev/Termic/Backup/agents-1794610294`. GUI CRC32 4FBA275C,
 worker 0EE89984, MCP B3344EDF. Installed MCP handshake, 15 tools and the
 default-disabled gate passed. Production geometry and settings were restored.
 The Mac desktop app was installed and its running relay connection verified.
+
+
+## Proxy connection recovery
+
+The installed proxy was subsequently found stopped with an opaque MCP
+TaskGroup error. The original nested exception was not recorded, so its exact
+cause is unknown. Transport failures now reconnect with bounded backoff and
+show a readable status. Partially initialized MCP contexts are closed before
+retry. The running proxy retains its consumed job ID across reconnects.
+Regression tests cover failed initialization cleanup, interrupted-job replay
+prevention, retry backoff, Stop during retry, lock release, fatal input errors,
+HTTP status classification and an actual refused localhost connection.
+The packaged GUI test now starts with an unavailable synthetic Amiga and
+simulates a second disconnection after connecting, before Stop/restart/close.
+
+All 18 portable proxy test groups passed after this change, as did the local
+macOS bundled startup/MCP and expanded GUI connection-recovery tests.
