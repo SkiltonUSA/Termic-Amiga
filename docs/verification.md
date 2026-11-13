@@ -302,3 +302,9 @@ simulates a second disconnection after connecting, before Stop/restart/close.
 
 All 18 portable proxy test groups passed after this change, as did the local
 macOS bundled startup/MCP and expanded GUI connection-recovery tests.
+
+[Recovery build 43526908696](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43526908696)
+passed on macOS and Windows, including the expanded packaged GUI recovery
+checks. The installed Mac app was updated with a local backup and reconnected
+to the actual Amiga bridge. The new Windows download passed archive integrity
+checks. Claude and Cursor live authentication remains unverified.
