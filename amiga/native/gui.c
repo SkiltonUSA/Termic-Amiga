@@ -140,16 +140,13 @@ static Object *button(const char *s, int id)
     notify(o, MUIA_Pressed, FALSE, id);
     return o;
 }
-static Object *chrome_button(const char *text, int id, int width)
+static Object *chrome_button(int id)
 {
-    Object *o = TextObject, ButtonFrame, MUIA_Font,
-        bodyfont ? (ULONG)bodyfont : MUIV_Font_Button,
-        MUIA_FixWidth, width, MUIA_FixHeight, 32, MUIA_Text_SetVMax, FALSE,
-        MUIA_Background, MUII_ButtonBack, MUIA_InputMode, MUIV_InputMode_RelVerify,
-        MUIA_Text_Contents, text, MUIA_Text_PreParse, "\33c", MUIA_CycleChain, 1,
-        MUIA_ShortHelp, id == WINDOW_ZOOM ? "Fit screen / restore window"
-            : id == WINDOW_DEPTH ? "Send window behind other windows" : "Save and close", End;
-    notify(o, MUIA_Pressed, FALSE, id);
+    Object *o = chrome_icon(id == WINDOW_ZOOM ? 2 : id == WINDOW_DEPTH ? 1 : 0,
+        id == WINDOW_ZOOM ? "Zoom: fit screen / restore window"
+            : id == WINDOW_DEPTH ? "Back: send window behind other windows" : "Close: save and close");
+    if (o)
+        notify(o, MUIA_Pressed, FALSE, id);
     return o;
 }
 static Object *entry(unsigned max)
@@ -1160,8 +1157,8 @@ static int build_ui(void)
     body = VGroup, MUIA_Group_Spacing, 0, InnerSpacing(2, 2), Child,
         HGroup, MUIA_Group_Spacing, 2, MUIA_FixHeight, 32,
         MUIA_Background, "2:r2d2d2d2d,5d5d5d5d,9d9d9d9d",
-        Child, chrome_button("X", QUIT, 32), Child, titlebar,
-        Child, chrome_button("Back", WINDOW_DEPTH, 54), Child, chrome_button("Zoom", WINDOW_ZOOM, 54), End,
+        Child, chrome_button(QUIT), Child, titlebar,
+        Child, chrome_button(WINDOW_DEPTH), Child, chrome_button(WINDOW_ZOOM), End,
         Child, body, Child, HGroup, Child, HVSpace, Child, grip, End, End;
     win = WindowObject, MUIA_Window_Title, NULL,
     MUIA_Window_ScreenTitle, "Termic Amiga Workspace",

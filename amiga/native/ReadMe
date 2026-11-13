@@ -195,6 +195,7 @@ Main window controls
 --------------------
 Termic draws a taller blue title bar within its own Workbench window.
 Drag the title text to move; drag the lower-right blue grip to resize.
-X saves and closes, Back sends the window backwards, and Zoom fits the screen
-or restores its previous size. Workbench font preferences are not changed.
+The cross saves and closes; overlapping squares send the window backwards;
+the single square fits the screen or restores its previous size. Hover over
+an icon for its tooltip. Workbench font preferences are not changed.
 The Files list has light filenames on black, matching the source editor.

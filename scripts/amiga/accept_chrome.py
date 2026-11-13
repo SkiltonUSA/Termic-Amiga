@@ -123,7 +123,7 @@ async def main(args):
                     "y": original["y"],
                 },
             )
-            await click(original["x"] + original["width"] - 95, original["y"] + 20)
+            await click(original["x"] + original["width"] - 65, original["y"] + 20)
             behind = await state()
             assert not behind["front"], behind
             await call(

@@ -81,3 +81,10 @@ Older native-title suites remain historical evidence for editor, clipboard and
 preferences behaviour; their window-name guards are not compatible with the
 new borderless main window. The custom bar has not been retested on MUI 3.8.
 The existing Poseidon/MultiView issues above are not resolved by this change.
+
+The title-bar icon update was rebuilt and passed the same hardware controls
+suite, including X close, depth, zoom/restore, dragging and resizing. The compact
+buttons use MUI custom Area drawings with explicit minimum/default/maximum sizes;
+MUI supplies the frames and input handling. The final editor/preferences captures
+were inspected after installation, and transferred executable/guide CRCs matched
+the host files.

@@ -11,7 +11,7 @@ struct MUI_CustomClass *__termic_mui_class(__reg("a6") struct Library *,
                                            __reg("a3") APTR) = "\tjsr\t-108(a6)";
 void __termic_mui_unclass(__reg("a6") struct Library *,
                           __reg("a0") struct MUI_CustomClass *) = "\tjsr\t-114(a6)";
-static struct MUI_CustomClass *chrome_class;
+static struct MUI_CustomClass *chrome_class, *chrome_icon_class;
 struct ChromeData
 {
     struct MUI_EventHandlerNode events;
@@ -126,10 +126,86 @@ static Object *chrome_area(struct TextFont *font, int resize)
                      6, MUIA_ShortHelp, resize ? "Drag to resize" : "Drag to move the window",
                      TAG_DONE);
 }
+/* Small pixel-aligned symbols, rendered using the current MUI text pen.
+ * Button frames, focus, pressed state and input stay with MUI's Area class. */
+static void chrome_square(struct RastPort *rp, LONG x, LONG y, LONG size)
+{
+    RectFill(rp, x, y, x + size - 1, y + 1);
+    RectFill(rp, x, y + size - 2, x + size - 1, y + size - 1);
+    RectFill(rp, x, y + 2, x + 1, y + size - 3);
+    RectFill(rp, x + size - 2, y + 2, x + size - 1, y + size - 3);
+}
+static ULONG chrome_icon_dispatch(__reg("a0") struct IClass *cl,
+                                  __reg("a2") Object *obj, __reg("a1") Msg msg)
+{
+    ULONG result = DoSuperMethodA(cl, obj, msg);
+    if (msg->MethodID == MUIM_AskMinMax)
+    {
+        struct MUI_MinMax *mm = ((struct MUIP_AskMinMax *)msg)->MinMaxInfo;
+        /* Area contributes frame/insets; the custom drawing must supply its size. */
+        mm->MinWidth += 32;
+        mm->DefWidth += 32;
+        mm->MaxWidth += 32;
+        mm->MinHeight += 32;
+        mm->DefHeight += 32;
+        mm->MaxHeight += 32;
+        return 0;
+    }
+    if (msg->MethodID == MUIM_Draw &&
+        (((struct MUIP_Draw *)msg)->flags & MADF_DRAWOBJECT))
+    {
+        struct RastPort *rp = _rp(obj);
+        ULONG kind = 0, selected = 0, pen = GetAPen(rp), mode = GetDrMd(rp);
+        LONG x, y, i;
+        get(obj, MUIA_UserData, &kind);
+        get(obj, MUIA_Selected, &selected);
+        x = _mleft(obj) + (_mwidth(obj) - 18) / 2 + !!selected;
+        y = _mtop(obj) + (_mheight(obj) - 18) / 2 + !!selected;
+        SetAPen(rp, _pens(obj)[MPEN_TEXT]);
+        SetDrMd(rp, JAM1);
+        if (kind == 0)
+        {
+            for (i = 2; i < 14; i++)
+            {
+                RectFill(rp, x + i, y + i, x + i + 2, y + i + 2);
+                RectFill(rp, x + 16 - i, y + i, x + 18 - i, y + i + 2);
+            }
+        }
+        else if (kind == 1)
+        {
+            /* Only the visible edges of the rear square are drawn. */
+            RectFill(rp, x, y, x + 12, y + 1);
+            RectFill(rp, x, y + 2, x + 1, y + 12);
+            RectFill(rp, x + 2, y + 11, x + 4, y + 12);
+            RectFill(rp, x + 11, y + 2, x + 12, y + 4);
+            chrome_square(rp, x + 5, y + 5, 13);
+        }
+        else
+            chrome_square(rp, x + 1, y + 1, 16);
+        SetAPen(rp, pen);
+        SetDrMd(rp, mode);
+    }
+    return result;
+}
+static Object *chrome_icon(ULONG kind, const char *help)
+{
+    if (!chrome_icon_class)
+        chrome_icon_class = __termic_mui_class(MUIMasterBase, NULL, MUIC_Area, NULL,
+                                               0, (APTR)chrome_icon_dispatch);
+    if (!chrome_icon_class)
+        return NULL;
+    return NewObject(chrome_icon_class->mcc_Class, NULL, ButtonFrame,
+        MUIA_UserData, kind,
+        MUIA_Background, MUII_ButtonBack, MUIA_InputMode, MUIV_InputMode_RelVerify,
+        MUIA_CycleChain, 1, MUIA_ShortHelp, help, TAG_DONE);
+}
 static void chrome_cleanup(void)
 {
     if (chrome_class)
         __termic_mui_unclass(MUIMasterBase, chrome_class);
     chrome_class = NULL;
+    if (chrome_icon_class)
+        __termic_mui_unclass(MUIMasterBase, chrome_icon_class);
+    chrome_icon_class = NULL;
 }
 #endif

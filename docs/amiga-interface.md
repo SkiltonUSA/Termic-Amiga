@@ -63,9 +63,11 @@ This is an adaptation of the applicable conventions, not a claim of complete
 style-guide compliance. Preset import/export, SETTINGS ToolTypes/CLI overrides,
 an IFF project format, live file notifications, clipboard unit selection and an
 application ARexx port remain unimplemented. Text source remains compiler-readable.
-The main window now draws its own taller blue title bar on Workbench. X uses
-the existing save-and-quit action; Back sends the window behind other windows;
-Zoom fits the screen and restores its previous rectangle. Drag the title text
+The main window now draws its own taller blue title bar on Workbench. The cross icon uses
+the existing save-and-quit action; overlapping squares send the window behind
+other windows; the outlined square fits the screen and restores its previous
+rectangle. These are pixel-aligned MUI drawings with hover tooltips and native
+button focus/pressed feedback, with no external image dependency. Drag the title text
 to move it and the lower-right blue grip to resize it. Movement stays below the
 screen bar and resize honours MUI's minimum dimensions. Workbench fonts and
 other applications' borders are untouched. The Files list uses a black background

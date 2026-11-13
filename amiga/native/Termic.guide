@@ -22,8 +22,9 @@ This manual does not execute commands. Type examples in an Amiga Shell.
 @NODE Start "Getting started"
 The blue title bar belongs to Termic; Workbench fonts are unchanged.
 Drag its title to move the window, or the lower-right blue grip to resize.
-X saves and closes; Back sends the window behind other windows; Zoom fits
-it to the screen and restores the previous size. Files uses light text on black.
+The cross saves and closes; overlapping squares send the window behind others;
+the single square fits it to the screen and restores its previous size.
+Hover over an icon for its tooltip. Files uses light text on black.
 
 1. Start TermicNative from its Workbench icon or the Shell.
 2. Type a name in the project field; choose New project. A clean
