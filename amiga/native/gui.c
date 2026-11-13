@@ -1463,7 +1463,7 @@ int main(int argc, char **argv)
             int n;
             char *name;
             if(id>=AC_OPEN && id<=AC_CANCEL) {access_event(id);continue;}
-            if(id>=PF_OPEN && id<=PF_ADDCODEX) {profile_event(id);continue;}
+            if(id>=PF_OPEN && id<=PF_ADDCURSOR) {profile_event(id);continue;}
             if (shortcut_event(id)) continue;
             if(id>=PL_OPEN && id<=PL_INSERT) {prompts_event(id);continue;}
             switch (id)
@@ -1691,10 +1691,10 @@ int main(int argc, char **argv)
                 if (!busy(current))
                 {
                     int n=value(profile_picker,MUIA_Cycle_Active);
-                    const char *pid;
+                    char sessionfile[64];
                     if(n<0 || n>=picker_count) { message("Select an agent profile first.");break; }
-                    pid=profile_live.items[picker_row[n]].id;
-                    if(strcmp(pid,"openai")) { char file[64];sprintf(file,"session-%s.txt",pid);join(path,current,file); }
+                    profile_session(&profile_live.items[picker_row[n]],sessionfile);
+                    join(path,current,sessionfile);
                     DeleteFile((STRPTR)path);
                     join(path,current,"cli-started");DeleteFile((STRPTR)path);
                     message("Next agent request starts a new conversation. Transcript retained.");

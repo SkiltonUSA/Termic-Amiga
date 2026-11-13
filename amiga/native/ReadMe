@@ -289,3 +289,13 @@ Blank model uses Codex's default. API steps / relay calls limits tool calls;
 API token limits, usage reporting and CLI arguments do not apply.
 Install on the Mac: python3 scripts/amiga/install_codex_relay.py
 Full setup and limits: docs/codex-relay.md in the source repository.
+
+CLAUDE, CURSOR AND DESKTOP AI PROXY
+
+Settings > Agents / CLI / Scripts now includes Add Claude and Add Cursor.
+Enter a supported Model and save, then select the profile in the composer.
+Open Termic AI Proxy on the Mac or Windows 11 host. The app provides Start,
+Stop, sign-in and connection status without an open terminal. DevBench and
+the provider CLI must be installed separately. Credentials remain on the host.
+The on Mac profile names also work with a Windows proxy. One task at a time.
+See docs/ai-proxy.md in the repository for downloads and setup.

@@ -233,6 +233,9 @@ async def main(args):
                 assert len(replies)==3 and len(replies[1]['result']['tools'])==15,replies
                 assert not replies[2]['result']['isError'],replies
                 (out/'bridge-replies.json').write_bytes(stdout)
+                if args.providers:
+                    import accept_providers
+                    await accept_providers.exercise(ROOT,out,fixture,shell,push,call,state,click,capture,menu,args)
                 if args.codex_relay:
                     import accept_codex
                     await accept_codex.exercise(ROOT,out,fixture,shell,push,call,state,click,capture,menu,args)
@@ -252,6 +255,7 @@ async def main(args):
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
     for name in ['gui','worker','mcp','probe','micropython']:p.add_argument('--'+name,type=Path,required=True)
+    p.add_argument('--providers', action='store_true', help='Exercise Claude/Cursor native profiles with synthetic MCP clients')
     p.add_argument('--codex-relay',action='store_true',help='Run an authenticated synthetic Codex read/write/build and resume test')
     p.add_argument('--skip-screenshots',action='store_true')
     asyncio.run(main(p.parse_args()))

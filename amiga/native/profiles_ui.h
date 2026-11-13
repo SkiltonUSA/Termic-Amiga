@@ -13,7 +13,7 @@ static int profile_row[PROFILE_MAX], profile_rows, profile_edit = -1, profile_lo
 static int picker_row[PROFILE_MAX], picker_count;
 static const char *picker_names[PROFILE_MAX + 1];
 static const char *yesno[] = {"Off", "On", NULL};
-static const char *kinds[] = {"OpenAI API", "Amiga agent CLI", "Amiga CLI", "ARexx", "MicroPython", "Codex on Mac", NULL};
+static const char *kinds[] = {"OpenAI API", "Amiga agent CLI", "Amiga CLI", "ARexx", "MicroPython", "Codex on Mac", "Claude on Mac", "Cursor on Mac", NULL};
 static const char *roles[] = {"Edit and build C/H files", "Read C/H files only", NULL};
 static const char *filters[] = {"All", "API / CLI agents", "CLI / Scripts", NULL};
 static const char *profile_tabnames[] = {"General", "Launch / Sessions", "Environment",
@@ -35,7 +35,9 @@ enum
     PF_KIND,
     PF_ADDREXX,
     PF_ADDPYTHON,
-    PF_ADDCODEX
+    PF_ADDCODEX,
+    PF_ADDCLAUDE,
+    PF_ADDCURSOR
 };
 static Object *cycle(const char **choices)
 {
@@ -140,22 +142,22 @@ static void profile_show(int index)
     sprintf(n, "%d", p->tokens);
     set(profile_tokens, MUIA_String_Contents, n);
     set(profile_env, MUIA_TextEditor_Contents, p->env);
-    set(profile_model, MUIA_Disabled, p->kind != 0 && p->kind != 5);
+    set(profile_model, MUIA_Disabled, p->kind != 0 && !profile_is_relay(p->kind));
     set(profile_keyfield, MUIA_Disabled, p->kind != 0);
-    set(profile_role, MUIA_Disabled, p->kind != 0 && p->kind != 5);
-    set(profile_steps, MUIA_Disabled, p->kind != 0 && p->kind != 5);
+    set(profile_role, MUIA_Disabled, p->kind != 0 && !profile_is_relay(p->kind));
+    set(profile_steps, MUIA_Disabled, p->kind != 0 && !profile_is_relay(p->kind));
     set(profile_tokens, MUIA_Disabled, p->kind != 0);
     set(profile_usage, MUIA_Disabled, p->kind != 0);
-    set(profile_commandfield, MUIA_Disabled, p->kind == 0 || p->kind == 5);
-    set(profile_args, MUIA_Disabled, p->kind == 0 || p->kind == 5);
-    set(profile_yolo, MUIA_Disabled, p->kind == 0 || p->kind == 5);
-    set(profile_resume_args, MUIA_Disabled, p->kind == 0 || p->kind == 5);
-    set(profile_env, MUIA_Disabled, p->kind == 0 || p->kind == 5);
+    set(profile_commandfield, MUIA_Disabled, p->kind == 0 || profile_is_relay(p->kind));
+    set(profile_args, MUIA_Disabled, p->kind == 0 || profile_is_relay(p->kind));
+    set(profile_yolo, MUIA_Disabled, p->kind == 0 || profile_is_relay(p->kind));
+    set(profile_resume_args, MUIA_Disabled, p->kind == 0 || profile_is_relay(p->kind));
+    set(profile_env, MUIA_Disabled, p->kind == 0 || profile_is_relay(p->kind));
     set(profile_info, MUIA_Text_Contents,
         p->kind == 0
             ? "Direct OpenAI API. Blank model uses the main Settings model.\nBlank key retains "
               "this profile's credential. Copies need their own key."
-            : p->kind == 5 ? "Codex on Mac through the MCP relay. Sign in on the Mac; no Amiga API key.\nBlank model uses the Mac default. Steps limits tool calls. Start the Mac relay before sending."
+            : profile_is_relay(p->kind) ? "Mac agent through the MCP relay. Sign in on the Mac; no Amiga API key.\nBlank model uses the Mac default. Steps limits tool calls. Start the Mac relay before sending."
             : p->kind == 3 ? "ARexx: enter the script path and arguments under Launch / Sessions.\nRequires SYS:Rexxc/RX and a running RexxMast. No Termic-specific ARexx commands are added."
             : p->kind == 4 ? "MicroPython: enter a script path or -c expression under Launch / Sessions.\nRuntime: Termic:Tools/MicroPython/micropython. Interactive use is through CLI."
             : "Native AmigaDOS command. Install the executable before launching.\nCLI consoles open separately; desktop agent executables need a different host.");
@@ -169,7 +171,7 @@ static void profile_refresh(int selected)
     DoMethod(profile_list, MUIM_List_Clear);
     profile_rows = 0;
     for (i = 0; i < profile_draft.count; i++)
-        if (filter == 0 || (filter == 1 && (profile_draft.items[i].kind < 2 || profile_draft.items[i].kind == 5)) ||
+        if (filter == 0 || (filter == 1 && (profile_draft.items[i].kind < 2 || profile_is_relay(profile_draft.items[i].kind))) ||
             (filter == 2 && (profile_draft.items[i].kind >= 2 && profile_draft.items[i].kind <= 4)))
         {
             if (i == selected)
@@ -327,7 +329,9 @@ static void profile_event(int id)
     else
     {
         index = profile_add(&profile_draft,
-                            id == PF_ADDCODEX ? 5
+                            id == PF_ADDCLAUDE ? 6
+                            : id == PF_ADDCURSOR ? 7
+                            : id == PF_ADDCODEX ? 5
                             : id == PF_ADDREXX ? 3
                             : id == PF_ADDPYTHON ? 4
                             : id == PF_ADDTERM  ? 2
@@ -357,7 +361,7 @@ static Object *build_profiles_window(void)
     }
     o=WindowObject,MUIA_Window_Title,"Termic: Agents, CLI and Scripts",MUIA_Window_ID,MAKE_ID('T','A','G','T'),
     MUIA_Window_Width,1060,MUIA_Window_Height,600,WindowContents,VGroup,InnerSpacing(10,10),
-    Child,HGroup,Child,label("\33bAgents / CLI / Scripts"),Child,HVSpace,Child,button("Add Codex",PF_ADDCODEX),Child,button("Reset built-ins",PF_RESET),End,
+    Child,HGroup,Child,label("\33bAgents / CLI / Scripts"),Child,HVSpace,Child,button("Add Codex",PF_ADDCODEX),Child,button("Add Claude",PF_ADDCLAUDE),Child,button("Add Cursor",PF_ADDCURSOR),Child,button("Reset built-ins",PF_RESET),End,
     Child,label("Configure API agents, CLI commands, ARexx and MicroPython scripts. Save keeps changes; Use lasts until reboot."),
     Child,HGroup,Child,button("Add API",PF_ADDAPI),Child,button("Add CLI",PF_ADDTERM),Child,button("Add ARexx",PF_ADDREXX),Child,button("Add MicroPython",PF_ADDPYTHON),Child,button("Duplicate",PF_COPY),Child,button("Remove",PF_REMOVE),End,
     Child,HGroup,Child,VGroup,MUIA_Weight,24,Child,profile_filter=cycle(filters),Child,list(&profile_list),End,

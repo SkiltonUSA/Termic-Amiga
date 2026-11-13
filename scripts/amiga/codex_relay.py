@@ -7,7 +7,6 @@ native worker's bounded tools are exposed; the model cannot call the bridge.
 import argparse
 import asyncio
 from contextlib import AsyncExitStack
-import fcntl
 import json
 import os
 from pathlib import Path
@@ -17,6 +16,8 @@ import sys
 import tempfile
 import time
 import unicodedata
+import zlib
+from host_process import executable_command, process_options
 
 ID = re.compile(r'[0-9a-f]{8}-[0-9a-f]{8}-[0-9a-f]{4}\Z')
 THREAD = re.compile(r'[0-9a-fA-F-]{1,64}\Z')
@@ -26,8 +27,11 @@ MAX_JSON = 65536
 
 
 def validate_job(job):
-    if not isinstance(job, dict) or job.get('protocol') != 1 or not ID.fullmatch(job.get('id', '')):
+    if not isinstance(job, dict) or job.get('protocol') not in (1, 2) or not ID.fullmatch(job.get('id', '')):
         raise ValueError('Unsupported relay request')
+    provider = job.get('provider', 'codex')
+    if provider not in ('codex', 'claude', 'cursor') or (job['protocol'] == 1 and provider != 'codex'):
+        raise ValueError('Unsupported relay provider')
     for key, limit in [('prompt', 8192), ('instructions', 8192), ('model', 127), ('thread', 64)]:
         value = job.get(key)
         if not isinstance(value, str) or len(value.encode('utf-8')) > limit or '\0' in value:
@@ -65,6 +69,44 @@ def display_text(text):
     text = text.replace('\u2014', '-').replace('\u2013', '-').replace('\u2019', "'")
     text = unicodedata.normalize('NFKD', text).encode('ascii', 'replace').decode('ascii')
     return ''.join(c for c in text if c in '\n\t' or 32 <= ord(c) < 127)
+
+
+def decode_hex_dump(text, offset):
+    data = bytearray()
+    for line in text.splitlines():
+        match = re.fullmatch(r'([0-9a-fA-F]{8})  ([0-9a-fA-F ]{47})   .*', line)
+        if not match or int(match[1], 16) != offset + len(data):
+            raise ConnectionError('Invalid bridge file data')
+        block = bytes.fromhex(match[2])
+        if not 1 <= len(block) <= 16: raise ConnectionError('Invalid bridge file block')
+        data.extend(block)
+    if not data: raise ConnectionError('Empty bridge file reply')
+    return bytes(data)
+
+
+def default_state():
+    if sys.platform == 'win32':
+        return Path(os.environ.get('LOCALAPPDATA', str(Path.home() / 'AppData/Local'))) / 'Termic-Amiga/relay'
+    return Path.home() / 'Library/Application Support/Termic-Amiga/relay'
+
+
+class RelayLock:
+    def __init__(self, state):
+        state.mkdir(parents=True, exist_ok=True, mode=0o700)
+        self.file = (state / 'relay.lock').open('a+b')
+        try:
+            if os.name == 'nt':
+                import msvcrt
+                if self.file.tell() == 0: self.file.write(b'0'); self.file.flush()
+                self.file.seek(0); msvcrt.locking(self.file.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(self.file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            self.file.close()
+            raise RuntimeError('Another AI proxy is running. Stop it before starting this one.') from None
+    def close(self):
+        self.file.close()
 
 
 class Bridge:
@@ -107,13 +149,18 @@ class Bridge:
             exists = await self.shell(f'If EXISTS {remote}\n Echo TERMIC_FILE_PRESENT\nEndIf')
             if 'TERMIC_FILE_PRESENT' not in exists:
                 return None
-            with tempfile.TemporaryDirectory(prefix='termic-relay-') as d:
-                local = Path(d) / 'message'
-                await self.call('amiga_pull_file', {'amiga_path': remote, 'local_path': str(local)})
-                raw = local.read_bytes()
-                if len(raw) > MAX_JSON:
-                    raise ValueError('Relay message too large')
-                return raw.decode('utf-8')
+            raw = bytearray()
+            while len(raw) <= MAX_JSON:
+                block = await self.call('amiga_read_file', {'path': remote, 'offset': len(raw), 'size': 1024})
+                if block.startswith('File is empty or could not be read:'):
+                    break
+                chunk = decode_hex_dump(block, len(raw))
+                raw.extend(chunk)
+                if len(chunk) < 1024:
+                    break
+            if len(raw) > MAX_JSON:
+                raise ValueError('Relay message too large')
+            return raw.decode('utf-8')
 
     async def write(self, name, value):
         raw = json.dumps(value, ensure_ascii=True, separators=(',', ':')).encode()
@@ -121,11 +168,14 @@ class Bridge:
             raise ValueError('Relay message too large')
         async with self.lock:
             remote = self.path(name)
-            with tempfile.TemporaryDirectory(prefix='termic-relay-') as d:
-                local = Path(d) / 'message'
-                local.write_bytes(raw)
-                await self.call('amiga_push_file', {'local_path': str(local), 'amiga_path': remote + '.tmp'})
-                await self.shell(f'If EXISTS {remote}\n Delete {remote}\nEndIf\nRename {remote}.tmp {remote}')
+            await self.shell(f'If EXISTS {remote}.tmp\n Delete {remote}.tmp\nEndIf')
+            for offset in range(0, len(raw), 1024):
+                await self.call('amiga_write_file', {'path': remote + '.tmp', 'offset': offset,
+                                                    'hex_data': raw[offset:offset+1024].hex()})
+            check = await self.call('amiga_checksum', {'path': remote + '.tmp'})
+            if f'{zlib.crc32(raw):08X}' not in check or f'{len(raw)} bytes' not in check:
+                raise ConnectionError('Relay upload checksum mismatch')
+            await self.shell(f'If EXISTS {remote}\n Delete {remote}\nEndIf\nRename {remote}.tmp {remote}')
 
     async def remove(self, *names):
         async with self.lock:
@@ -189,13 +239,13 @@ class Codex:
                if not k.startswith(('CODEX_', 'OPENAI_'))}
         env['CODEX_HOME'] = str(self.home)
         flags = ['shell_tool', 'multi_agent', 'apps', 'browser_use', 'computer_use', 'skill_search']
-        command = [self.executable, 'app-server', '--listen', 'stdio://']
+        command = executable_command(self.executable) + ['app-server', '--listen', 'stdio://']
         for flag in flags:
             command += ['--disable', flag]
         command += ['-c', 'web_search="disabled"', '-c', 'features.skip_host_skill_discovery=true']
         self.proc = await asyncio.create_subprocess_exec(*command, cwd=self.work, env=env,
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL, limit=4 * 1024 * 1024)
+            stderr=asyncio.subprocess.DEVNULL, limit=4 * 1024 * 1024, **process_options())
         self.reader = asyncio.create_task(self.read_loop())
         await self.rpc('initialize', {'clientInfo': {'name': 'termic_amiga', 'version': '0.1.0'},
                                       'capabilities': {'experimentalApi': True}})
@@ -260,7 +310,14 @@ def prepare_home(state, auth_home):
     if not target.exists():
         if not auth.is_file():
             raise RuntimeError('Run codex login on the Mac first; no file-based sign-in was found')
-        target.symlink_to(auth.resolve())
+        try:
+            target.symlink_to(auth.resolve())
+        except OSError:
+            if os.name != 'nt': raise
+            shutil.copyfile(auth, target)
+            target.chmod(0o600)
+    if os.name == 'nt' and target.exists() and not target.is_symlink() and auth.is_file() and auth.stat().st_mtime > target.stat().st_mtime:
+        shutil.copyfile(auth, target)
     return home, work
 
 
@@ -368,36 +425,52 @@ async def run_job(bridge, job, executable, home, work):
     return status == 'completed'
 
 
+async def dispatch_job(bridge, job, args):
+    provider = job.get('provider', 'codex')
+    if provider == 'codex':
+        home, work = prepare_home(args.state_dir, args.auth_home)
+        return await run_job(bridge, job, args.codex, home, work)
+    from cli_relay import run_cli_job
+    return await run_cli_job(bridge, job, getattr(args, provider), args.state_dir)
+
+
 async def main(args):
-    home, work = prepare_home(args.state_dir, args.auth_home)
-    lock = (args.state_dir / 'relay.lock').open('a')
+    lock = RelayLock(args.state_dir)
     try:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
-        raise RuntimeError('Another Mac relay is running') from None
-    if args.check:
-        codex = Codex(args.codex, home, work)
-        try:
-            await codex.start()
-            print('Codex ChatGPT sign-in verified. No credential copied to Amiga.')
-        finally:
-            await codex.close()
-        return
-    async with Bridge(args.bridge, args.relay_drawer) as bridge:
-        print('Mac relay ready. Select Codex on Mac in Termic, then send a task. Ctrl C stops the relay.', flush=True)
-        last = None
-        while True:
-            raw = await bridge.read('request.json')
-            if raw:
-                job = validate_job(json.loads(raw))
-                if job['id'] != last:
-                    last = job['id']
-                    print('Processing Amiga task.', flush=True)
-                    ok = await run_job(bridge, job, args.codex, home, work)
-                    print('Task completed.' if ok else 'Task failed or stopped.', flush=True)
-                    if args.once:
-                        return 0 if ok else 1
-            await asyncio.sleep(2)
+        if args.check:
+            if args.check != 'codex':
+                from cli_relay import check_login
+                await check_login(args.check, getattr(args, args.check), args.state_dir)
+            else:
+                home, work = prepare_home(args.state_dir, args.auth_home)
+                codex = Codex(args.codex, home, work)
+                try: await codex.start()
+                finally: await codex.close()
+            print(args.check.title() + ' saved login detected. No model request or credential transfer.', flush=True)
+            return
+        async with Bridge(args.bridge, args.relay_drawer) as bridge:
+            print('AI proxy ready for Codex, Claude and Cursor. Stop closes the connection.', flush=True)
+            last = None
+            while True:
+                raw = await bridge.read('request.json')
+                if raw:
+                    job = validate_job(json.loads(raw))
+                    if job['id'] != last:
+                        last = job['id']
+                        print('Processing ' + job.get('provider', 'codex') + ' task.', flush=True)
+                        try:
+                            ok = await dispatch_job(bridge, job, args)
+                        except Exception as error:
+                            print('Provider unavailable: ' + type(error).__name__, flush=True)
+                            box = Mailbox(bridge, job)
+                            await box.text('[Host agent unavailable. Open AI Proxy and check sign-in.]\n')
+                            await box.send('done', status='failed')
+                            ok = False
+                        print('Task completed.' if ok else 'Task failed or stopped.', flush=True)
+                        if args.once: return 0 if ok else 1
+                await asyncio.sleep(2)
+    finally:
+        lock.close()
 
 
 def parser():
@@ -405,10 +478,12 @@ def parser():
     p.add_argument('--bridge', default='http://127.0.0.1:55010/mcp')
     p.add_argument('--relay-drawer', default='Termic:Relay')
     p.add_argument('--codex', default=shutil.which('codex') or 'codex')
-    p.add_argument('--state-dir', type=Path, default=Path.home() / 'Library/Application Support/Termic-Amiga/relay')
+    p.add_argument('--claude', default=shutil.which('claude') or 'claude')
+    p.add_argument('--cursor', default=shutil.which('cursor-agent') or shutil.which('agent') or 'cursor-agent')
+    p.add_argument('--state-dir', type=Path, default=default_state())
     p.add_argument('--auth-home', type=Path, default=Path(os.environ.get('CODEX_HOME', str(Path.home() / '.codex'))))
     p.add_argument('--once', action='store_true', help='Exit after one task')
-    p.add_argument('--check', action='store_true', help='Check Mac ChatGPT sign-in without running a model')
+    p.add_argument('--check', nargs='?', const='codex', choices=['codex', 'claude', 'cursor'], help='Check host sign-in without running a model')
     return p
 
 if __name__ == '__main__':

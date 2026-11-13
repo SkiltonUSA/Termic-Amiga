@@ -583,32 +583,38 @@ file tools can read the six named files; only C/H files can be written.
 CLAUDE.md is a compatibility pointer, not an installed agent executable.
 @ENDNODE
 
-@NODE Codex "Codex on Mac through MCP"
-Use your Mac's ChatGPT sign-in from the Amiga task composer.
+@NODE Codex "Codex, Claude and Cursor through AI Proxy"
+Use host AI sign-in from the Amiga task composer.
 No API key or sign-in token is copied to the Amiga.
 
-On the Mac, sign into Codex CLI with codex login. From the source checkout:
-  python3 scripts/amiga/install_codex_relay.py
-Double-click Termic Amiga Codex.command in your Mac Applications drawer.
-Keep that Terminal window and the existing DevBench MCP bridge running.
-Ctrl C in the Mac window stops the relay. No startup service is installed.
+Open Termic AI Proxy on macOS or Windows 11. The proxy connects automatically
+when opened. Its window provides Start, Stop, Sign in and connection status.
+Install the provider CLI and keep the existing DevBench MCP bridge running.
+The proxy is not the serial bridge. Closing it requests an orderly stop.
+No login item or system startup service is installed.
 
-On the Amiga, open Settings > Agents / CLI / Scripts and choose Add Codex.
-Save, select Codex on Mac below the composer, enter a task and press Tab.
-A blank model uses Codex's default. Choose read-only or edit-and-build access.
-API steps / relay calls limits tool calls. Token/usage and CLI settings
-do not apply to this profile. ChatGPT plan access and limits still apply.
+On the Amiga, open Settings > Agents / CLI / Scripts and choose Add Codex,
+Add Claude or Add Cursor. Save, select the profile, enter a task and press Tab.
+Enter a supported Model identifier, or leave it blank for the host default.
+The on Mac profile names also work with a Windows proxy.
+Choose read-only or edit-and-build access. API steps / relay calls limits
+native tool calls. Token/usage and CLI fields do not apply to proxy profiles.
+Provider subscription access and usage limits still apply.
 
 The relay provides C/H reads, backup saves and native builds. Project guidance
 is included. Responses appear in the transcript after each assistant message.
 One relay task runs at a time. Stop (Shift F10) cancels; New conversation starts
-a separate thread. The Mac keeps conversation history and credentials.
+a separate thread. The host keeps conversation history and credentials.
+After changing file access, start a new conversation to refresh available tools.
 
-If the Mac is unavailable, the worker times out. Start the relay and send again.
+If the host is unavailable, the worker times out. Start the proxy and send again.
 A failed conversation resume needs New conversation. Tasks are not retried
 automatically. Custom Amiga build commands retain ordinary AmigaOS access.
 The general MCP access setting governs external clients; a relay started by
 the user does not require it. Codex app-server is experimental.
+
+Desktop setup, downloads and verification: docs/ai-proxy.md in the source repo.
+The optional command-line launcher remains available for developers.
 
 See also: @{"Profiles" LINK Profiles}  @{"MCP" LINK MCP}  @{"Cloud agent" LINK Agent}
 @ENDNODE

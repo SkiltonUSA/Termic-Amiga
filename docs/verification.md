@@ -240,3 +240,35 @@ backup is SD032G:Dev/Termic/Backup/agents-1794608665. The production app
 reopened at 1920x789 with its control port present. The installed MCP handshake,
 15-tool catalogue and disabled-by-default gate passed. The Mac launcher
 uses an installed copy of the tested relay and passes the sign-in check.
+
+## Desktop proxy, Claude and Cursor
+
+The desktop proxy adds native profile kinds 6 and 7, provider-specific session
+references, model arguments, a bounded stdio MCP adapter and cross-host file
+transfers. The Mac GUI is bundled with Qt/Python; Windows uses the same source.
+Portable tests include real stdio MCP communication, invalid client tokens,
+read-only rejection, call limits, provider/model/resume routing, completed and
+failed CLI responses, missing login cleanup and duplicate proxy locks.
+
+A live Claude request was attempted. Its status command reported a saved
+Claude.ai Pro login, but inference failed because that OAuth session could not
+be refreshed. The user chose to finish without live Claude testing. Cursor's
+CLI was installed but no authenticated Cursor request has passed. Neither
+provider is claimed to have passed live cloud inference. The host status label
+says Login saved because stored login state alone cannot establish live access.
+
+The written `accept_providers` suite uses synthetic MCP clients against native
+Amiga workers. It checks each provider/model request, C/H read/write, native
+VBCC compilation, history resumption, read-only rejection and waiting-worker
+Stop. This establishes the local tool path independently of cloud access.
+The bundled smoke test checks Qt startup and actual executable-to-executable
+MCP pipes; it does not authenticate to any model or contact the Amiga.
+
+The Claude/Cursor hardware suite passed on the A4000TX with MUI 5, in the
+isolated fixture agents-1794607649. It restored production at 1920 x 789.
+Twenty-six host test groups passed. The macOS bundled GUI and stdio MCP smoke
+test passed. Live inference for the two new providers remains unverified.
+
+The packaged macOS application also passed written Start, Stop, restart and
+window-close tests against a synthetic HTTP MCP bridge. These use actual
+GUI button handlers and worker processes, with no cloud or Amiga dependency.

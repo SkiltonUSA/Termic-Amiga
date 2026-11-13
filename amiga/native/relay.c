@@ -42,7 +42,7 @@ int relay_message(struct RelayState *s,const char *json,char **reply)
         name=field(m,"name");args=cJSON_PrintUnformatted(cJSON_GetObjectItemCaseSensitive(m,"arguments"));
         if(!name || strlen(name)>40 || !args || ++s->calls>s->limit)ok=0;
         else {
-            printf("Codex tool: %s\n",name);
+            printf("Mac agent tool: %s\n",name);
             result=agent_tool_result(name,args,s->readonly);
             ok=result!=NULL;
         }
@@ -105,13 +105,13 @@ int run_relay(void)
     char in[128],out[128],stopped[128],*task=NULL,*json=NULL,*previous=NULL;
     cJSON *request=NULL,*guides=NULL;int selected,i,owned=0,idle=0,total=0,done=0;
     memset(&s,0,sizeof(s));s.result=20;
-    if(!registry || !profiles_load(registry) || (selected=profile_selected(registry))<0) {puts("Cannot load Codex relay profile.");goto end;}
-    p=&registry->items[selected];if(p->kind!=5) {puts("Select a Codex on Mac profile.");goto end;}
+    if(!registry || !profiles_load(registry) || (selected=profile_selected(registry))<0) {puts("Cannot load Mac relay profile.");goto end;}
+    p=&registry->items[selected];if(!profile_is_relay(p->kind)) {puts("Select a Mac agent profile.");goto end;}
     task=read_text("task.txt",8192);if(!task || !*task) {puts("Enter task instructions first.");goto end;}
     memset(&port,0,sizeof(port));port.mp_Node.ln_Name="TermicCodexRelay";
     port.mp_Node.ln_Type=NT_MSGPORT;port.mp_Flags=PA_IGNORE;port.mp_SigTask=FindTask(NULL);
     Forbid();if(!FindPort((STRPTR)"TermicCodexRelay")) {AddPort(&port);owned=1;}Permit();
-    if(!owned) {puts("Another Codex relay task is running. Wait or stop it first.");goto end;}
+    if(!owned) {puts("Another Mac relay task is running. Wait or stop it first.");goto end;}
     l=Lock((STRPTR)"Termic:Relay",ACCESS_READ);
     if(!l)l=CreateDir((STRPTR)"Termic:Relay");
     if(!l) {puts("Cannot create Termic:Relay drawer.");goto end;}UnLock(l);
@@ -119,16 +119,17 @@ int run_relay(void)
     sprintf(s.id,"%08lx-%08lx-%04lx",(unsigned long)stamp.ds_Days,
         (unsigned long)(stamp.ds_Minute*3000+stamp.ds_Tick),((unsigned long)FindTask(NULL))&0xffffUL);
     sprintf(in,RELAY "%s.in",s.id);sprintf(out,RELAY "%s.out",s.id);sprintf(stopped,RELAY "%s.stopped",s.id);
-    sprintf(s.session,"session-%s.txt",p->id);s.readonly=p->readonly;s.limit=p->steps;
+    profile_session(p,s.session);s.readonly=p->readonly;s.limit=p->steps;
     s.append=append_transcript;
-    {char *heading=malloc(strlen(task)+40);int ok;
-     if(!heading)goto end;sprintf(heading,"\nTask (Codex on Mac):\n%s\n\n",task);
+    {char *heading=malloc(strlen(task)+80);int ok;
+     if(!heading)goto end;sprintf(heading,"\nTask (%s on Mac):\n%s\n\n",profile_provider(p->kind),task);
      ok=s.append(heading);free(heading);
      if(!ok) {puts("Cannot update task transcript.");goto end;}}
 
     request=cJSON_CreateObject();guides=cJSON_CreateArray();
     if(!request || !guides) {puts("Not enough memory for relay request.");goto end;}
-    cJSON_AddNumberToObject(request,"protocol",1);
+    cJSON_AddNumberToObject(request,"protocol",p->kind==5?1:2);
+    cJSON_AddStringToObject(request,"provider",profile_provider(p->kind));
     cJSON_AddStringToObject(request,"id",s.id);
     cJSON_AddStringToObject(request,"prompt",task);
     cJSON_AddStringToObject(request,"model",p->model);
@@ -146,10 +147,10 @@ int run_relay(void)
     cJSON_AddItemToObject(request,"guidance",guides);guides=NULL;
     json=cJSON_PrintUnformatted(request);
     if(!json || strlen(json)>65536 || !publish(RELAY "request.json",json)) {puts("Cannot publish relay request.");goto end;}
-    puts("Waiting for Codex on Mac. Start scripts/amiga/codex_relay.py on the Mac.");
+    puts("Waiting for the Mac agent. Start scripts/amiga/codex_relay.py on the Mac.");
     while(!done && total++<18000) {
         char *message,*reply=NULL;
-        if(cancel_requested()) {puts("Codex relay cancelled.");break;}
+        if(cancel_requested()) {puts("Mac relay cancelled.");break;}
         message=read_text(in,65536);
         if(message) {
             int result;DeleteFile((STRPTR)in);
@@ -163,7 +164,7 @@ int run_relay(void)
         if(!done)Delay(5);
     }
     if(!done) {s.result=20;publish(stopped,"stopped");}
-    if(!s.append(s.result==0?"\n[Codex relay completed]\n":"\n[Codex relay stopped or failed]\n"))s.result=20;
+    if(!s.append(s.result==0?"\n[Mac relay completed]\n":"\n[Mac relay stopped or failed]\n"))s.result=20;
     DeleteFile((STRPTR)in);
 end:
     if(owned) {DeleteFile((STRPTR)RELAY "request.json");RemPort(&port);}

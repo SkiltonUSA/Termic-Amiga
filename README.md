@@ -17,7 +17,8 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 - Native VBCC build/run and explicit AmigaDOS commands with captured output.
 - Native Git initialization, status, diffs and source commits.
 - OpenAI agent conversations with bounded C/header file tools and local builds.
-- Codex on Mac relay using ChatGPT sign-in, with prompts sent from the Amiga.
+- Codex, Claude and Cursor host profiles, with model selection on the Amiga.
+- Standalone Termic AI Proxy desktop app for macOS and Windows 11.
 - Agents / CLI / Scripts profiles with separate credentials, launch arguments, sessions and access limits.
 - CLI, ARexx and MicroPython script execution, with a pinned native MicroPython runtime.
 - Native MCP/CLI routines for task orchestration, builds, source files and scratchpads.
@@ -41,9 +42,15 @@ for the prompt library, project guidance and screenshot-style key bindings.
 
 ![Compose, Session and Transcript shortcuts](docs/screenshots/keyboard-shortcuts.png)
 
-For ChatGPT sign-in without an Amiga API key, see [Codex on Mac relay](docs/codex-relay.md).
+Start with [Termic AI Proxy for macOS and Windows 11](docs/ai-proxy.md) for
+Codex, Claude and Cursor setup, downloads and model selection.
+[Codex relay details](docs/codex-relay.md) describe the ChatGPT integration.
 
-![Codex on Mac profile](docs/screenshots/codex-profile.png)
+![Termic AI Proxy desktop application](docs/screenshots/ai-proxy.png)
+
+![Claude profile with Amiga model selection](docs/screenshots/claude-profile.png)
+
+![Cursor profile with Amiga model selection](docs/screenshots/cursor-profile.png)
 
 See [Agents, CLI, scripts and MCP](docs/agents-and-mcp.md) for setup, client connections
 and differences from desktop Termic.

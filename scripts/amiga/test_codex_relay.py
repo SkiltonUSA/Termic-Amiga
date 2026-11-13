@@ -34,7 +34,7 @@ class RelayTests(unittest.TestCase):
     def test_job_boundaries(self):
         relay.validate_job(job())
         for key, value in [('id', '../Config'), ('thread', '../../auth.json'), ('prompt', 'x' * 8193),
-                           ('readonly', 1), ('limit', 0), ('limit', 33), ('protocol', 2),
+                           ('readonly', 1), ('limit', 0), ('limit', 33), ('protocol', 3),
                            ('guidance', [{'path': 'Config/api-key', 'text': 'fixture'}])]:
             data = job(); data[key] = value
             with self.assertRaises(ValueError):
@@ -53,7 +53,10 @@ class RelayTests(unittest.TestCase):
             base = Path(d); source = base / 'source'; source.mkdir()
             ((source / 'auth.json').resolve()).write_text('{"fixture":"not-a-credential"}')
             home, work = relay.prepare_home(base / 'state', source)
-            self.assertTrue((home / 'auth.json').is_symlink())
+            self.assertTrue((home / 'auth.json').is_file())
+            if not (home / 'auth.json').is_symlink():
+                self.assertEqual((home / 'auth.json').read_bytes(), (source / 'auth.json').read_bytes())
+                return
             self.assertEqual((home / 'auth.json').resolve(), (source / 'auth.json').resolve())
             self.assertEqual(list(work.iterdir()), [])
 

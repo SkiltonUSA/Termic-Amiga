@@ -40,10 +40,21 @@ static int single(const char *s)
     }
     return 1;
 }
+int profile_is_relay(int kind) { return kind >= 5 && kind <= 7; }
+const char *profile_provider(int kind)
+{
+    return kind == 6 ? "claude" : kind == 7 ? "cursor" : "codex";
+}
+void profile_session(const struct AgentProfile *p, char *out)
+{
+    if (!strcmp(p->id, "openai")) strcpy(out, "session.txt");
+    else if (p->kind == 6 || p->kind == 7) sprintf(out, "session-%d-%s.txt", p->kind, p->id);
+    else sprintf(out, "session-%s.txt", p->id);
+}
 int profile_valid(const struct AgentProfile *p)
 {
     const char *s = p->id, *e;
-    if (!*s || !*p->name || p->kind < 0 || p->kind > 5 || p->steps < 1 || p->steps > 32 ||
+    if (!*s || !*p->name || p->kind < 0 || p->kind > 7 || p->steps < 1 || p->steps > 32 ||
         p->tokens < 256 || p->tokens > 16384 || p->visible < 0 || p->visible > 1 ||
         p->readonly < 0 || p->readonly > 1 || p->resume < 0 || p->resume > 1 || p->usage < 0 ||
         p->usage > 1)
@@ -112,7 +123,7 @@ int profile_add(struct AgentProfiles *p, int kind, int copy)
              kind == 0   ? "New API agent"
              : kind == 1 ? "New Amiga CLI"
                          : kind == 2 ? "New CLI"
-             : kind == 3 ? "New ARexx script" : kind == 4 ? "New MicroPython script" : "Codex on Mac",
+             : kind == 3 ? "New ARexx script" : kind == 4 ? "New MicroPython script" : kind == 6 ? "Claude on Mac" : kind == 7 ? "Cursor on Mac" : "Codex on Mac",
              kind);
     if (copy < 0) {
         if (kind == 2) strcpy(p->items[i].command, "C:NewShell");
@@ -272,7 +283,7 @@ int profile_command(const struct AgentProfile *p, int yolo, int resume, char *ou
                     unsigned size)
 {
     int n;
-    if (!profile_valid(p) || (p->kind == 0 || p->kind == 5) || !*p->command)
+    if (!profile_valid(p) || (p->kind == 0 || profile_is_relay(p->kind)) || !*p->command)
         return 0;
     n = snprintf(out, size, "\"%s\" %s %s %s", p->command, p->args, yolo ? p->yolo : "",
                  resume ? p->resume_args : "");

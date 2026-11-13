@@ -75,6 +75,17 @@ int main(void)
     assert(profile_valid(&p->items[n]) && !strcmp(p->items[n].name,"Codex on Mac"));
     assert(!profile_command(&p->items[n],0,0,command,sizeof(command)));
     json=profiles_json(p);assert(json && profiles_parse(q,json) && q->items[n].kind==5);free(json);
+    n=profile_add(p,6,-1);
+    assert(profile_valid(&p->items[n]) && !strcmp(p->items[n].name,"Claude on Mac"));
+    strcpy(p->items[n].model,"sonnet");
+    assert(!profile_command(&p->items[n],0,0,command,sizeof(command)));
+    profile_session(&p->items[n],command);assert(strstr(command,"session-6-")==command);
+    n=profile_add(p,7,-1);
+    assert(profile_valid(&p->items[n]) && !strcmp(p->items[n].name,"Cursor on Mac"));
+    strcpy(p->items[n].model,"auto");
+    profile_session(&p->items[n],command);assert(strstr(command,"session-7-")==command);
+    json=profiles_json(p);assert(json && profiles_parse(q,json) && q->items[n].kind==7 && !strcmp(q->items[n].model,"auto"));free(json);
+    assert(profile_is_relay(5) && profile_is_relay(6) && profile_is_relay(7) && !profile_is_relay(8));
     free(p);
     free(q);
     puts("Profiles: independent keys, persistence, validation and launch options passed.");

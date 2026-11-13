@@ -11,7 +11,8 @@ of projects; the selected profile ID and YOLO choice are saved in the task when
 it starts. The supplied profiles are OpenAI API and Amiga CLI. Desktop Claude,
 Codex and other CLI executables are not bundled or marked as installed.
 
-- Add API, Add Codex, Add CLI, Add ARexx and Add MicroPython create editable profiles, up to 32.
+- Add API, Add Codex, Add Claude, Add Cursor, Add CLI, Add ARexx and
+  Add MicroPython create editable profiles, up to 32.
 - Duplicate makes a separate profile. API duplicates need their own credential;
   they do not silently inherit another account's key.
 - Built-ins can be edited and reset but not removed. Reset preserves credentials
@@ -191,3 +192,12 @@ package. Installing the native runtime does not replace that connector.
 
 Upstream: [MicroPython Amiga port](https://github.com/OoZe1911/micropython-amiga-port).
 ARexx command reference: [AmigaOS ARexx utilities](https://wiki.amigaos.net/wiki/AmigaOS_Manual:_ARexx_Command_Utilities).
+
+## Claude, Cursor and the desktop proxy
+
+Add Claude and Add Cursor create kinds 6 and 7. Model, file access, relay-call
+limits and resume settings apply as for Codex. Credentials stay on the host.
+The bundled [AI Proxy app](ai-proxy.md) supports macOS and Windows 11; native
+profile labels retain "on Mac" for compatibility. Provider tools are restricted
+to the shared C/H and native-build interface. Live cloud access still requires
+a valid provider login and account entitlement.

@@ -7,6 +7,9 @@ ChatGPT access/refresh token is sent to the Amiga.
 
 ![Codex on Mac profile in MUI](screenshots/codex-profile.png)
 
+For the standalone desktop application and Claude/Cursor support, see
+[Termic AI Proxy](ai-proxy.md). The command-line launcher below is optional.
+
 ## Install and start
 
 On the Mac, install Codex CLI and sign in with `codex login`. Then, from this
@@ -17,15 +20,16 @@ python3 scripts/amiga/install_codex_relay.py
 ```
 
 The installer creates a private Python environment with MCP 1.30.0 and copies
-just the relay script into `~/Library/Application Support/Termic-Amiga/relay`.
+the relay scripts into `~/Library/Application Support/Termic-Amiga/relay`.
 It creates `~/Applications/Termic Amiga Codex.command`. Double-click that launcher
 and leave its Terminal window open. Ctrl C stops the relay. It does not modify
 login items, system startup or your normal Codex configuration.
 
 The existing DevBench bridge must already be running at
 `http://127.0.0.1:55010/mcp`. For a different address, run the script with
-`--bridge URL`. The bridge and relay must share the Mac filesystem used for
-file transfers. No second bridge or network listener is started.
+`--bridge URL`. File transfers use MCP operations directly, without a shared
+filesystem. No second DevBench bridge is started. Claude/Cursor tasks use a
+private authenticated loopback adapter described in the proxy documentation.
 
 On the Amiga:
 

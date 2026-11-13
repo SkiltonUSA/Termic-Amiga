@@ -1,0 +1,136 @@
+# Termic AI Proxy for macOS and Windows 11
+
+Termic AI Proxy is a standalone desktop application. Open it to connect the
+Amiga task composer to Codex, Claude Code or Cursor on your host computer.
+It bundles Python, Qt and the MCP client. The three vendor CLIs and the
+DevBench bridge are separate prerequisites.
+
+![Termic AI Proxy with synthetic account status](screenshots/ai-proxy.png)
+
+## Start the app
+
+On macOS, open **Termic AI Proxy.app** from Applications. On Windows 11,
+extract the Windows download completely and open **Termic AI Proxy.exe**.
+Keep the `_internal` folder beside the executable. No Python installation or
+Terminal window is needed to run the packaged app.
+
+Build downloads are attached to successful
+[AI Proxy desktop builds](https://github.com/SkiltonUSA/Termic-Amiga/actions/workflows/ai-proxy.yml)
+runs. The macOS artifact contains an app ZIP; the Windows artifact contains
+an executable and its dependencies. GitHub requires sign-in for these artifacts,
+and retains them for 30 days. Builds are unsigned development builds, not
+notarized releases. The Mac app is built for its runner's architecture.
+
+The window provides:
+
+- Start and Stop, with task progress and connection errors.
+- Automatic connection when the app opens (enabled initially).
+- A configurable DevBench MCP URL.
+- Executable paths, Browse, Check and Sign in for each provider.
+
+Closing the app stops its relay and requests cancellation of the active host
+agent. It waits for cleanup; a synchronous native build can delay stopping.
+It does not install a login item, service or background startup task.
+Only one proxy can own the relay at a time. Stop the old Terminal-based relay
+before opening this application.
+
+## Host sign-in
+
+Install the vendor CLI on the host. Use **Browse** if it is not on PATH.
+Use **Sign in** to complete the provider's browser authentication. **Check**
+checks stored login state without running a model; a saved login can still be
+expired, or have no remaining usage. A real request is the final authentication
+check.
+
+| Provider | Host CLI | Amiga model field |
+| --- | --- | --- |
+| Codex | `codex` | An account-supported Codex model ID; blank uses its default |
+| Claude | `claude` | A Claude Code model ID or supported alias such as `sonnet` |
+| Cursor | `cursor-agent` / `agent` | A Cursor model ID; blank uses its default |
+
+Model names are passed as process arguments, never shell commands. There is
+no automatic fallback to another model. Invalid or inaccessible models fail
+with an error in the Amiga transcript. The app does not contain a frozen list
+of model names or imply that every subscription includes every model.
+
+Claude uses a Claude.ai subscription login. Cursor uses the login in the
+proxy's dedicated Cursor configuration directory. Codex uses the existing
+host file-based ChatGPT login through a local auth link, or a local copy on
+Windows where creating a symlink is unavailable. Credentials never travel to
+the Amiga. Existing normal Cursor settings and MCP servers are not modified.
+
+On Windows, select native `.exe` CLIs. The npm `codex.cmd` installation is
+also supported by launching its Node entry directly. Arbitrary batch wrappers
+are rejected. WSL-only installations are not discovered by the native app.
+
+Official installation and usage references:
+[Codex](https://learn.chatgpt.com/docs/cli/reference),
+[Claude Code](https://code.claude.com/docs/en/cli-reference),
+[Cursor on macOS and native Windows](https://cursor.com/docs/cli/installation).
+
+## Bridge connection
+
+The default bridge is `http://127.0.0.1:55010/mcp`. DevBench must already be
+running and connected to the Amiga. The proxy does not start a second bridge
+or configure the serial connection.
+
+The proxy can connect to a bridge on another host. Transfers use MCP file
+read/write operations and verify uploads by CRC32, so no shared filesystem
+is needed. Use the bridge's reachable URL or an SSH tunnel. For example, a
+Windows proxy can use a tunnel to a Mac bridge bound to loopback; configuring
+that tunnel and its SSH login is separate from provider sign-in. Do not expose
+an unauthenticated DevBench bridge to the public internet.
+
+## Amiga setup
+
+1. Open **Settings > Agents / CLI / Scripts**.
+2. Choose **Add Codex**, **Add Claude** or **Add Cursor**.
+3. Set **Model**, file access, and the relay call limit. Save or Use.
+4. Select that profile beneath the task composer and send with Tab.
+
+The existing profile labels say **on Mac**; they also route to a Windows proxy.
+History is separate by task, profile and provider for Claude/Cursor. Changing
+a model applies to the next turn. **New conversation** clears that provider's
+thread reference and retains the transcript. After changing file access,
+start a new conversation to refresh the advertised tool list.
+
+All three providers use six bounded tools: list_sources, read_source,
+read_file, write_source, write_file and build. The native worker independently
+enforces C/H path restrictions, backup writes and read-only mode. Read-only
+also blocks compilation. The general DevBench command tools are not exposed
+to the model. Builds use the task's existing native Amiga build command.
+
+Claude and Cursor consume these tools through a private stdio MCP adapter.
+The adapter talks to an ephemeral loopback-only listener with a per-task
+secret. It has no independent bridge credentials or arbitrary command tool.
+Claude's built-in tools, skills, hooks and other MCP configurations are disabled
+for these tasks. Cursor uses a dedicated empty workspace and configuration,
+with local shell, file reads/writes and web fetch denied. This is provider
+permission configuration, not an OS sandbox or a guarantee about every future
+Cursor built-in tool. Native Amiga bounds remain enforced independently.
+
+Limits, cancellation behavior and transcript handling are shared with the
+[Codex relay](codex-relay.md). One task runs at a time. No ARM offload or
+standalone cloud authentication is added to the Amiga.
+
+## Build and test
+
+Use Python 3.14 or later on the target OS:
+
+```sh
+python -m pip install -r scripts/proxy/requirements.txt
+python scripts/proxy/check.py
+python scripts/proxy/build.py
+```
+
+Run `scripts/proxy/smoke_bundle.py` with the built executable path. This checks
+Qt startup, a synthetic screenshot and real bundled stdio MCP communication.
+The GitHub workflow runs these checks on macOS and Windows. It uses synthetic
+data, needs no cloud secrets and does not contact an Amiga.
+
+Native profile and tool integration can be checked with
+`accept_agents.py --providers`, in addition to its required binary arguments.
+This closes production normally, runs synthetic Claude/Cursor tasks in an
+isolated installation, and restores settings, clipboard and window geometry.
+It does not claim cloud authentication. See [verification](verification.md)
+for the actual tested scope.

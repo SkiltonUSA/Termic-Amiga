@@ -188,7 +188,7 @@ static int run_profile(void)
     }
     p=&r->items[i];
     if(p->kind==0) { free(r); return run_agent(); }
-    if(p->kind==5) { free(r); return run_relay(); }
+    if(profile_is_relay(p->kind)) { free(r); return run_relay(); }
     if ((p->kind == 3 || p->kind == 4) && !*p->args) {
         puts("Enter a script path and arguments in Launch / Sessions. Use a CLI for interactive input.");
         free(r);return 20;
