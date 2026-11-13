@@ -218,8 +218,9 @@ check storage and retry if Termic reports a preference write failure.
 
 Build commands have their own Save build command button because they are
 workspace data. Settings > MUI Settings... opens MUI's appearance editor.
-Interface fonts and colours follow MUI preferences, including its fixed-width
-font for editors. No Helvetica or Courier font is forced. Source text retains
+Controls use Helvetica 13 and code uses Courier 13 when installed, falling
+back to MUI fonts if unavailable. Framed groups and aligned labels organize
+preferences. MUI supplies colours and gadget styling. Source text retains
 the requested black background and readable syntax palette. System
 preferences are not changed.
 

@@ -14,8 +14,10 @@
 #include <libraries/gadtools.h>
 #include <mui/TextEditor_mcc.h>
 #include <proto/asl.h>
+#include <proto/diskfont.h>
 #include <proto/dos.h>
 #include <proto/exec.h>
+#include <proto/graphics.h>
 #include <proto/icon.h>
 #include <proto/intuition.h>
 #include <stdio.h>
@@ -23,7 +25,9 @@
 #include <string.h>
 #include <workbench/workbench.h>
 
-struct Library *MUIMasterBase, *IconBase, *AslBase;
+struct Library *MUIMasterBase, *IconBase, *DiskfontBase, *AslBase;
+struct GfxBase *GfxBase;
+static struct TextFont *bodyfont, *codefont;
 struct IntuitionBase *IntuitionBase;
 const char version_tag[] = TERMIC_VERSION_TAG("TermicNative");
 const char stack_size[] = "$STACK:262144";
@@ -116,12 +120,13 @@ static void notify(Object *o, ULONG a, ULONG v, ULONG id)
 }
 static Object *label(const char *s)
 {
-    return TextObject, MUIA_Font, MUIV_Font_Normal, MUIA_Text_Contents, s, End;
+    return TextObject, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, MUIA_Text_Contents,
+           s, End;
 }
 static Object *button(const char *s, int id)
 {
-    Object *o = TextObject, ButtonFrame, MUIA_Font, MUIV_Font_Button, MUIA_InnerTop, 4,
-           MUIA_InnerBottom, 4, MUIA_Background, MUII_ButtonBack, MUIA_InputMode,
+    Object *o = TextObject, ButtonFrame, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Button,
+           MUIA_InnerTop, 4, MUIA_InnerBottom, 4, MUIA_Background, MUII_ButtonBack, MUIA_InputMode,
            MUIV_InputMode_RelVerify, MUIA_Text_Contents, s, MUIA_Text_PreParse, "\33c",
            MUIA_CycleChain, 1, End;
     if (id == SAVECONFIG || id == USECONFIG || id == CANCELCONFIG)
@@ -134,20 +139,21 @@ static Object *button(const char *s, int id)
 }
 static Object *entry(unsigned max)
 {
-    return StringObject, StringFrame, MUIA_Font, MUIV_Font_Normal, MUIA_String_MaxLen, max,
-           MUIA_CycleChain, 1, End;
+    return StringObject, StringFrame, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal,
+           MUIA_String_MaxLen, max, MUIA_CycleChain, 1, End;
 }
 static Object *list(Object **o)
 {
     return ListviewObject, MUIA_Listview_List,
-           *o = ListObject, InputListFrame, MUIA_Font, MUIV_Font_List, MUIA_List_ConstructHook,
-           MUIV_List_ConstructHook_String, MUIA_List_DestructHook, MUIV_List_DestructHook_String,
-           End, End;
+           *o = ListObject, InputListFrame, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_List,
+           MUIA_List_ConstructHook, MUIV_List_ConstructHook_String, MUIA_List_DestructHook,
+           MUIV_List_DestructHook_String, End, End;
 }
 static Object *editor(Object **o, int readonly)
 {
     Object *slider;
-    Object *g = HGroup, Child, *o = TextEditorObject, InputListFrame, MUIA_Font, MUIV_Font_Fixed,
+    Object *g = HGroup, Child, *o = TextEditorObject, InputListFrame, MUIA_Font,
+           codefont ? (ULONG)codefont : MUIV_Font_Fixed,
            o == &source ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
            MUIA_TextEditor_ReadOnly, readonly, MUIA_TextEditor_ImportHook,
            MUIV_TextEditor_ImportHook_Plain, MUIA_TextEditor_ExportHook,
@@ -923,7 +929,8 @@ static void open_about(void)
         MUIA_Window_SizeGadget, FALSE, MUIA_Window_NoMenus, TRUE, MUIA_Window_LeftEdge,
         MUIV_Window_LeftEdge_Centered, MUIA_Window_TopEdge, MUIV_Window_TopEdge_Centered,
         WindowContents, VGroup, InnerSpacing(16, 14), MUIA_Group_Spacing, 10, MUIA_Font,
-        MUIV_Font_Normal, Child, label("\33c\33bTermic Amiga " TERMIC_VERSION), Child,
+        bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, Child,
+        label("\33c\33bTermic Amiga " TERMIC_VERSION), Child,
         label("\33cNative development workspace for AmigaOS"), Child, TextObject, TextFrame,
         MUIA_Text_Contents,
         "Version: " TERMIC_VERSION "   |   Build date: " TERMIC_VERSION_DATE "\n"
@@ -1068,18 +1075,21 @@ static int build_ui(void)
     MUIA_Application_Description, "Native Amiga development workspace", End;
     if (!app)
         return 0;
-    left = VGroup, MUIA_Group_Spacing, 6, MUIA_Weight, 22, Child, label("\33bPROJECTS"), Child,
-    list(&projects), Child, projectname = entry(120), Child, HGroup, Child,
-    button("New project", NEWPROJECT), Child, button("Rename", RENAMEPROJECT), End, Child,
-    button("Import source drawer", IMPORTPROJECT), Child, label("\33bTASKS / WORKSPACES"), Child,
-    list(&tasks), Child, taskname = entry(120), Child, HGroup, Child, button("New task", NEWTASK),
-    Child, button("Rename", RENAMETASK), End, Child, button("Mark done", MARKDONE), End;
+    left = VGroup, MUIA_Group_Spacing, 8, MUIA_Weight, 22, Child, VGroup, GroupFrame, Child,
+    label("\33bProjects"), InnerSpacing(6, 6), MUIA_Group_Spacing, 6, Child, list(&projects), Child,
+    projectname = entry(120), Child, HGroup, Child, button("New project", NEWPROJECT), Child,
+    button("Rename", RENAMEPROJECT), End, Child, button("Import source drawer...", IMPORTPROJECT),
+    End, Child, VGroup, GroupFrame, Child, label("\33bTasks"), InnerSpacing(6, 6),
+    MUIA_Group_Spacing, 6, Child, list(&tasks), Child, taskname = entry(120), Child, HGroup, Child,
+    button("New task", NEWTASK), Child, button("Rename", RENAMETASK), End, Child,
+    button("Mark done", MARKDONE), End, End;
     center = VGroup, MUIA_Weight, 65, Child, heading = label("Termic workspace"), Child,
-    pages = RegisterGroup(tabs), MUIA_Font, MUIV_Font_Normal, Child, VGroup, Child,
-    editor(&transcript, 1), Child, label("\33bTask instructions"), Child, editor(&prompt, 0), Child,
-    HGroup, Child, button("Save task", SAVETASK), Child, button("Start agent", AGENT), Child,
-    button("Cancel", CANCEL), Child, button("New conversation", NEWSESSION), End, End, Child,
-    VGroup, Child, filename = label("main.c"), Child, editor(&source, 0), Child, HGroup, Child,
+    pages = RegisterGroup(tabs), MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, Child,
+    VGroup, Child, editor(&transcript, 1), Child, label("\33bTask instructions"), Child,
+    editor(&prompt, 0), Child, HGroup, Child, button("Save task", SAVETASK), Child,
+    button("Start agent", AGENT), Child, button("Cancel", CANCEL), Child,
+    button("New conversation", NEWSESSION), End, End, Child, VGroup, Child,
+    filename = label("main.c"), Child, editor(&source, 0), Child, HGroup, Child,
     findtext = entry(120), Child, button("Find", FIND), Child, button("Next", FINDNEXT), End, End,
     Child, VGroup, Child, editor(&output, 1), Child,
     label("AmigaDOS command (runs in this workspace)"), Child, command = entry(1024), Child, HGroup,
@@ -1087,32 +1097,35 @@ static int build_ui(void)
     Child, HGroup, Child, button("Status", GITSTATUS), Child, button("Diff", DIFF), Child,
     button("Init repository", GITINIT), End, Child, editor(&review, 1), Child,
     label("Commit message (configure Git identity in the shell first)"), Child, commit = entry(256),
-    Child, button("Stage source and commit", GITCOMMIT), End, Child, VGroup, Child,
-    label("\33bCLOUD AGENT"), Child, label("Model"), Child, model = entry(128), Child,
-    label("API key (blank preserves existing key; never displayed)"), Child,
-    keyfield = StringObject, StringFrame, MUIA_String_Secret, TRUE, MUIA_String_MaxLen, 512,
-    MUIA_CycleChain, 1, End, Child, button("Test verified HTTPS", PROBE), Child,
-    label("\33bNATIVE DEVELOPMENT"), Child,
-    label("Project drawer (restart required after changing)"), Child, projectdrawer = entry(180),
-    Child, label("Build command for this workspace (must produce Program.new)"), Child,
-    buildcommand = entry(512), Child, button("Save build command", SAVEBUILD), Child,
-    label("VBCC / NDK 3.2. Build and Run execute on the Amiga.\nTasks use independent source "
-          "snapshots.\nMUI preferences supply interface fonts and colours. Resize the split "
-          "panes.\nZZ9000 "
-          "provides the RTG display. ARM jobs require an exclusive core lease.\nCloud inference "
-          "needs an API key and an internet connection."),
+    Child, button("Stage source and commit", GITCOMMIT), End, Child, VGroup, Child, VGroup,
+    GroupFrame, Child, label("\33bCloud agent"), InnerSpacing(8, 8), MUIA_Group_Spacing, 6, Child,
+    ColGroup(2), MUIA_Group_HorizSpacing, 10, MUIA_Group_VertSpacing, 6, Child, label("Model"),
+    Child, model = entry(128), Child, label("API key"), Child, keyfield = StringObject, StringFrame,
+    MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, MUIA_String_Secret, TRUE,
+    MUIA_String_MaxLen, 512, MUIA_CycleChain, 1, End, End, Child,
+    label("Leave the key blank to retain it. The stored key is never displayed."), Child,
+    button("Test verified HTTPS", PROBE), End, Child, VGroup, GroupFrame, Child,
+    label("\33bDevelopment"), InnerSpacing(8, 8), MUIA_Group_Spacing, 6, Child, ColGroup(2),
+    MUIA_Group_HorizSpacing, 10, MUIA_Group_VertSpacing, 6, Child, label("Project drawer"), Child,
+    projectdrawer = entry(180), Child, label("Build command"), Child, buildcommand = entry(512),
+    End, Child,
+    label("Restart after changing the project drawer. Builds must produce Program.new."), Child,
+    button("Save build command", SAVEBUILD), End, Child,
+    label("Builds run locally with VBCC / NDK. Tasks have independent source copies.\n"
+          "Cloud inference needs an API key and internet access.\n"
+          "ZZ9000 supplies the RTG display; ARM compute is not enabled."),
     Child, HVSpace, Child, HGroup, Child, button("Save", SAVECONFIG), Child,
     button("Use", USECONFIG), Child, button("Cancel", CANCELCONFIG), End, End, End, End;
-    right = VGroup, MUIA_Group_Spacing, 6, MUIA_Weight, 23, Child, label("\33bFILES"), Child,
-    list(&files), Child, newname = entry(180), Child, button("Create file", NEWFILE), Child,
-    button("Refresh files", REFRESH), Child,
+    right = VGroup, GroupFrame, Child, label("\33bFiles"), InnerSpacing(6, 6), MUIA_Group_Spacing,
+    6, MUIA_Weight, 23, Child, list(&files), Child, newname = entry(180), Child,
+    button("Create file", NEWFILE), Child, button("Refresh files", REFRESH), Child,
     label("C, H, text and Markdown\nSelect to edit.\nSaves keep .bak copies."), End;
-    body = VGroup, MUIA_Font, MUIV_Font_Normal, MUIA_Group_Spacing, 7, InnerSpacing(8, 6), Child,
-    HGroup, Child, label("\33bTERMIC / AMIGA " TERMIC_VERSION), Child, HVSpace, Child,
-    button("Build", BUILD), Child, button("Run", RUN), Child, button("Settings", SETTINGS), Child,
-    button("About", ABOUT), Child, button("Quit", QUIT), End, Child, HGroup, Child, left, Child,
-    BalanceObject, End, Child, center, Child, BalanceObject, End, Child, right, End, Child,
-    status = label("Ready"), End;
+    body = VGroup, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, MUIA_Group_Spacing, 7,
+    InnerSpacing(8, 6), Child, HGroup, Child, label("\33bTERMIC / AMIGA " TERMIC_VERSION), Child,
+    HVSpace, Child, button("Build", BUILD), Child, button("Run", RUN), Child,
+    button("Settings", SETTINGS), Child, button("About", ABOUT), Child, button("Quit", QUIT), End,
+    Child, HGroup, Child, left, Child, BalanceObject, End, Child, center, Child, BalanceObject, End,
+    Child, right, End, Child, status = label("Ready"), End;
     win = WindowObject, MUIA_Window_Title, "Termic Amiga Workspace", MUIA_Window_ID,
     MAKE_ID('T', 'R', 'M', 'C'), MUIA_Window_Width, 1400, MUIA_Window_Height, 650,
     MUIA_Window_Menustrip, build_menus(), WindowContents, body, End;
@@ -1190,7 +1203,16 @@ int main(int argc, char **argv)
     MUIMasterBase = OpenLibrary((STRPTR) "muimaster.library", 19);
     if (!IntuitionBase || !MUIMasterBase)
         goto cleanup;
+    GfxBase = (struct GfxBase *)OpenLibrary((STRPTR) "graphics.library", 37);
     AslBase = OpenLibrary((STRPTR) "asl.library", 37);
+    DiskfontBase = OpenLibrary((STRPTR) "diskfont.library", 37);
+    if (GfxBase && DiskfontBase)
+    {
+        struct TextAttr a = {(STRPTR) "helvetica.font", 13, 0, FPF_DISKFONT},
+                        b = {(STRPTR) "courier.font", 13, 0, FPF_DISKFONT};
+        bodyfont = OpenDiskFont(&a);
+        codefont = OpenDiskFont(&b);
+    }
     {
         char *configured = read_preference("projects-drawer", 180);
         if (configured)
@@ -1610,6 +1632,14 @@ cleanup:
         DeleteMsgPort(timer_port);
     if (app)
         MUI_DisposeObject(app);
+    if (codefont)
+        CloseFont(codefont);
+    if (bodyfont)
+        CloseFont(bodyfont);
+    if (DiskfontBase)
+        CloseLibrary(DiskfontBase);
+    if (GfxBase)
+        CloseLibrary((struct Library *)GfxBase);
     if (AslBase)
         CloseLibrary(AslBase);
     if (MUIMasterBase)

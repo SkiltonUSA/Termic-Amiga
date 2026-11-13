@@ -57,9 +57,10 @@ WORKSPACE
 Left: projects, project naming/import, tasks and task status.
 Centre: Agent, Editor, Build / Shell, Changes and Settings tabs.
 Right: editable C, header, text and Markdown files, plus new-file controls.
-Drag the dividers to resize panes. MUI preferences supply the interface fonts
-and colours, including the fixed-width editor font. Use Settings > MUI Settings...
-to customize them. The source editor retains its black syntax-colour background.
+Drag the dividers to resize panes. Controls use Helvetica 13 and code uses
+Courier 13 when installed, with MUI fonts as fallback. Framed sections and
+aligned preference fields keep related controls together. MUI supplies colours
+and gadget styling. The source editor retains its black syntax-colour background.
 
 New project uses the clean Template drawer. Import source drawer copies
 regular editable files into a managed project. New task copies the selected

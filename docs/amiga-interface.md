@@ -9,10 +9,17 @@ Edit actions follow the focused TextEditor gadget, including task instructions
 and selectable log output. Single-line fields keep their MUI editing behavior;
 Tab to a button before using application keys that a field consumes.
 The editor has no duplicate command button row. Save is in Project; Undo, Redo,
-Cut, Copy and Paste are in Edit. Standard MUI font roles (normal, button, list
-and fixed-width) follow configured preferences instead of forcing Helvetica or
-Courier. Interface colours use MUI pens; the requested black source background
-and syntax palette remain local to the source editor.
+Cut, Copy and Paste are in Edit. The readable application fonts are restored:
+Helvetica 13 for controls and Courier 13 for code, with MUI font roles used
+only as fallback if those disk fonts are unavailable. The generic font-role
+change was rejected because the machine defaults were less legible.
+
+The FinalWriter reference supplied by the user guides presentation: crisp text,
+framed groups, aligned form labels and consistent spacing. Projects, Tasks and
+Files have named frames; preferences group Cloud agent and Development fields
+into aligned columns. Interface colours and gadget bevels use MUI; the requested
+black source background and syntax palette remain local to the editor.
+AmigaGuide 101 governs the help document structure, not the application typeface.
 TextEditor handles IFF FTXT clipboard exchange. Source and task saves export
 without formatting, and pasted colours are disabled so clipboard styles do not
 become escape sequences in source files or task instructions.
@@ -35,6 +42,12 @@ MUI owns menu creation, layout and disposal on 68k AmigaOS. The OS4 interface
 pointers in the current GadTools example are not used by this AmigaOS 3.x build.
 Menu strings have static lifetimes. MUI notifications dispatch existing actions.
 
+ReBuild provides a concrete menu reference: Project/Edit ordering, grouped
+actions, command keys, submenus and disabled/checkable items. Its menu editor
+builds native GadTools menus using CreateMenusA and LayoutMenusA. Termic keeps
+MUI ownership of its equivalent native menu strip; ReBuild is a design reference,
+not a new runtime dependency or a replacement GUI toolkit.
+
 MagicMenu's `src/misc.c` hooks Intuition menu-strip functions; using ordinary
 MUI menus keeps Termic on that system path. No MagicMenu code is embedded.
 ToolsDaemon concerns Workbench launchers; the manual explains optional
@@ -55,6 +68,9 @@ References consulted:
 - [Preferences](https://wiki.amigaos.net/wiki/UI_Style_Guide_Preferences)
 - [Data Sharing](https://wiki.amigaos.net/wiki/UI_Style_Guide_Data_Sharing)
 - [AmigaGuide 101](https://wiki.amigaos.net/wiki/AmigaGuide_101)
+- [ReBuild menu editor](https://github.com/dmcoles/ReBuild/blob/main/menuObject.e)
+  and [application menus](https://github.com/dmcoles/ReBuild/blob/main/rebuild.e),
+  reviewed at `9884ee4e282e7c551a90ff6bd493929828c490c2`.
 - [GadTools Menus](https://wiki.amigaos.net/wiki/GadTools_Menus)
 - [MagicMenu source](https://github.com/jens-maus/magicmenu), reviewed at
   `01a29e65596ff870e7bb171e36c3ff1e89d4599a`.
