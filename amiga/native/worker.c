@@ -1,4 +1,6 @@
 #include "native.h"
+#include "profiles.h"
+#include <dos/var.h>
 #include "version.h"
 #include "workspace.h"
 #include <ctype.h>
@@ -145,6 +147,35 @@ char *list_project_sources(void)
         collect_sources("", "", out, &n, 0);
     return out;
 }
+static int run_profile(void)
+{
+    struct AgentProfiles *r=calloc(1,sizeof(*r));
+    struct AgentProfile *p;
+    char line[1200],*mode,*previous,*env,*end,*eq; int i,rc=20;
+    if(!r || !profiles_load(r) || (i=profile_selected(r))<0) {
+        puts("Agent profile missing or invalid."); free(r); return 20;
+    }
+    p=&r->items[i];
+    if(p->kind==0) { free(r); return run_agent(); }
+    mode=read_text("agent-yolo",8); previous=read_text("cli-started",64);
+    if(!profile_command(p,mode && !strcmp(mode,"1"),p->resume && previous && !strcmp(previous,p->id),line,sizeof(line))) {
+        puts("Configure an Amiga executable and valid arguments in Agents & Terminals.");
+        goto done;
+    }
+    /* Per-process local variables are inherited by the command; ENV: is untouched. */
+    env=p->env;
+    while(*env) {
+        end=strchr(env,'\n'); if(end) *end=0;
+        if(*env) { eq=strchr(env,'='); *eq++=0;
+            if(!SetVar((STRPTR)env,(STRPTR)eq,-1,GVF_LOCAL_ONLY)) { puts("Cannot set command environment."); goto done; }
+        }
+        if(!end) break; env=end+1;
+    }
+    printf("Starting %s. Native commands have ordinary AmigaDOS access.\n",p->name);
+    rc=run_command(line);
+    if(!rc) save_text("cli-started",p->id,31);
+done: free(mode);free(previous);free(r);return rc;
+}
 int main(int argc, char **argv)
 {
     BPTR lock, old;
@@ -186,6 +217,7 @@ int main(int argc, char **argv)
         return 20;
     }
     UnLock(lock);
+    DeleteFile((STRPTR)".launch");
     for (p = path; *p; ++p)
         hash = hash * 33 + (unsigned char)*p;
     sprintf(portname, "TermicJob.%08lx", hash);
@@ -195,6 +227,10 @@ int main(int argc, char **argv)
     port.mp_Flags = PA_IGNORE;
     port.mp_SigTask = FindTask(NULL);
     AddPort(&port);
+    save_text("state.txt","Running",32);
+    Forbid();
+    {struct MsgPort *ui=FindPort((STRPTR)"TermicWorkspaceUI");if(ui)Signal(ui->mp_SigTask,SIGBREAKF_CTRL_D);}
+    Permit();
     if (!strcmp(action, "--probe"))
     {
         char *reply = NULL;
@@ -208,7 +244,7 @@ int main(int argc, char **argv)
     else if (!strcmp(action, "--run"))
         result = run_command("Program");
     else if (!strcmp(action, "--agent"))
-        result = run_agent();
+        result = run_profile();
     else if (!strcmp(action, "--shell"))
     {
         char *command = read_text("command.txt", 1024);
@@ -244,12 +280,7 @@ int main(int argc, char **argv)
             FILE *existing = fopen(".gitignore", "rb");
             if (existing)
                 fclose(existing);
-            else if (!save_text(".gitignore",
-                                "Program\nProgram.new\n*.o\n*.asm\n*.bak\n*.new\n.busy/"
-                                "\n.job*\n.result*\njob.log\n.stderr\n.command.log\nbuild."
-                                "log\ntranscript.txt\nsession."
-                                "txt*\nname.txt\nstate.txt\ncommand.txt\ncommit.txt\nTasks/\n",
-                                1024))
+            else if (!save_text(".gitignore", TERMIC_WORKSPACE_IGNORE, 2048))
                 result = 20;
         }
     }
@@ -313,6 +344,10 @@ int main(int argc, char **argv)
         remove(".result");
         rename(".result.new", ".result");
     }
+    save_text("state.txt",result==0?"Review":"Needs attention",32);
+    Forbid();
+    {struct MsgPort *ui=FindPort((STRPTR)"TermicWorkspaceUI");if(ui)Signal(ui->mp_SigTask,SIGBREAKF_CTRL_D);}
+    Permit();
     UnLock(CurrentDir(old));
     return result;
 }

@@ -23,7 +23,7 @@ char *read_text(const char *path, size_t limit)
 char *read_preference(const char *name, size_t limit)
 {
     char path[512], *text;
-    if (strcmp(name, "model") && strcmp(name, "api-key") && strcmp(name, "projects-drawer"))
+    if (strcmp(name, "model") && strcmp(name, "api-key") && strcmp(name, "projects-drawer") && strcmp(name, "agents.json") && strcmp(name, "mcp-enabled"))
         return NULL;
     if (sizeof(TERMIC_ENV) + strlen(name) > sizeof(path)) return NULL;
     strcpy(path, TERMIC_ENV); strcat(path, name);

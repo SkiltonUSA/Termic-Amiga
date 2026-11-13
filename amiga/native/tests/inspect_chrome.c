@@ -15,6 +15,7 @@ int main(int argc, char **argv)
     struct Window *w;
     LONG x = 0, y = 0, width = 0, height = 0, top = 0, active = 0, mx = 0, my = 0, front = 0;
     ULONG address = 0;
+    const char *wanted = argc > 2 ? argv[2] : NULL;
     IntuitionBase = (struct IntuitionBase *)OpenLibrary("intuition.library", 37);
     if (!IntuitionBase)
         return 20;
@@ -34,7 +35,8 @@ int main(int argc, char **argv)
     LockLayerInfo(&s->LayerInfo);
     Forbid();
     for (w = s->FirstWindow; w; w = w->NextWindow)
-        if (w->ScreenTitle && !strcmp(w->ScreenTitle, "Termic Amiga Workspace"))
+        if (wanted ? (w->Title && !strcmp(w->Title, wanted))
+                   : (w->ScreenTitle && !strcmp(w->ScreenTitle, "Termic Amiga Workspace")))
         {
             address = (ULONG)w;
             x = w->LeftEdge;
@@ -52,7 +54,7 @@ int main(int argc, char **argv)
     my = s->MouseY;
     Permit();
     UnlockLayerInfo(&s->LayerInfo);
-    if (w && argc == 2 && !strcmp(argv[1], "front"))
+    if (w && argc >= 2 && !strcmp(argv[1], "front"))
     {
         WindowToFront(w);
         ActivateWindow(w);

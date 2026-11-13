@@ -11,6 +11,14 @@ SOURCE = ROOT / "amiga/native"
 
 
 class NativeProtocolTests(unittest.TestCase):
+    def test_profiles(self):
+        with tempfile.TemporaryDirectory() as directory:
+            work=Path(directory)
+            (work/"Config").mkdir(); (work/"Env").mkdir()
+            binary=work/"profiles"
+            subprocess.run(["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-Wno-deprecated-declarations", "-fsanitize=address,undefined", "-I", str(SOURCE), '-DTERMIC_CONFIG="Config/"', '-DTERMIC_ENV="Env/"'] + [str(SOURCE/f) for f in ["profiles.c", "files.c", "workspace.c", "vendor/cJSON.c", "tests/test_profiles.c"]] + ["-o",str(binary)],check=True)
+            subprocess.run([str(binary)],cwd=work,check=True)
+
     def test_chrome_geometry(self):
         with tempfile.TemporaryDirectory() as directory:
             binary = str(Path(directory) / "chrome")
@@ -114,6 +122,7 @@ class NativeProtocolTests(unittest.TestCase):
                     str(SOURCE / f)
                     for f in [
                         "agent.c",
+                        "profiles.c",
                         "files.c",
                         "workspace.c",
                         "vendor/cJSON.c",
@@ -128,11 +137,13 @@ class NativeProtocolTests(unittest.TestCase):
             (work / "Config/model").write_text("fixture-model\n")
             (work / "Project/task.txt").write_text("Compile a synthetic fixture.\n")
             (work / "Project/build.log").write_text("Fixture compiler succeeded.\n")
-            for mode in range(11):
+            for mode in range(14):
                 with self.subTest(mode=mode):
                     (work / "Config/api-key").write_text(
                         "" if mode == 6 else "test-key\n"
                     )
+                    (work / "Config/agents.json").unlink(missing_ok=True)
+                    (work / "Project/agent-profile").unlink(missing_ok=True)
                     original = "/* fixture source */\n"
                     (work / "Project/main.c").write_text(original)
                     (work / "Project/session.txt").unlink(missing_ok=True)

@@ -12,6 +12,7 @@ Native MUI development workspace for AmigaOS 3.2 / 68020+.
   @{"Clipboard sharing" LINK Sharing}     @{"Storage and backup" LINK Storage}
   @{"Troubleshooting" LINK Trouble}       @{"Limits and hardware" LINK Limits}
   @{"Workbench launchers" LINK Workbench}  @{"Version and credits" LINK About}
+  @{"Agent profiles" LINK Profiles}     @{"MCP and CLI access" LINK MCP}
   @{"Alphabetical index" LINK Index}
 
 Use Contents to return here, Index for topics, Retrace to go back,
@@ -187,7 +188,7 @@ Enter instructions in the Agent tab and choose Start agent. The worker
 sends the instructions and requested source/compiler output to OpenAI.
 It can list, read and write bounded C/header files and invoke a build.
 It has no general shell-command tool. File paths reject devices and
-traversal. Each run makes at most eight requests.
+traversal. Each run defaults to eight requests; profiles allow a limit of 1-32.
 
 Conversation IDs persist per task. New conversation clears the continuation
 ID while retaining the transcript. Cancel requests a stop; network and
@@ -388,7 +389,7 @@ not recolour and preserves undo. Syntax highlighting is not live.
 @NODE Limits "Limits and hardware"
 Source file: 32 KiB. Task instructions: 8 KiB. HTTP response: 256 KiB.
 Agent compiler output: 16 KiB. File list: 128 files, six directory levels.
-Workers: 16 per application, one per task. Agent rounds: eight maximum.
+Workers: 16 per application, one per task. Agent rounds: 1-32 per profile (default eight).
 Network deadline: 120 seconds after DNS; DNS timing belongs to the stack.
 Large imports copy synchronously and can delay the interface.
 
@@ -444,4 +445,72 @@ https://wiki.amigaos.net/wiki/UI_Style_Guide_Data_Sharing
   @{"Source editing" LINK Editor}       @{"Storage" LINK Storage}
   @{"ToolsDaemon / Workbench" LINK Workbench}
   @{"Troubleshooting" LINK Trouble}     @{"ZZ9000" LINK Limits}
+@ENDNODE
+
+@NODE Profiles "Agents and terminals"
+Settings > Agents & Terminals opens the profile manager.
+The supplied profiles are OpenAI API and Amiga Shell. Desktop agent CLIs
+are not native Amiga programs and are not bundled.
+
+Add API, Add agent CLI, Add terminal, Duplicate and Remove manage profiles.
+Built-ins can be edited and reset, but not removed. Reset keeps credentials
+and custom profiles. All / agents / terminals filters the list.
+Save persists Config and ENV; Use updates ENV until reboot; Cancel discards
+draft edits. Select an applied profile on the Agent page before starting.
+
+General: name, type, launcher visibility, model, API key and source access.
+Blank keys retain that profile's existing credential. Duplicates need their
+own key. Blank models use the main Settings model. Keys remain plaintext
+in local Config/ENV files, separate from the profile registry.
+
+Launch / Sessions: native command, default/YOLO/resume arguments, resume
+switch, API step limit (1-32) and output token limit (256-16384).
+YOLO arguments only apply when selected in the launcher. Native arguments
+use AmigaDOS syntax. API sessions are separated by task and profile.
+New conversation resets the selected profile's session.
+
+Environment: native command variables, one NAME=value per line. These are
+worker-local and do not alter ENV:. Native commands have normal AmigaDOS
+access. API read-only access rejects edits and builds locally.
+
+Status: native workers report running, completion and failure. Optional
+API usage reports actual input/output tokens, not plan quotas. External
+CLI hooks, live YOLO switching, Keychain roles and Docker are unavailable.
+
+@{"Cloud agent" LINK Agent}  @{"Preferences" LINK Prefs}  @{"MCP" LINK MCP}
+@ENDNODE
+
+@NODE MCP "Amiga MCP and CLI access"
+Settings > Agent access / MCP enables native MCP tools. Save persists the
+setting; Use lasts until reboot. Default is disabled. Disabling access
+rejects new calls without cancelling workers already started.
+
+In a Shell, a local MCP client can start:
+  Termic:TermicMCP --stdio
+
+One JSON-RPC message is read/written per line. Scripts can instead use:
+  Termic:TermicMCP --request request.json --reply reply.json
+
+Clients on another computer use scripts/amiga/mcp_bridge.py from the
+repository and a Python environment with the mcp package. The connector
+uses the existing DevBench bridge; it opens no new network listener.
+Register its stdio command in the MCP client's settings. Automatic desktop
+peer discovery, pairing codes and agent registration are not implemented.
+
+Routines: project_list, task_list, task_new, task_status, task_send,
+task_stop, task_result, task_log, task_build, agent_list, file_read,
+file_write, scratchpad_write, scratchpad_read and scratchpad_list.
+
+Task routines take project and task drawer IDs. task_new copies sources
+without launching an agent. task_send starts a direct API profile.
+Writes require idle MCP-created tasks that are not selected in the editor.
+File tools are limited to task C/H files; keys and arbitrary shell commands
+are not exposed. Scratchpads live in .scratchpads, excluded from new-task
+Git tracking. Read them through MCP; there is no scratchpad editor tab yet.
+
+The task list refreshes on native MCP/worker notifications without reloading
+the current editor. See docs/agents-and-mcp.md in the repository for the
+client configuration example and protocol compatibility details.
+
+@{"Agent profiles" LINK Profiles}  @{"Projects" LINK Projects}  @{"Contents" LINK MAIN}
 @ENDNODE

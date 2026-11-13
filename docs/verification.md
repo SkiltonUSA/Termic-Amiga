@@ -5,6 +5,22 @@ Workbench 3.2.3, MUI 3.8 and subsequently MUI 5.0 (muimaster 21.227),
 TextEditor.mcc 15.56, AmiSSL 5.27 and ZZ9000 RTG.
 The screenshots show synthetic fixtures on that machine.
 
+The new Agents & Terminals and Agent access / MCP implementation cross-builds
+for 68k and passes 11 portable test groups, including profile persistence,
+credential separation, read-only API enforcement, MCP protocol handling and
+filesystem boundaries. An initial hardware run verified profile Save/Use/Cancel,
+the MCP enable setting, task creation, source writes and scratchpad round trips.
+Worker-local environment inheritance was separately checked with AmigaDOS Get.
+
+The complete new acceptance run is **pending a reboot and repeat test**. Its
+cleanup left an orphan candidate window and a stale public control port; the
+cause is not established. The test now uses normal MUI close events, and task-list
+refresh notifications have been corrected. Original settings and the production
+assign were restored. The new GUI, worker and TermicMCP have **not been promoted
+to the production installation**. End-to-end stdio bridge operation, asynchronous
+MCP builds and authenticated API calls remain unverified on hardware.
+See [Agents and MCP](agents-and-mcp.md) for implemented features and limitations.
+
 Verified through the written hardware suites:
 
 - Project/task creation, panel navigation, local compilation and program execution.

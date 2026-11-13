@@ -121,7 +121,7 @@ to OpenAI. The model may list/read/write C/header files and build. It has
 no shell-command tool, and file tools reject device paths and traversal.
 Completed conversation IDs persist per task; New conversation resets the
 ID while retaining the transcript. API responses are stored for continuity.
-Each run makes at most eight requests. API access and billing are required.
+Each run defaults to eight requests; profiles allow a limit of 1-32. API access and billing are required.
 The default model is gpt-5-mini; choose a model available to your account.
 
 The local Config/api-key file is plaintext on classic AmigaOS. It is sent
@@ -204,3 +204,25 @@ Title-bar sizing follows the default public screen height at launch. On the
 1920x800 desktop it is slightly smaller than before; higher resolutions get
 larger controls. Restart after changing screen resolution. The editor font
 is unchanged. This is resolution scaling, not automatic monitor-DPI detection.
+
+AGENTS & TERMINALS
+Settings opens a profile manager for OpenAI API, Amiga agent CLI and terminal
+profiles. Add, duplicate, remove custom profiles or reset the built-ins.
+Save persists settings; Use lasts until reboot; Cancel discards draft edits.
+The Agent page selects the applied profile and optional native YOLO arguments.
+Profiles have independent API keys and conversation history. Blank keys retain
+the existing key; copied profiles need their own key. Read-only API access
+disables edits and builds. Steps, output tokens and actual token reporting
+are configurable. Environment applies to native command workers only.
+Desktop CLI login accounts, Keychain roles and Docker are not implemented.
+
+AMIGA MCP / CLI
+Settings > Agent access / MCP enables the TermicMCP tools, disabled by default.
+TermicMCP --stdio uses newline-delimited JSON-RPC; --request file --reply file
+is the same dispatcher for scripts. The scripts/amiga/mcp_bridge.py connector
+uses an existing DevBench MCP bridge for clients on another computer.
+No new network listener, discovery or desktop pairing service is installed.
+Tools list projects, create isolated source-copy tasks, send prompts, inspect
+results, build, edit C/H files and keep scratchpads. Writes refuse busy tasks
+and the editor-selected workspace, and only target MCP-created tasks.
+See the linked Agent profiles and MCP chapters in Termic.guide.

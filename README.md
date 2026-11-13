@@ -17,6 +17,8 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 - Native VBCC build/run and explicit AmigaDOS commands with captured output.
 - Native Git initialization, status, diffs and source commits.
 - OpenAI agent conversations with bounded C/header file tools and local builds.
+- Agents & Terminals profiles with separate credentials, launch arguments, sessions and access limits.
+- Native MCP/CLI routines for task orchestration, builds, source files and scratchpads.
 - Persistent workspace selection, task status, model settings and an About window.
 - Native Project/Edit/Workspace/View/Settings/Help menus and Right-Amiga shortcuts.
 - Editor commands in the menu strip, crisp Helvetica/Courier fonts and framed MUI panels.
@@ -26,6 +28,9 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 ![About Termic Amiga](docs/screenshots/about.png)
 
 ![Amiga preferences with Save, Use and Cancel](docs/screenshots/preferences.png)
+
+See [Agents, terminals and MCP](docs/agents-and-mcp.md) for setup, client connections
+and differences from desktop Termic.
 
 [Amiga interface conventions](docs/amiga-interface.md) describes the menu,
 preferences and clipboard behavior and its remaining limitations.
@@ -52,10 +57,10 @@ The source is backed up here; an AmiPkg release has not yet been published.
 
 ## Build and verification
 
-`amiga/native/BuildNative` builds TermicNative, TermicAgent and TermicStorage
+`amiga/native/BuildNative` builds TermicNative, TermicAgent, TermicStorage and TermicMCP
 on the Amiga in the installation layout described in the guide. Their shared
 version is defined in [version.h](amiga/native/version.h), independently of the
-desktop version. All three support `--version` and AmigaDOS `Version FILE FULL`.
+desktop version. All four support `--version` and AmigaDOS `Version FILE FULL`.
 
 Run portable tests on a host with a C compiler and AddressSanitizer:
 

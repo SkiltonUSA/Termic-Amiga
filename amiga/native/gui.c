@@ -2,6 +2,7 @@
  * operations run in TermicAgent processes with per-workspace locking. */
 #include "mui_compat.h"
 #include "native.h"
+#include "profiles.h"
 #include "syntax.h"
 #include "version.h"
 #include "workspace.h"
@@ -110,7 +111,8 @@ struct Job
 } jobs[16];
 static struct MsgPort *timer_port;
 static struct timerequest *timer_io;
-static int timer_open, timer_pending;
+static int timer_open, timer_pending, control_registered;
+static struct MsgPort control_port;
 static ULONG value(Object *o, ULONG a)
 {
     ULONG v = 0;
@@ -212,7 +214,9 @@ static int busy(const char *p)
         if (jobs[i].active && !strcmp(jobs[i].path, p))
             return 1;
     join(path, p, ".busy");
-    return exists(path);
+    if(exists(path)) return 1;
+    join(path,p,".launch");if(exists(path))return 1;
+    join(path,p,".mcp-lock");return exists(path);
 }
 static void content(Object *o, const char *p, const char *fallback)
 {
@@ -345,28 +349,33 @@ static char *read_value(const char *path, unsigned limit)
     }
     return s;
 }
+static void task_label(const char *p, int index, char *labeltext, unsigned size)
+{
+    char path[PATH_SIZE], *name, *state;
+    join(path, p, "name.txt");
+    name = read_value(path, 120);
+    join(path, p, "state.txt");
+    state = read_value(path, 32);
+    snprintf(labeltext, size, "%s [%s]", name ? name : (index ? "Task" : "Main workspace"),
+             state ? state : "Ready");
+    free(name);
+    free(state);
+}
 static void task_row(const char *p)
 {
-    char path[PATH_SIZE], labeltext[180], *name, *state;
+    char labeltext[180];
     int i, n = value(tasks, MUIA_List_Active);
     for (i = 0; i < task_count; i++)
         if (!strcmp(task_paths[i], p))
             break;
     if (i == task_count)
         return;
-    join(path, p, "name.txt");
-    name = read_value(path, 120);
-    join(path, p, "state.txt");
-    state = read_value(path, 32);
-    snprintf(labeltext, sizeof(labeltext), "%s [%s]", name ? name : (i ? "Task" : "Main workspace"),
-             state ? state : "Ready");
+    task_label(p, i, labeltext, sizeof(labeltext));
     DoMethod(tasks, MUIM_KillNotify, MUIA_List_Active);
     DoMethod(tasks, MUIM_List_Remove, i);
     DoMethod(tasks, MUIM_List_InsertSingle, labeltext, i);
     set(tasks, MUIA_List_Active, n);
     notify(tasks, MUIA_List_Active, MUIV_EveryTime, TASK);
-    free(name);
-    free(state);
 }
 static void scan_files(const char *dir, const char *prefix, int depth)
 {
@@ -429,11 +438,13 @@ static void open_file(const char *name)
     set(source, MUIA_TextEditor_ReadOnly, busy(current) || !source_loaded);
     set(filename, MUIA_Text_Contents, name);
 }
+static void profiles_picker_refresh(void);
 static void load_workspace(const char *p)
 {
     char path[PATH_SIZE], title[420];
     strcpy(current, p);
     attach_job(p);
+    profiles_picker_refresh();
     save_text("Termic:Config/last-workspace", p, PATH_SIZE);
     *opened = 0;
     refresh_files();
@@ -521,6 +532,29 @@ static void load_tasks(void)
     notify(tasks, MUIA_List_Active, MUIV_EveryTime, TASK);
     loading = 0;
     load_workspace(project);
+}
+/* MCP notifies through an Exec signal; only this UI task touches MUI.
+ * Rebuild the task list without selecting/reloading the current editor. */
+static void refresh_mcp_tasks(void)
+{
+    char path[PATH_SIZE], labeltext[180];int i,selected=-1;
+    if(!*project)return;
+    DoMethod(tasks,MUIM_KillNotify,MUIA_List_Active);
+    set(tasks,MUIA_List_Quiet,TRUE);
+    join(path,project,"Tasks");scan_drawers(tasks,path,task_paths,&task_count);
+    if(task_count<MAX_ITEMS) {
+        memmove(task_paths+1,task_paths,task_count*PATH_SIZE);strcpy(task_paths[0],project);task_count++;
+        DoMethod(tasks,MUIM_List_InsertSingle,"Main workspace",MUIV_List_Insert_Top);
+    }
+    for(i=0;i<task_count;i++) {
+        if(!strcmp(task_paths[i],current))selected=i;
+        task_label(task_paths[i],i,labeltext,sizeof(labeltext));
+        DoMethod(tasks,MUIM_List_Remove,i);
+        DoMethod(tasks,MUIM_List_InsertSingle,labeltext,i);
+        attach_job(task_paths[i]);
+    }
+    SetAttrs(tasks,MUIA_NoNotify,TRUE,MUIA_List_Active,selected,MUIA_List_Quiet,FALSE,TAG_DONE);
+    notify(tasks,MUIA_List_Active,MUIV_EveryTime,TASK);
 }
 static void load_projects(void)
 {
@@ -894,6 +928,8 @@ static void configure(int permanent)
             ? "Preferences saved. Restart Termic to use a changed project drawer."
             : "Preferences in use until reboot. Restart Termic for a changed project drawer.");
 }
+#include "profiles_ui.h"
+#include "access_ui.h"
 static void open_help(void)
 {
     BPTR in, out;
@@ -1086,6 +1122,7 @@ static int build_ui(void)
 {
     Object *body, *left, *right, *center, *titlebar, *grip, *tabtitles = NULL;
     chrome_init_scale(bodyfont);
+    profiles_load(&profile_live);
     app = ApplicationObject, MUIA_Application_Title, "Termic", MUIA_Application_Base, "TERMIC",
     MUIA_Application_Version, version_tag + 1, MUIA_Application_SingleTask, TRUE,
     MUIA_Application_Description, "Native Amiga development workspace", End;
@@ -1114,6 +1151,7 @@ static int build_ui(void)
     MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal,
     tabtitles ? Child : TAG_IGNORE, tabtitles, Child, VGroup, Child,
     editor(&transcript, 1), Child, label("\33bTask instructions"), Child, editor(&prompt, 0), Child,
+    HGroup, Child, profile_picker=cycle(kinds), Child, label("YOLO"), Child, profile_fast=cycle(yesno), End, Child,
     HGroup, Child, button("Save task", SAVETASK), Child, button("Start agent", AGENT), Child,
     button("Cancel", CANCEL), Child, button("New conversation", NEWSESSION), End, End, Child,
     VGroup, Child, filename = label("main.c"), Child, editor(&source, 0), Child, HGroup, Child,
@@ -1125,7 +1163,7 @@ static int build_ui(void)
     button("Init repository", GITINIT), End, Child, editor(&review, 1), Child,
     label("Commit message (configure Git identity in the shell first)"), Child, commit = entry(256),
     Child, button("Stage source and commit", GITCOMMIT), End, Child, VGroup, Child, VGroup,
-    GroupFrame, Child, label("\33bCloud agent"), InnerSpacing(8, 8), MUIA_Group_Spacing, 6, Child,
+    GroupFrame, Child, HGroup, Child, button("Agents & Terminals...", PF_OPEN), Child, button("Agent access / MCP...", AC_OPEN), End, Child, label("\33bDefault API connection"), InnerSpacing(8, 8), MUIA_Group_Spacing, 6, Child,
     ColGroup(2), MUIA_Group_HorizSpacing, 10, MUIA_Group_VertSpacing, 6, Child, label("Model"),
     Child, model = entry(128), Child, label("API key"), Child, keyfield = StringObject, StringFrame,
     MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, MUIA_String_Secret, TRUE,
@@ -1171,6 +1209,11 @@ static int build_ui(void)
     if (!win)
         return 0;
     DoMethod(app, OM_ADDMEMBER, win);
+    profile_window=build_profiles_window();
+    if(!profile_window) return 0;
+    access_window=build_access_window();
+    if(!access_window) return 0;
+    profiles_picker_refresh();
     notify(win, MUIA_Window_CloseRequest, TRUE, QUIT);
     notify(win, MUIA_Window_InputEvent, (ULONG) "-repeat help", HELP);
     notify(win, MUIA_Window_InputEvent, (ULONG) "shift help", ABOUT);
@@ -1310,6 +1353,7 @@ int main(int argc, char **argv)
             load_workspace(desired);
         }
     }
+    profiles_picker_refresh();
     timer_port = CreateMsgPort();
     if (timer_port)
         timer_io = (struct timerequest *)CreateIORequest(timer_port, sizeof(*timer_io));
@@ -1319,6 +1363,18 @@ int main(int argc, char **argv)
         goto cleanup;
     }
     timer_open = 1;
+    memset(&control_port,0,sizeof(control_port));control_port.mp_Node.ln_Name=(STRPTR)"TermicWorkspaceUI";
+    control_port.mp_Node.ln_Type=NT_MSGPORT;control_port.mp_Flags=PA_IGNORE;control_port.mp_SigTask=FindTask(NULL);
+    Forbid();
+    if(!FindPort((STRPTR)"TermicWorkspaceUI")) {
+        AddPort(&control_port);control_registered=1;
+    }
+    Permit();
+    if(!control_registered) {
+        message("Another Termic window is registered. Close it before starting this copy. "
+                "If it exited abnormally, reboot the Amiga first.");
+        goto cleanup;
+    }
     if (any_jobs())
         arm_timer();
     if (storage_failed)
@@ -1335,6 +1391,8 @@ int main(int argc, char **argv)
         {
             int n;
             char *name;
+            if(id>=AC_OPEN && id<=AC_CANCEL) {access_event(id);continue;}
+            if(id>=PF_OPEN && id<=PF_KIND) {profile_event(id);continue;}
             switch (id)
             {
             case WINDOW_DEPTH:
@@ -1539,7 +1597,7 @@ int main(int argc, char **argv)
                 launch("--run", 2);
                 break;
             case AGENT:
-                if (save_editor(prompt, "task.txt", 8192))
+                if (save_editor(prompt, "task.txt", 8192) && profile_prepare_launch())
                     launch("--agent", 2);
                 break;
             case CANCEL:
@@ -1557,7 +1615,13 @@ int main(int argc, char **argv)
                 join(path, current, "session.txt");
                 if (!busy(current))
                 {
+                    int n=value(profile_picker,MUIA_Cycle_Active);
+                    const char *pid;
+                    if(n<0 || n>=picker_count) { message("Select an agent profile first.");break; }
+                    pid=profile_live.items[picker_row[n]].id;
+                    if(strcmp(pid,"openai")) { char file[64];sprintf(file,"session-%s.txt",pid);join(path,current,file); }
                     DeleteFile((STRPTR)path);
+                    join(path,current,"cli-started");DeleteFile((STRPTR)path);
                     message("Next agent request starts a new conversation. Transcript retained.");
                 }
                 break;
@@ -1667,7 +1731,8 @@ int main(int argc, char **argv)
             break;
         if (signals)
         {
-            received = Wait(signals | SIGBREAKF_CTRL_C | (1UL << timer_port->mp_SigBit));
+            received = Wait(signals | SIGBREAKF_CTRL_C | SIGBREAKF_CTRL_D | (1UL << timer_port->mp_SigBit));
+            if (received & SIGBREAKF_CTRL_D) refresh_mcp_tasks();
             if (received & SIGBREAKF_CTRL_C)
             {
                 if (save_current())
@@ -1683,6 +1748,7 @@ int main(int argc, char **argv)
     }
     result = 0;
 cleanup:
+    if(control_registered)RemPort(&control_port);
     if (timer_pending)
     {
         AbortIO((struct IORequest *)timer_io);

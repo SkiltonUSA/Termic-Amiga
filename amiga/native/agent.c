@@ -1,4 +1,5 @@
 #include "native.h"
+#include "profiles.h"
 #include "vendor/cJSON.h"
 #include "workspace.h"
 #include <stdio.h>
@@ -61,13 +62,15 @@ static void trim(char *s)
         s[--n] = 0;
 }
 
-static char *tool_result(const char *name, const char *arguments)
+static char *tool_result(const char *name, const char *arguments, int readonly)
 {
     char *result = NULL;
     cJSON *args = cJSON_Parse(arguments);
     const char *source;
     const char *message = "Unsupported tool or invalid arguments.";
-    if (cJSON_IsObject(args))
+    if (readonly && (!strcmp(name, "write_source") || !strcmp(name, "write_file") || !strcmp(name, "build")))
+        message = "Read-only profile: editing and builds are disabled.";
+    else if (cJSON_IsObject(args))
     {
         if (!strcmp(name, "list_sources") && cJSON_GetArraySize(args) == 0)
         {
@@ -135,9 +138,22 @@ int run_agent(void)
     char *key = NULL, *model = NULL, *task = NULL, *previous = NULL;
     cJSON *input = NULL;
     FILE *transcript = NULL;
-    int round, success = 0;
-    key = read_preference("api-key", 512);
-    model = read_preference("model", 128);
+    int round, success = 0, selected;
+    struct AgentProfiles *registry = calloc(1, sizeof(*registry));
+    struct AgentProfile *profile;
+    char session[96], usage_path[96];
+    if (!registry || !profiles_load(registry) || (selected=profile_selected(registry))<0) {
+        puts("Agent profile is missing or invalid. Choose a profile in Settings.");
+        free(registry); return 20;
+    }
+    profile=&registry->items[selected];
+    if(profile->kind!=0) { free(registry); return 20; }
+    sprintf(session, TERMIC_PROJECT "session-%s.txt",profile->id);
+    if(!strcmp(profile->id,"openai")) strcpy(session,TERMIC_PROJECT "session.txt");
+    sprintf(usage_path, TERMIC_PROJECT "usage-%s.txt",profile->id);
+    key = profile_key(profile);
+    if(*profile->model) { model=malloc(strlen(profile->model)+1); if(model) strcpy(model,profile->model); }
+    else model = read_preference("model", 128);
     task = read_text(TERMIC_PROJECT "task.txt", 8192);
     if (key)
         trim(key);
@@ -150,7 +166,7 @@ int run_agent(void)
     }
     /* Key is used only by transport and never placed in prompts or transcripts. */
     transcript = fopen(TERMIC_PROJECT "transcript.txt", "a");
-    previous = read_text(TERMIC_PROJECT "session.txt", 256);
+    previous = profile->resume ? read_text(session, 256) : NULL;
     if (previous)
     {
         trim(previous);
@@ -174,7 +190,7 @@ int run_agent(void)
         cJSON_AddStringToObject(user, "content", task);
         cJSON_AddItemToArray(input, user);
     }
-    for (round = 0; input && round < 8; ++round)
+    for (round = 0; input && round < profile->steps; ++round)
     {
         cJSON *request, *response, *output, *item;
         char *json, *reply = NULL;
@@ -190,19 +206,26 @@ int run_agent(void)
             break;
         cJSON_AddStringToObject(request, "model", model);
         cJSON_AddStringToObject(request, "instructions", instructions);
-        cJSON_AddNumberToObject(request, "max_output_tokens", 4096);
+        cJSON_AddNumberToObject(request, "max_output_tokens", profile->tokens);
         cJSON_AddBoolToObject(request, "parallel_tool_calls", 0);
         cJSON_AddBoolToObject(request, "store", 1);
         if (previous)
             cJSON_AddStringToObject(request, "previous_response_id", previous);
-        cJSON_AddItemToObject(request, "tools", cJSON_Parse(tools_json));
+        {
+            cJSON *allowed=cJSON_Parse(tools_json);int i;
+            if(profile->readonly)for(i=cJSON_GetArraySize(allowed)-1;i>=0;i--) {
+                const char *name=string_field(cJSON_GetArrayItem(allowed,i),"name");
+                if(name&&(!strcmp(name,"write_source")||!strcmp(name,"write_file")||!strcmp(name,"build")))cJSON_DeleteItemFromArray(allowed,i);
+            }
+            cJSON_AddItemToObject(request,"tools",allowed);
+        }
         cJSON_AddItemToObject(request, "input", input);
         input = NULL;
         json = cJSON_PrintUnformatted(request);
         cJSON_Delete(request);
         if (!json)
             break;
-        printf("Agent step %d of 8\n", round + 1);
+        printf("%s: step %d of %d\n", profile->name, round + 1, profile->steps);
         fflush(stdout);
         status = cloud_request(key, json, &reply);
         free(json);
@@ -279,7 +302,7 @@ int run_agent(void)
                 printf("Tool: %s\n", name);
                 fflush(stdout);
                 fprintf(transcript, "Tool: %s\n", name);
-                result = tool_result(name, args);
+                result = tool_result(name, args, profile->readonly);
                 if (!result)
                     break;
                 fprintf(transcript, "%s\n", result);
@@ -309,6 +332,15 @@ int run_agent(void)
                 }
             }
         }
+        if(profile->usage) {
+            cJSON *u=cJSON_GetObjectItemCaseSensitive(response,"usage");
+            cJSON *in=cJSON_GetObjectItemCaseSensitive(u,"input_tokens"), *out=cJSON_GetObjectItemCaseSensitive(u,"output_tokens");
+            if(cJSON_IsNumber(in) && cJSON_IsNumber(out)) {
+                char report[128];
+                snprintf(report,sizeof(report),"Last response: input %.0f / output %.0f tokens",in->valuedouble,out->valuedouble);
+                puts(report); fprintf(transcript,"%s\n",report); save_text(usage_path,report,127);
+            }
+        }
         cJSON_Delete(response);
         if (calls > 1 || calls != cJSON_GetArraySize(input))
         {
@@ -319,7 +351,7 @@ int run_agent(void)
         {
             success = text_seen;
             if (success)
-                save_text(TERMIC_PROJECT "session.txt", previous, 256);
+                save_text(session, previous, 256);
             break;
         }
     }
@@ -339,5 +371,6 @@ done:
     free(model);
     free(task);
     free(previous);
+    free(registry);
     return success ? 0 : 20;
 }

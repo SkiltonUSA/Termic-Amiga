@@ -1,5 +1,6 @@
 /* Synthetic transport only. Never uses a network or a real credential. */
 #include "native.h"
+#include "profiles.h"
 #include "vendor/cJSON.h"
 #include "workspace.h"
 #include <assert.h>
@@ -39,6 +40,7 @@ int cloud_request(const char *key, const char *json, char **reply)
     if (mode == 10 && !step)
         assert(
             !strcmp(cJSON_GetObjectItem(r, "previous_response_id")->valuestring, "fixture_resume"));
+    if(mode==13&&!step)assert(!cJSON_GetObjectItem(r,"previous_response_id"));
     cJSON_Delete(r);
     if (mode == 1)
     {
@@ -52,7 +54,7 @@ int cloud_request(const char *key, const char *json, char **reply)
     cJSON_AddStringToObject(resp, "status", mode == 2 ? "incomplete" : "completed");
     output = cJSON_AddArrayToObject(resp, "output");
     call = cJSON_CreateObject();
-    if ((mode < 7 && (step < 3 || mode == 4)) || (mode >= 7 && mode <= 9 && step == 0))
+    if (((mode < 7 || mode==11 || mode==12) && (step < 3 || mode == 4)) || (mode >= 7 && mode <= 9 && step == 0))
     {
         cJSON_AddStringToObject(call, "type", "function_call");
         cJSON_AddStringToObject(call, "call_id", id);
@@ -64,7 +66,7 @@ int cloud_request(const char *key, const char *json, char **reply)
         cJSON_AddStringToObject(
             call, "arguments",
             step == 1 && mode != 4 ? "{\"source\":\"int main(void) { return 0; }\\n\"}" : "{}");
-        if (mode >= 7)
+        if (mode >= 7 && mode <=9)
         {
             cJSON_ReplaceItemInObject(call, "name",
                                       cJSON_CreateString(mode == 7   ? "write_file"
@@ -99,7 +101,27 @@ int main(int argc, char **argv)
 {
     int code;
     mode = argc > 1 ? atoi(argv[1]) : 0;
+    if(mode>=11) {
+        struct AgentProfiles *p=calloc(1,sizeof(*p));char *json;int i=0;
+        profiles_defaults(p);
+        if(mode==11)p->items[0].readonly=1;
+        if(mode==12){p->items[0].steps=2;p->items[0].readonly=1;}
+        if(mode==13){i=profile_add(p,0,0);strcpy(p->items[i].model,"fixture-model");
+            assert(save_text("Config/key-custom-1","test-key",512));
+            assert(save_text("Project/agent-profile","custom-1",31));
+            assert(save_text("Project/session.txt","unrelated-profile-session",256));
+        }
+        json=profiles_json(p);assert(json&&save_text("Config/agents.json",json,PROFILE_LIMIT));free(json);free(p);
+    }
     code = run_agent();
+    if(mode>=11) {
+        char *source=read_text("Project/main.c",SOURCE_LIMIT);
+        assert(source&&!strcmp(source,"/* fixture source */\n"));free(source);
+        if(mode==11)assert(code==0&&step==4&&builds==0);
+        if(mode==12)assert(code==20&&step==2&&builds==0);
+        if(mode==13)assert(code==0&&step==1);
+        return 0;
+    }
     if (mode >= 7)
         assert(code == 0 && step == (mode == 10 ? 1 : 2) && builds == 0);
     else if (mode == 0)

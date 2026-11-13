@@ -6,11 +6,15 @@ vc +aos68k -cpu=68020 -O0 -ITermic:SDK/AmiSSL/Developer/include -c tls.c -o tls.
 If WARN
   Quit 20
 EndIf
-vc +aos68k -cpu=68020 -O1 worker.c agent.c files.c workspace.c http.c tls.o vendor/cJSON.c -o Termic:TermicAgent.new -lamiga -lmieee
+vc +aos68k -cpu=68020 -O1 worker.c profiles.c agent.c files.c workspace.c http.c tls.o vendor/cJSON.c -o Termic:TermicAgent.new -lamiga -lmieee
 If WARN
   Quit 20
 EndIf
-vc +aos68k -cpu=68020 -O1 -ITermic:SDK/MUI/Developer/C/Include -ITermic:SDK/MCC_TextEditor/Developer/C/include gui.c files.c workspace.c syntax.c -o Termic:TermicNative.new -lamiga
+vc +aos68k -cpu=68020 -O1 -ITermic:SDK/MUI/Developer/C/Include -ITermic:SDK/MCC_TextEditor/Developer/C/include gui.c profiles.c vendor/cJSON.c files.c workspace.c syntax.c -o Termic:TermicNative.new -lamiga -lmieee
+If WARN
+  Quit 20
+EndIf
+vc +aos68k -cpu=68020 -O1 mcp.c profiles.c files.c workspace.c vendor/cJSON.c -o Termic:TermicMCP.new -lamiga -lmieee
 If WARN
   Quit 20
 EndIf
@@ -33,4 +37,9 @@ EndIf
 Rename Termic:TermicNative.new Termic:TermicNative
 Protect Termic:TermicAgent +e
 Protect Termic:TermicNative +e
+If EXISTS Termic:TermicMCP
+  Delete Termic:TermicMCP
+EndIf
+Rename Termic:TermicMCP.new Termic:TermicMCP
+Protect Termic:TermicMCP +e
 Echo "Termic native applications built on this Amiga."

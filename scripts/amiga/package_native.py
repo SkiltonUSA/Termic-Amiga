@@ -61,7 +61,7 @@ def main():
     with tempfile.TemporaryDirectory() as directory:
         stage = Path(directory) / "TermicNative"
         stage.mkdir()
-        for name in ("TermicNative", "TermicAgent", "TermicStorage"):
+        for name in ("TermicNative", "TermicAgent", "TermicStorage", "TermicMCP"):
             binary = args.binaries / name
             if binary.read_bytes()[:4] != b"\x00\x00\x03\xf3":
                 raise ValueError(f"Not an Amiga Hunk executable: {name}")
@@ -92,7 +92,7 @@ def main():
             if path.is_file():
                 path.chmod(
                     0o755
-                    if path.name in ("TermicNative", "TermicAgent", "TermicStorage")
+                    if path.name in ("TermicNative", "TermicAgent", "TermicStorage", "TermicMCP")
                     else 0o644
                 )
         subprocess.run(
