@@ -1085,6 +1085,7 @@ static Object *build_menus(void)
 static int build_ui(void)
 {
     Object *body, *left, *right, *center, *titlebar, *grip, *tabtitles = NULL;
+    chrome_init_scale(bodyfont);
     app = ApplicationObject, MUIA_Application_Title, "Termic", MUIA_Application_Base, "TERMIC",
     MUIA_Application_Version, version_tag + 1, MUIA_Application_SingleTask, TRUE,
     MUIA_Application_Description, "Native Amiga development workspace", End;
@@ -1155,7 +1156,7 @@ static int build_ui(void)
     grip = chrome_area(bodyfont, 1);
     if (!titlebar || !grip) return 0;
     body = VGroup, MUIA_Group_Spacing, 0, InnerSpacing(2, 2), Child,
-        HGroup, MUIA_Group_Spacing, 2, MUIA_FixHeight, 32,
+        HGroup, MUIA_Group_Spacing, 2, MUIA_FixHeight, chrome_sizes.bar,
         MUIA_Background, "2:r2d2d2d2d,5d5d5d5d,9d9d9d9d",
         Child, chrome_button(QUIT), Child, titlebar,
         Child, chrome_button(WINDOW_DEPTH), Child, chrome_button(WINDOW_ZOOM), End,

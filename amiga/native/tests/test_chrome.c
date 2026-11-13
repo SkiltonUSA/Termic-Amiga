@@ -3,6 +3,15 @@
 #include <stdio.h>
 int main(void)
 {
+    struct ChromeMetrics small = chrome_metrics(480), current = chrome_metrics(800),
+                         hd = chrome_metrics(1080), double_size = chrome_metrics(1600),
+                         huge = chrome_metrics(4320);
+    assert(small.bar == 20 && small.font >= 11);
+    assert(current.bar == 26 && current.icon == 16 && current.font == 13);
+    assert(hd.bar == 35 && hd.icon > current.icon && hd.font > current.font);
+    assert(double_size.bar == 2 * current.bar && double_size.icon == 2 * current.icon);
+    assert(huge.bar == 52 && huge.font == 26);
+    assert(chrome_metrics(0).bar == 20 && chrome_metrics(1000000).bar == 52);
     struct ChromeRect start = {260, 75, 1400, 650}, r;
     r = chrome_motion(start, 100, 50, 0, 1920, 800, 11, 820, 500);
     assert(r.x == 360 && r.y == 125 && r.width == 1400 && r.height == 650);

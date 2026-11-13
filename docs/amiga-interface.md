@@ -102,3 +102,13 @@ References consulted:
 The linked English Amiga Board discussion was blocked by an anti-bot check and
 was not used as evidence. Runtime evidence and remaining checks belong in
 [verification.md](verification.md).
+
+The title bar scales from the default public screen's pixel height when Termic
+starts. At 800 screen lines, the button/title content is 26 pixels high (formerly
+32), with 16-pixel icons and a 13-pixel title font. MUI adds its frame/insets.
+At 1080 lines, the content grows to 35 pixels; at 1600 lines it is 52 pixels.
+Content height is bounded to 20–52 pixels to keep controls usable at extremes.
+The title font and resize grip scale too; editor and other UI fonts stay unchanged.
+This is resolution-based sizing, not physical-DPI detection. Restart Termic after
+changing screen resolution; resizing or zooming the window does not change its
+control scale. A missing title font falls back to the existing UI font.

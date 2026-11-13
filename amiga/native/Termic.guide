@@ -24,7 +24,9 @@ The blue title bar belongs to Termic; Workbench fonts are unchanged.
 Drag its title to move the window, or the lower-right blue grip to resize.
 The cross saves and closes; overlapping squares send the window behind others;
 the single square fits it to the screen and restores its previous size.
-Hover over an icon for its tooltip. Files uses light text on black.
+Hover over an icon for its tooltip.
+Title-bar height, icons and title font follow the screen height at launch.
+Restart after changing resolution. Editor and other UI fonts are unchanged. Files uses light text on black.
 
 1. Start TermicNative from its Workbench icon or the Shell.
 2. Type a name in the project field; choose New project. A clean

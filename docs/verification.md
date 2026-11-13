@@ -88,3 +88,13 @@ buttons use MUI custom Area drawings with explicit minimum/default/maximum sizes
 MUI supplies the frames and input handling. The final editor/preferences captures
 were inspected after installation, and transferred executable/guide CRCs matched
 the host files.
+
+The resolution-scaled bar was rebuilt and passed the same hardware suite at
+1920x800, including close. Its content height is now 26 rather than 32 pixels
+at that resolution. Host tests cover the low-resolution minimum, 800/1080/1600
+line sizes, the upper cap and invalid inputs. Other display resolutions have
+not been exercised on the physical Amiga. Scaling uses the default public
+screen height at launch; a resolution change requires restarting Termic.
+The installed executable and guide matched host CRC32 checks. Editor and
+preferences screenshots were inspected, and the user's maximized window
+rectangle was restored after the windowed acceptance run.

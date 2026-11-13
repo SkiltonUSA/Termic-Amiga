@@ -12,7 +12,7 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 
 - Projects and independent source-copy task workspaces.
 - Embedded editor with a black background and C/header syntax colours on load.
-- Taller blue title bar with close, depth and zoom icons, drag support and a black Files list.
+- Resolution-scaled blue title bar with close, depth and zoom icons, drag support and a black Files list.
 - Source backups, undo/redo, clipboard and search.
 - Native VBCC build/run and explicit AmigaDOS commands with captured output.
 - Native Git initialization, status, diffs and source commits.

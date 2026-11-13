@@ -12,6 +12,28 @@ struct MUI_CustomClass *__termic_mui_class(__reg("a6") struct Library *,
 void __termic_mui_unclass(__reg("a6") struct Library *,
                           __reg("a0") struct MUI_CustomClass *) = "\tjsr\t-114(a6)";
 static struct MUI_CustomClass *chrome_class, *chrome_icon_class;
+static struct ChromeMetrics chrome_sizes;
+static struct TextFont *chrome_font;
+static void chrome_init_scale(struct TextFont *body_font)
+{
+    struct Screen *screen = LockPubScreen(NULL);
+    struct TextAttr attr = {(STRPTR)"helvetica.font", 13, 0, FPF_DISKFONT};
+    chrome_sizes = chrome_metrics(screen ? screen->Height : 800);
+    if (screen)
+        UnlockPubScreen(NULL, screen);
+    if (DiskfontBase && (!body_font || body_font->tf_YSize != chrome_sizes.font))
+    {
+        attr.ta_YSize = chrome_sizes.font;
+        chrome_font = OpenDiskFont(&attr);
+    }
+    /* Respect the actual fallback font if the requested size is unavailable. */
+    if (chrome_font || body_font)
+    {
+        struct TextFont *font = chrome_font ? chrome_font : body_font;
+        if (chrome_sizes.bar < font->tf_YSize + 6)
+            chrome_sizes.bar = font->tf_YSize + 6;
+    }
+}
 struct ChromeData
 {
     struct MUI_EventHandlerNode events;
@@ -116,24 +138,32 @@ static Object *chrome_area(struct TextFont *font, int resize)
     if (!chrome_class)
         return NULL;
     return NewObject(chrome_class->mcc_Class, NULL, MUIA_UserData, resize, MUIA_Font,
-                     font ? (ULONG)font : MUIV_Font_Normal, MUIA_Text_Contents,
+                     (chrome_font ? (ULONG)chrome_font : font ? (ULONG)font : MUIV_Font_Normal), MUIA_Text_Contents,
                      resize ? " /" : "\33bTermic Amiga Workspace", MUIA_Text_PreParse,
                      MUIMasterBase->lib_Version >= 21
                          ? "\33P[FFFFFF]\33p[2D5D9D]\33B" : "\33" "3",
                      MUIA_Background, "2:r2d2d2d2d,5d5d5d5d,9d9d9d9d", MUIA_FixHeight,
-                     resize ? 18 : 32, MUIA_Text_SetVMax, FALSE,
-                     resize ? MUIA_FixWidth : TAG_IGNORE, 24, MUIA_InnerLeft, 10, MUIA_InnerRight,
+                     resize ? chrome_sizes.grip : chrome_sizes.bar, MUIA_Text_SetVMax, FALSE,
+                     resize ? MUIA_FixWidth : TAG_IGNORE, chrome_sizes.bar, MUIA_InnerLeft, 10, MUIA_InnerRight,
                      6, MUIA_ShortHelp, resize ? "Drag to resize" : "Drag to move the window",
                      TAG_DONE);
 }
 /* Small pixel-aligned symbols, rendered using the current MUI text pen.
  * Button frames, focus, pressed state and input stay with MUI's Area class. */
-static void chrome_square(struct RastPort *rp, LONG x, LONG y, LONG size)
+/* Map the icon's 18-unit design grid to integer display pixels. */
+static void chrome_icon_rect(struct RastPort *rp, LONG x, LONG y,
+                             LONG left, LONG top, LONG right, LONG bottom)
 {
-    RectFill(rp, x, y, x + size - 1, y + 1);
-    RectFill(rp, x, y + size - 2, x + size - 1, y + size - 1);
-    RectFill(rp, x, y + 2, x + 1, y + size - 3);
-    RectFill(rp, x + size - 2, y + 2, x + size - 1, y + size - 3);
+    LONG size = chrome_sizes.icon;
+    RectFill(rp, x + left * size / 18, y + top * size / 18,
+             x + (right + 1) * size / 18 - 1, y + (bottom + 1) * size / 18 - 1);
+}
+static void chrome_square(struct RastPort *rp, LONG x, LONG y, LONG left, LONG top, LONG size)
+{
+    chrome_icon_rect(rp, x, y, left, top, left + size - 1, top + 1);
+    chrome_icon_rect(rp, x, y, left, top + size - 2, left + size - 1, top + size - 1);
+    chrome_icon_rect(rp, x, y, left, top + 2, left + 1, top + size - 3);
+    chrome_icon_rect(rp, x, y, left + size - 2, top + 2, left + size - 1, top + size - 3);
 }
 static ULONG chrome_icon_dispatch(__reg("a0") struct IClass *cl,
                                   __reg("a2") Object *obj, __reg("a1") Msg msg)
@@ -143,12 +173,12 @@ static ULONG chrome_icon_dispatch(__reg("a0") struct IClass *cl,
     {
         struct MUI_MinMax *mm = ((struct MUIP_AskMinMax *)msg)->MinMaxInfo;
         /* Area contributes frame/insets; the custom drawing must supply its size. */
-        mm->MinWidth += 32;
-        mm->DefWidth += 32;
-        mm->MaxWidth += 32;
-        mm->MinHeight += 32;
-        mm->DefHeight += 32;
-        mm->MaxHeight += 32;
+        mm->MinWidth += chrome_sizes.bar;
+        mm->DefWidth += chrome_sizes.bar;
+        mm->MaxWidth += chrome_sizes.bar;
+        mm->MinHeight += chrome_sizes.bar;
+        mm->DefHeight += chrome_sizes.bar;
+        mm->MaxHeight += chrome_sizes.bar;
         return 0;
     }
     if (msg->MethodID == MUIM_Draw &&
@@ -159,29 +189,29 @@ static ULONG chrome_icon_dispatch(__reg("a0") struct IClass *cl,
         LONG x, y, i;
         get(obj, MUIA_UserData, &kind);
         get(obj, MUIA_Selected, &selected);
-        x = _mleft(obj) + (_mwidth(obj) - 18) / 2 + !!selected;
-        y = _mtop(obj) + (_mheight(obj) - 18) / 2 + !!selected;
+        x = _mleft(obj) + (_mwidth(obj) - chrome_sizes.icon) / 2 + !!selected;
+        y = _mtop(obj) + (_mheight(obj) - chrome_sizes.icon) / 2 + !!selected;
         SetAPen(rp, _pens(obj)[MPEN_TEXT]);
         SetDrMd(rp, JAM1);
         if (kind == 0)
         {
             for (i = 2; i < 14; i++)
             {
-                RectFill(rp, x + i, y + i, x + i + 2, y + i + 2);
-                RectFill(rp, x + 16 - i, y + i, x + 18 - i, y + i + 2);
+                chrome_icon_rect(rp, x, y, i, i, i + 2, i + 2);
+                chrome_icon_rect(rp, x, y, 16 - i, i, 18 - i, i + 2);
             }
         }
         else if (kind == 1)
         {
             /* Only the visible edges of the rear square are drawn. */
-            RectFill(rp, x, y, x + 12, y + 1);
-            RectFill(rp, x, y + 2, x + 1, y + 12);
-            RectFill(rp, x + 2, y + 11, x + 4, y + 12);
-            RectFill(rp, x + 11, y + 2, x + 12, y + 4);
-            chrome_square(rp, x + 5, y + 5, 13);
+            chrome_icon_rect(rp, x, y, 0, 0, 12, 1);
+            chrome_icon_rect(rp, x, y, 0, 2, 1, 12);
+            chrome_icon_rect(rp, x, y, 2, 11, 4, 12);
+            chrome_icon_rect(rp, x, y, 11, 2, 12, 4);
+            chrome_square(rp, x, y, 5, 5, 13);
         }
         else
-            chrome_square(rp, x + 1, y + 1, 16);
+            chrome_square(rp, x, y, 1, 1, 16);
         SetAPen(rp, pen);
         SetDrMd(rp, mode);
     }
@@ -207,5 +237,8 @@ static void chrome_cleanup(void)
     if (chrome_icon_class)
         __termic_mui_unclass(MUIMasterBase, chrome_icon_class);
     chrome_icon_class = NULL;
+    if (chrome_font)
+        CloseFont(chrome_font);
+    chrome_font = NULL;
 }
 #endif

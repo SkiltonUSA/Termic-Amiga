@@ -199,3 +199,8 @@ The cross saves and closes; overlapping squares send the window backwards;
 the single square fits the screen or restores its previous size. Hover over
 an icon for its tooltip. Workbench font preferences are not changed.
 The Files list has light filenames on black, matching the source editor.
+
+Title-bar sizing follows the default public screen height at launch. On the
+1920x800 desktop it is slightly smaller than before; higher resolutions get
+larger controls. Restart after changing screen resolution. The editor font
+is unchanged. This is resolution scaling, not automatic monitor-DPI detection.

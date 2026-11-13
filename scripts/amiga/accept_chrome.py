@@ -73,11 +73,11 @@ async def main(args):
             original = await state()
             assert original["width"] == 1400 and original["height"] == 650, original
             # Editor tab in the fixed acceptance layout, without typing into source.
-            await click(original["x"] + 550, original["y"] + 108)
-            await click(original["x"] + original["width"] - 30, original["y"] + 20)
+            await click(original["x"] + 550, original["y"] + 102)
+            await click(original["x"] + original["width"] - 18, original["y"] + 20)
             zoom = await state()
             assert zoom["width"] == 1920 and zoom["x"] == 0, zoom
-            await click(zoom["x"] + zoom["width"] - 30, zoom["y"] + 20)
+            await click(zoom["x"] + zoom["width"] - 18, zoom["y"] + 20)
             restored = await state()
             for k in ["x", "y", "width", "height"]:
                 assert restored[k] == original[k], (k, original, restored)
@@ -123,7 +123,7 @@ async def main(args):
                     "y": original["y"],
                 },
             )
-            await click(original["x"] + original["width"] - 65, original["y"] + 20)
+            await click(original["x"] + original["width"] - 54, original["y"] + 20)
             behind = await state()
             assert not behind["front"], behind
             await call(
