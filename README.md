@@ -32,6 +32,7 @@ preferences and clipboard behavior and its remaining limitations.
 ## Requirements and installation
 
 AmigaOS 3.2, 68020 or newer, Fast RAM, MUI 3.8+ and TextEditor.mcc 15.56.
+The application is also tested with MUI 5.0 and uses its native Title tabs.
 Development uses VBCC and NDK3.2. Native Git requires long filenames and was
 verified with AmiSSL 5.27. Cloud access additionally needs a compatible TCP/IP
 stack, CA certificates, an accurate clock and your own OpenAI API key.

@@ -23,6 +23,9 @@ Unpack into a new drawer. In an Amiga Shell:
   Termic:TermicNative --icon Termic:TermicNative
 Replace Work:TermicNative with your chosen drawer, then double-click the
 TermicNative icon. The application assigns Termic: to its own drawer.
+For a Shell launch, set Stack 262144 before running Termic:TermicNative.
+The Workbench icon already requests this stack. MUI 5 is supported; its
+Title class provides the workspace tabs with the restored application font.
 InstallUI adds TextEditor only if absent; it never replaces your MUI core.
 SDK archives include their original licences. Startup files are not edited.
 The AmiSSL 5.27 runtime archive is in SDK/amissl527.lha; extract it into a

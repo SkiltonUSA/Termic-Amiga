@@ -51,7 +51,7 @@ async def main():
                     + fixture
                     + "/main.c\nCopy Termic:Template/task.txt "
                     + fixture
-                    + "/task.txt\nProtect Termic:TermicColour +e\nRun >NIL: <NIL: Termic:TermicColour --workspace "
+                    + "/task.txt\nProtect Termic:TermicColour +e\nStack 262144\nRun >NIL: <NIL: Termic:TermicColour --workspace "
                     + fixture,
                     "timeout": 15,
                 },
@@ -86,7 +86,10 @@ async def main():
             await key("0x59")
             await call(
                 "amiga_run_script",
-                {"script": "Run >NIL: <NIL: Termic:TermicColour", "timeout": 10},
+                {
+                    "script": "Stack 262144\nRun >NIL: <NIL: Termic:TermicColour",
+                    "timeout": 10,
+                },
             )
             await asyncio.sleep(2)
             await key("0x51")

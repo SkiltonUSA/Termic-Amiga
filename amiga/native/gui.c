@@ -1069,12 +1069,21 @@ static Object *build_menus(void)
 }
 static int build_ui(void)
 {
-    Object *body, *left, *right, *center;
+    Object *body, *left, *right, *center, *tabtitles = NULL;
     app = ApplicationObject, MUIA_Application_Title, "Termic", MUIA_Application_Base, "TERMIC",
     MUIA_Application_Version, version_tag + 1, MUIA_Application_SingleTask, TRUE,
     MUIA_Application_Description, "Native Amiga development workspace", End;
     if (!app)
         return 0;
+    if (MUIMasterBase->lib_Version >= 21)
+    {
+        /* MUI 5's Title class gives each tab its own font-aware text object. */
+        tabtitles =
+            MUI_NewObject("Title.mui", Child, label(tabs[0]), Child, label(tabs[1]), Child,
+                          label(tabs[2]), Child, label(tabs[3]), Child, label(tabs[4]), TAG_DONE);
+        if (!tabtitles)
+            return 0;
+    }
     left = VGroup, MUIA_Group_Spacing, 8, MUIA_Weight, 22, Child, VGroup, GroupFrame, Child,
     label("\33bProjects"), InnerSpacing(6, 6), MUIA_Group_Spacing, 6, Child, list(&projects), Child,
     projectname = entry(120), Child, HGroup, Child, button("New project", NEWPROJECT), Child,
@@ -1084,12 +1093,14 @@ static int build_ui(void)
     button("New task", NEWTASK), Child, button("Rename", RENAMETASK), End, Child,
     button("Mark done", MARKDONE), End, End;
     center = VGroup, MUIA_Weight, 65, Child, heading = label("Termic workspace"), Child,
-    pages = RegisterGroup(tabs), MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, Child,
-    VGroup, Child, editor(&transcript, 1), Child, label("\33bTask instructions"), Child,
-    editor(&prompt, 0), Child, HGroup, Child, button("Save task", SAVETASK), Child,
-    button("Start agent", AGENT), Child, button("Cancel", CANCEL), Child,
-    button("New conversation", NEWSESSION), End, End, Child, VGroup, Child,
-    filename = label("main.c"), Child, editor(&source, 0), Child, HGroup, Child,
+    pages = MUI_NewObject(tabtitles ? MUIC_Group : MUIC_Register,
+    tabtitles ? TAG_IGNORE : MUIA_Register_Titles, tabs, MUIA_Group_PageMode, TRUE,
+    MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal,
+    tabtitles ? Child : TAG_IGNORE, tabtitles, Child, VGroup, Child,
+    editor(&transcript, 1), Child, label("\33bTask instructions"), Child, editor(&prompt, 0), Child,
+    HGroup, Child, button("Save task", SAVETASK), Child, button("Start agent", AGENT), Child,
+    button("Cancel", CANCEL), Child, button("New conversation", NEWSESSION), End, End, Child,
+    VGroup, Child, filename = label("main.c"), Child, editor(&source, 0), Child, HGroup, Child,
     findtext = entry(120), Child, button("Find", FIND), Child, button("Next", FINDNEXT), End, End,
     Child, VGroup, Child, editor(&output, 1), Child,
     label("AmigaDOS command (runs in this workspace)"), Child, command = entry(1024), Child, HGroup,
@@ -1120,12 +1131,11 @@ static int build_ui(void)
     6, MUIA_Weight, 23, Child, list(&files), Child, newname = entry(180), Child,
     button("Create file", NEWFILE), Child, button("Refresh files", REFRESH), Child,
     label("C, H, text and Markdown\nSelect to edit.\nSaves keep .bak copies."), End;
-    body = VGroup, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, MUIA_Group_Spacing, 7,
-    InnerSpacing(8, 6), Child, HGroup, Child, label("\33bTERMIC / AMIGA " TERMIC_VERSION), Child,
-    HVSpace, Child, button("Build", BUILD), Child, button("Run", RUN), Child,
-    button("Settings", SETTINGS), Child, button("About", ABOUT), Child, button("Quit", QUIT), End,
-    Child, HGroup, Child, left, Child, BalanceObject, End, Child, center, Child, BalanceObject, End,
-    Child, right, End, Child, status = label("Ready"), End;
+    body = VGroup, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, MUIA_Group_Spacing, 7, InnerSpacing(8, 6), Child, HGroup, Child,
+    label("\33bTERMIC / AMIGA " TERMIC_VERSION), Child, HVSpace, Child, button("Build", BUILD),
+    Child, button("Run", RUN), Child, button("Settings", SETTINGS), Child, button("About", ABOUT),
+    Child, button("Quit", QUIT), End, Child, HGroup, Child, left, Child, BalanceObject, End, Child,
+    center, Child, BalanceObject, End, Child, right, End, Child, status = label("Ready"), End;
     win = WindowObject, MUIA_Window_Title, "Termic Amiga Workspace", MUIA_Window_ID,
     MAKE_ID('T', 'R', 'M', 'C'), MUIA_Window_Width, 1400, MUIA_Window_Height, 650,
     MUIA_Window_Menustrip, build_menus(), WindowContents, body, End;

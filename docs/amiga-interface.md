@@ -38,6 +38,11 @@ a contents node, linked chapters and alphabetical index, and does not execute
 commands from links. Shift-Help and Project > About show version and credits.
 The local installation-kit builder includes the guide automatically.
 
+MUI 5 uses its Title class for workspace tabs, with an individual Helvetica
+text object for each label. The older Register implementation clipped labels
+on the tested MUI 5 installation; changing font inheritance did not fix it.
+MUI 3.8 keeps its Register tabs.
+
 MUI owns menu creation, layout and disposal on 68k AmigaOS. The OS4 interface
 pointers in the current GadTools example are not used by this AmigaOS 3.x build.
 Menu strings have static lifetimes. MUI notifications dispatch existing actions.
@@ -62,6 +67,8 @@ The workspace is intended for the A4000TX's RTG desktop, not a 640x200 layout.
 
 References consulted:
 
+- [MUI Title class](https://github.com/amiga-mui/muidev/wiki/MUI_Title)
+- [Hello MUI visual reference](https://keasigmadelta.com/blog/hello-mui-how-to-write-your-first-amigaos-app-using-mui/)
 - [Workbench manual](https://wiki.amigaos.net/wiki/AmigaOS_Manual:_Workbench)
 - [Workbench Fonts](https://wiki.amigaos.net/wiki/AmigaOS_Manual:_Workbench_Fonts)
 - [Menus](https://wiki.amigaos.net/wiki/UI_Style_Guide_Menus)

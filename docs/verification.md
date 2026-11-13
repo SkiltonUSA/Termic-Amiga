@@ -1,7 +1,8 @@
 # Verification and limitations
 
 The Amiga application was exercised on an A4000TX with a TF4060/68060,
-Workbench 3.2.3, MUI 3.8, TextEditor.mcc 15.56, AmiSSL 5.27 and ZZ9000 RTG.
+Workbench 3.2.3, MUI 3.8 and subsequently MUI 5.0 (muimaster 21.227),
+TextEditor.mcc 15.56, AmiSSL 5.27 and ZZ9000 RTG.
 The screenshots show synthetic fixtures on that machine.
 
 Verified through the written hardware suites:
@@ -21,6 +22,20 @@ Verified through the written hardware suites:
   persists the restored effective values. Tests use synthetic models and no key.
 - Help launches the 18-node AmigaGuide manual in MultiView; Shift-Help opens About.
   Keyboard link navigation reached the Installation and dependencies chapter.
+
+After the MUI 5 upgrade, the same file/clipboard, preferences, About and Help
+checks passed with `accept_style.py --mui-custom-menus`. MUI 5 did not expose
+these menus through the Intuition MenuStrip inspected by the helper, so that
+mode checks actual shortcut effects and explicitly records the menu-structure
+inspection as untested. All GUI test launches use a 256 KiB stack.
+
+The final production editor, preferences and About screenshots were inspected,
+and the installed GUI, worker and guide matched host CRC32 checks. A subsequent
+production Help launch stalled at MultiView’s “Loading…” window; its screenshot
+request and a follow-up bridge request timed out. Production Help navigation
+therefore still needs a repeat check, despite the fixture Help pass. The reboot
+also exposed a separate MUI warning for Poseidon’s PoPo helper (8192-byte stack;
+MUI recommends 32000); that system compatibility issue remains unresolved.
 
 The `accept_style.py` suite uses a fresh temporary installation and restores the
 previous clipboard and production app afterwards. Native menus were inspected

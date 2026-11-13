@@ -101,7 +101,10 @@ async def main():
             await key("0x59")
             await call(
                 "amiga_run_script",
-                {"script": "Run >NIL: <NIL: Termic:TermicAbout", "timeout": 10},
+                {
+                    "script": "Stack 262144\nRun >NIL: <NIL: Termic:TermicAbout",
+                    "timeout": 10,
+                },
             )
             await asyncio.sleep(2)
             await key("0x51")  # Focus the embedded editor first

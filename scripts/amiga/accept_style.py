@@ -48,7 +48,7 @@ async def main(args):
             async def shell(script):
                 result = await call(
                     "amiga_run_script",
-                    {"script": "FailAt 10\n" + script, "timeout": 15},
+                    {"script": "FailAt 10\nStack 262144\n" + script, "timeout": 15},
                 )
                 assert "[STILL RUNNING]" not in result, result
                 assert "[ERROR]" not in result, result
@@ -91,8 +91,17 @@ async def main(args):
                 url = "http://127.0.0.1:55010/api/screenshot?" + urllib.parse.urlencode(
                     {"window": title}
                 )
-                with urllib.request.urlopen(url, timeout=60) as response:
-                    data = json.load(response)
+                # A screenshot transfer can outlast its HTTP request on the
+                # physical bridge. Retry the read without repeating UI actions.
+                for attempt in range(2):
+                    try:
+                        with urllib.request.urlopen(url, timeout=60) as response:
+                            data = json.load(response)
+                        break
+                    except TimeoutError:
+                        if attempt:
+                            raise
+                        await asyncio.sleep(5)
                 subprocess.run(
                     [
                         "sips",
@@ -170,23 +179,25 @@ async def main(args):
                 started = True
                 await asyncio.sleep(2)
                 await key("0x02", ("0x67",))
-                menu = await shell(fixture + "/InspectUI menus")
-                assert re.findall(r"^MENU (.+)$", menu, re.M) == [
-                    "Project",
-                    "Edit",
-                    "Workspace",
-                    "View",
-                    "Settings",
-                    "Help",
-                ], menu
-                assert "ITEM Copy enabled=0" in menu, menu
-                assert "ITEM Save enabled=1 key=S" in menu, menu
+                if not args.mui_custom_menus:
+                    menu = await shell(fixture + "/InspectUI menus")
+                    assert re.findall(r"^MENU (.+)$", menu, re.M) == [
+                        "Project",
+                        "Edit",
+                        "Workspace",
+                        "View",
+                        "Settings",
+                        "Help",
+                    ], menu
+                    assert "ITEM Copy enabled=0" in menu, menu
+                    assert "ITEM Save enabled=1 key=S" in menu, menu
                 # Select the newly typed prefix and use standard native menu keys.
                 await type_text("ab")
                 await key("0x4f", ("0x60",))  # Shift-left
                 await key("0x4f", ("0x60",))
-                menu = await shell(fixture + "/InspectUI menus")
-                assert "ITEM Copy enabled=1 key=C" in menu, menu
+                if not args.mui_custom_menus:
+                    menu = await shell(fixture + "/InspectUI menus")
+                    assert "ITEM Copy enabled=1 key=C" in menu, menu
                 await key(mapping["c"], ("0x67",))
                 await shell(
                     fixture + "/InspectUI save-clip " + fixture + "/clipboard.fixture"
@@ -290,7 +301,8 @@ async def main(args):
                     json.dumps(
                         {
                             "fixture": fixture,
-                            "menus": True,
+                            "menu_shortcuts": True,
+                            "intuition_menu_structure": not args.mui_custom_menus,
                             "clipboard_ftxt": True,
                             "preferences_use_cancel_save": True,
                             "guide": True,
@@ -329,4 +341,9 @@ if __name__ == "__main__":
     parser.add_argument("--gui", type=Path, required=True)
     parser.add_argument("--probe", type=Path, required=True)
     parser.add_argument("--install", default="SD032G:Dev/Termic")
+    parser.add_argument(
+        "--mui-custom-menus",
+        action="store_true",
+        help="MUI 5: verify menu shortcuts; skip unavailable Intuition MenuStrip inspection",
+    )
     asyncio.run(main(parser.parse_args()))

@@ -188,7 +188,7 @@ async def main(args):
                         + fixture
                         + '/task.txt\nEcho "MUI acceptance" >'
                         + fixture
-                        + "/name.txt\nRun >NIL: <NIL: "
+                        + "/name.txt\nStack 262144\nRun >NIL: <NIL: "
                         + args.binary
                         + " --workspace "
                         + fixture,
@@ -367,7 +367,10 @@ async def main(args):
                 raise RuntimeError("Quit did not close the MUI window")
             await call(
                 "amiga_run_script",
-                {"script": "Run >NIL: <NIL: " + args.binary, "timeout": 15},
+                {
+                    "script": "Stack 262144\nRun >NIL: <NIL: " + args.binary,
+                    "timeout": 15,
+                },
             )
             await asyncio.sleep(2)
             text = await call(

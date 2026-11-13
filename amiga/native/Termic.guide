@@ -347,7 +347,9 @@ copy. A .bak is not a substitute for a separate disk backup.
 
 @NODE Trouble "Troubleshooting"
 No main window: check MUI 3.8+ and TextEditor.mcc installation. Run from
-Shell for startup messages. Keep executable and supporting files together.
+Shell for startup messages, using Stack 262144 before launching TermicNative.
+The Workbench icon already requests this stack. Keep supporting files together.
+MUI 5 uses Title-class tabs; MUI 3.8 uses its original Register tabs.
 
 Help fails: install Termic.guide beside TermicNative, and ensure
 SYS:Utilities/MultiView and the AmigaGuide datatype are installed.
