@@ -79,8 +79,9 @@ class CLIAsyncTests(unittest.IsolatedAsyncioTestCase):
             def __init__(self, failed):
                 self.stdin = Input(); self.stdout = asyncio.StreamReader(); self.returncode = None
                 events = [{'type': 'system', 'session_id': 'abcd-1234'},
+                          {'type': 'system', 'session_id': 'abcd-1234'},
                           {'type': 'assistant', 'message': {'content': [{'type': 'text', 'text': 'Fixture reply'}]}},
-                          {'type': 'result', 'subtype': 'error' if failed else 'success', 'is_error': failed}]
+                          {'type': 'result', 'session_id': 'abcd-1234', 'subtype': 'error' if failed else 'success', 'is_error': failed}]
                 for event in events: self.stdout.feed_data((json.dumps(event)+'\n').encode())
                 self.stdout.feed_eof()
             async def wait(self): self.returncode = 0; return 0
@@ -98,7 +99,7 @@ class CLIAsyncTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(ok, not failed)
                     self.assertFalse(list(Path(temp).glob('termic-job-*')))
                 self.assertEqual(bridge.frames[-1]['status'], 'failed' if failed else 'completed')
-                self.assertTrue(any(f.get('thread') == 'abcd-1234' for f in bridge.frames))
+                self.assertEqual([f['thread'] for f in bridge.frames if f['kind']=='session'], ['abcd-1234'])
 
     async def test_missing_login_finishes_task(self):
         async def no_login(*args): raise RuntimeError('Sign in required')

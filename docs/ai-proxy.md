@@ -140,7 +140,10 @@ data, needs no cloud secrets and does not contact an Amiga.
 
 Native profile and tool integration can be checked with
 `accept_agents.py --providers`, in addition to its required binary arguments.
+Use `--host-agent claude` or `--host-agent cursor` for authenticated
+read/write/build and conversation-resume acceptance using the host login.
 This closes production normally, runs synthetic Claude/Cursor tasks in an
 isolated installation, and restores settings, clipboard and window geometry.
-It does not claim cloud authentication. See [verification](verification.md)
+The `--providers` mode uses synthetic MCP clients; only the opt-in
+`--host-agent` mode tests cloud authentication. See [verification](verification.md)
 for the actual tested scope.

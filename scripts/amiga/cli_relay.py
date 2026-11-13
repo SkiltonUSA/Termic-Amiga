@@ -175,14 +175,18 @@ async def run_cli_job(bridge, job, executable, state):
                       'Write ASCII C89. Do not run built programs.\n' + guidance + '\nUser task:\n' + job['prompt'])
             proc.stdin.write(prompt.encode()); await proc.stdin.drain(); proc.stdin.close()
             async def consume():
-                seen_text = False; result = None
+                seen_text = False; result = None; saved_session = None
                 while raw := await proc.stdout.readline():
                     event = json.loads(raw)
                     session = event.get('session_id')
                     if session:
                         if not isinstance(session, str) or not THREAD.fullmatch(session):
                             raise ValueError('Invalid host conversation identifier')
-                        await mailbox.send('session', thread=session)
+                        if saved_session and session != saved_session:
+                            raise ValueError('Host changed conversation identifier during a turn')
+                        if session != saved_session:
+                            await mailbox.send('session', thread=session)
+                            saved_session = session
                     if event.get('type') == 'assistant':
                         for block in event.get('message', {}).get('content', []):
                             if block.get('type') == 'text':

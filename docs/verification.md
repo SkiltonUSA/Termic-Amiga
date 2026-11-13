@@ -308,3 +308,20 @@ passed on macOS and Windows, including the expanded packaged GUI recovery
 checks. The installed Mac app was updated with a local backup and reconnected
 to the actual Amiga bridge. The new Windows download passed archive integrity
 checks. Claude and Cursor live authentication remains unverified.
+
+
+## Claude subscription authentication completed
+
+The user refreshed Claude's browser login. Claude Code then reported a
+Claude.ai Pro login and passed a real model/MCP smoke test. The authenticated
+Amiga acceptance subsequently passed GUI task submission, source reading and
+writing, native compilation, conversation resume, Stop while waiting,
+read-only enforcement and path-traversal rejection. The generated program was
+compiled but not run. This supersedes the earlier expired-Claude-login result.
+The live transcript recorded the actual read_source, write_source and build
+calls. The resume check examines only the new turn's response text.
+
+Claude emits the same session ID on many events. The relay now saves it once
+per turn, avoiding redundant Amiga file writes, and rejects a changed ID
+within a turn. A subprocess protocol regression test covers repeated IDs.
+Cursor browser sign-in and authenticated Cursor execution remain pending.
