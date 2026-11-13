@@ -1,0 +1,11 @@
+{
+  "repository": "https://github.com/SkiltonUSA/termic",
+  "commit": "3056258663c271cdf4e806cf2520f51c4c965011",
+  "files": [
+    "src/store/prompts.ts",
+    "src/lib/builtinPrompts.ts",
+    "src/lib/review.ts"
+  ],
+  "license": "AGPL-3.0-or-later",
+  "adaptation": "Native tool-limit preamble and ASCII typography; upstream bodies retained."
+}

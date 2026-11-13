@@ -30,6 +30,7 @@ struct Library *MUIMasterBase, *IconBase, *DiskfontBase, *AslBase;
 struct GfxBase *GfxBase;
 static struct TextFont *bodyfont, *codefont;
 struct IntuitionBase *IntuitionBase;
+static ULONG termic_key_event(struct IntuiMessage *im);
 #include "chrome.h"
 const char version_tag[] = TERMIC_VERSION_TAG("TermicNative");
 const char stack_size[] = "$STACK:262144";
@@ -37,6 +38,7 @@ const char stack_size[] = "$STACK:262144";
 #define PATH_SIZE 384
 static Object *app, *win, *projects, *tasks, *files, *pages, *source, *prompt, *output, *review,
     *transcript;
+static Object *prompts_body;
 static Object *status, *heading, *filename, *newname, *projectname, *taskname, *model, *keyfield,
     *command, *command_mode, *commit, *findtext, *buildcommand, *projectdrawer;
 static char project_paths[MAX_ITEMS][PATH_SIZE], task_paths[MAX_ITEMS][PATH_SIZE],
@@ -102,7 +104,9 @@ enum
     SELECTALL,
     ERASE,
     WINDOW_DEPTH,
-    WINDOW_ZOOM
+    WINDOW_ZOOM,
+    SHORTCUTS, SHORTCUTSCLOSE, INSTRUCTIONS, HISTORY, HISTORYFIND, HISTORYNEXT,
+    LASTPROMPT, MENTION, COMMANDS, COMMANDSCLOSE
 };
 struct Job
 {
@@ -129,12 +133,19 @@ static Object *label(const char *s)
     return TextObject, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, MUIA_Text_Contents,
            s, End;
 }
+#include "action_icons.h"
 static Object *button(const char *s, int id)
 {
-    Object *o = TextObject, ButtonFrame, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Button,
+    int kind=action_icon_kind(s,id);
+    const char *help=id==CANCEL?"Stop current job (Shift F10)":id==RUN?"Run program (F7)":
+        id==BUILD?"Build (F6)":id==SAVE?"Save (F8 / Right Amiga S)":id==AGENT?"Start agent (Tab in prompt)":s;
+    Object *o;
+    if(kind>=0) o=action_icon(kind,help);
+    else o = TextObject, ButtonFrame, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Button,
            MUIA_InnerTop, 4, MUIA_InnerBottom, 4, MUIA_Background, MUII_ButtonBack, MUIA_InputMode,
            MUIV_InputMode_RelVerify, MUIA_Text_Contents, s, MUIA_Text_PreParse, "\33c",
            MUIA_CycleChain, 1, End;
+    if (!o) return NULL;
     if (id == SAVECONFIG || id == USECONFIG || id == CANCELCONFIG)
     {
         char key = id == SAVECONFIG ? 's' : id == USECONFIG ? 'u' : 'c';
@@ -167,12 +178,42 @@ static Object *list(Object **o)
            MUIA_List_ConstructHook, MUIV_List_ConstructHook_String, MUIA_List_DestructHook,
            MUIV_List_DestructHook_String, End, End;
 }
+/* Register on the active editor itself: MUI delivers active-object handlers
+ * before other objects, regardless of a title bar handler's priority.
+ * Each class owns its handler; unhandled events pass to TextEditor's node. */
+static struct MUI_CustomClass *keyeditor_class;
+struct KeyEditorData { struct MUI_EventHandlerNode events; };
+static ULONG keyeditor_dispatch(__reg("a0") struct IClass *cl,
+                                __reg("a2") Object *obj, __reg("a1") Msg msg)
+{
+    struct KeyEditorData *d=obj?INST_DATA(cl,obj):NULL;
+    switch(msg->MethodID) {
+    case MUIM_Setup:
+        if(!DoSuperMethodA(cl,obj,msg))return FALSE;
+        memset(d,0,sizeof(*d));
+        d->events.ehn_Object=obj;d->events.ehn_Class=cl;
+        d->events.ehn_Priority=20;d->events.ehn_Events=IDCMP_RAWKEY;
+        DoMethod(_win(obj),MUIM_Window_AddEventHandler,&d->events);return TRUE;
+    case MUIM_Cleanup:
+        DoMethod(_win(obj),MUIM_Window_RemEventHandler,&d->events);break;
+    case MUIM_HandleEvent:
+        {
+            struct IntuiMessage *im=((struct MUIP_HandleEvent *)msg)->imsg;
+            return im && termic_key_event(im)?MUI_EventHandlerRC_Eat:0;
+        }
+    }
+    return DoSuperMethodA(cl,obj,msg);
+}
 static Object *editor(Object **o, int readonly)
 {
     Object *slider;
-    Object *g = HGroup, Child, *o = TextEditorObject, InputListFrame, MUIA_Font,
+    Object *g;
+    if(!keyeditor_class)keyeditor_class=__termic_mui_class(MUIMasterBase,NULL,MUIC_TextEditor,NULL,
+        sizeof(struct KeyEditorData),(APTR)keyeditor_dispatch);
+    if(!keyeditor_class)return NULL;
+    g = HGroup, Child, *o = NewObject(keyeditor_class->mcc_Class, NULL, InputListFrame, MUIA_Font,
            codefont ? (ULONG)codefont : MUIV_Font_Fixed,
-           o == &source ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
+           (o == &source || o == &prompts_body) ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
            MUIA_TextEditor_ReadOnly, readonly, MUIA_TextEditor_ImportHook,
            MUIV_TextEditor_ImportHook_Plain, MUIA_TextEditor_ExportHook,
            MUIV_TextEditor_ExportHook_NoStyle, MUIA_TextEditor_PasteColors, FALSE,
@@ -323,7 +364,7 @@ static void attach_job(const char *path)
 static int internal_name(const char *n)
 {
     return !strcmp(n, "name.txt") || !strcmp(n, "state.txt") || !strcmp(n, "session.txt") ||
-           !strcmp(n, "commit.txt") || !strcmp(n, "command.txt") || !strcmp(n, "transcript.txt");
+           !strcmp(n, "last-prompt.txt") || !strcmp(n, "commit.txt") || !strcmp(n, "command.txt") || !strcmp(n, "transcript.txt");
 }
 static int managed_path(const char *p)
 {
@@ -392,7 +433,7 @@ static void scan_files(const char *dir, const char *prefix, int depth)
     if (f && Examine(l, f))
         while (ExNext(l, f) && file_count < MAX_ITEMS)
         {
-            if (f->fib_FileName[0] == '.' || internal_name(f->fib_FileName) ||
+            if ((f->fib_FileName[0] == '.' && strcmp(f->fib_FileName, ".agents") && strcmp(f->fib_FileName, ".termic-version")) || internal_name(f->fib_FileName) ||
                 !strcmp(f->fib_FileName, "task.txt") ||
                 !strcmp(f->fib_FileName, "build-command.txt") || !strcmp(f->fib_FileName, "Tasks"))
                 continue;
@@ -601,7 +642,7 @@ static int clone_sources(const char *from, const char *to, int depth)
     else
         while (ok && ExNext(l, f))
         {
-            if (f->fib_FileName[0] == '.' || internal_name(f->fib_FileName) ||
+            if ((f->fib_FileName[0] == '.' && strcmp(f->fib_FileName, ".agents") && strcmp(f->fib_FileName, ".termic-version")) || internal_name(f->fib_FileName) ||
                 !strcmp(f->fib_FileName, "Tasks") || !strcmp(f->fib_FileName, "name.txt") ||
                 !strcmp(f->fib_FileName, "transcript.txt") ||
                 !strcmp(f->fib_FileName, "command.txt"))
@@ -616,7 +657,7 @@ static int clone_sources(const char *from, const char *to, int depth)
             join(dst, to, f->fib_FileName);
             if (f->fib_DirEntryType == ST_USERDIR)
                 ok = mkdir_safe(dst) && clone_sources(src, dst, depth + 1);
-            else if (f->fib_DirEntryType == ST_FILE && source_name(f->fib_FileName))
+            else if (f->fib_DirEntryType == ST_FILE && (source_name(f->fib_FileName) || (depth==3 && !strcmp(f->fib_FileName,".termic-version"))))
             {
                 text = read_text(src, SOURCE_LIMIT);
                 ok = text && save_text(dst, text, SOURCE_LIMIT);
@@ -1015,7 +1056,9 @@ static void open_about(void)
     set(about_window, MUIA_Window_Open, TRUE);
     set(about_window, MUIA_Window_Activate, TRUE);
 }
-static Object *menu_items[ERASE + 1];
+#include "prompts_ui.h"
+#include "shortcuts_ui.h"
+static Object *menu_items[COMMANDSCLOSE + 1];
 static Object *edit_target(void)
 {
     Object *active = (Object *)value(win, MUIA_Window_ActiveObject);
@@ -1060,7 +1103,7 @@ static void menu_item(Object *menu, const char *title, const char *shortcut, int
     DoMethod(menu, OM_ADDMEMBER, item);
     if (id)
     {
-        menu_items[id] = item;
+        if (id <= COMMANDSCLOSE) menu_items[id] = item;
         notify(item, MUIA_Menuitem_Trigger, MUIV_EveryTime, id);
     }
 }
@@ -1094,6 +1137,7 @@ static Object *build_menus(void)
     menu_item(menu, "Redo", NULL, REDO);
     menu = new_menu(strip, "Workspace");
     menu_item(menu, "New Task", NULL, NEWTASK);
+    menu_item(menu, "Install agent instructions", NULL, INSTRUCTIONS);
     menu_item(menu, "Mark Done", NULL, MARKDONE);
     menu_item(menu, NM_BARLABEL, NULL, 0);
     menu_item(menu, "Build", "B", BUILD);
@@ -1110,6 +1154,9 @@ static Object *build_menus(void)
     menu_item(menu, "Changes", "4", PAGE_CHANGES);
     menu = new_menu(strip, "Settings");
     menu_item(menu, "Preferences", ",", SETTINGS);
+    menu_item(menu, "Prompts...", "P", PL_OPEN);
+    menu_item(menu, "Agents / CLI / Scripts...", "E", PF_OPEN);
+    menu_item(menu, "Agent access / MCP...", "M", AC_OPEN);
     menu_item(menu, "MUI Settings...", NULL, MUIPREFS);
     menu_item(menu, NM_BARLABEL, NULL, 0);
     menu_item(menu, "Save Settings", NULL, SAVECONFIG);
@@ -1117,11 +1164,30 @@ static Object *build_menus(void)
     menu_item(menu, "Cancel Edits", NULL, CANCELCONFIG);
     menu = new_menu(strip, "Help");
     menu_item(menu, "Contents...", NULL, HELP);
+    menu_item(menu, "Keyboard shortcuts...", "K", SHORTCUTS);
     return strip;
 }
+/* Icon-only controls must not set a vertical pane's maximum width.
+ * Keep the two navigation panes readable while allowing balance resizing. */
+static struct MUI_CustomClass *pane_class;
+static ULONG pane_dispatch(__reg("a0") struct IClass *cl,
+                           __reg("a2") Object *obj,__reg("a1") Msg msg)
+{
+    ULONG result=DoSuperMethodA(cl,obj,msg);
+    if(msg->MethodID==MUIM_AskMinMax) {
+        struct MUI_MinMax *mm=((struct MUIP_AskMinMax *)msg)->MinMaxInfo;
+        if(mm->MinWidth<230)mm->MinWidth=230;
+        if(mm->DefWidth<mm->MinWidth)mm->DefWidth=mm->MinWidth;
+        mm->MaxWidth=MUI_MAXMAX;
+    }
+    return result;
+}
+#define PaneGroup NewObject(pane_class->mcc_Class,NULL
 static int build_ui(void)
 {
     Object *body, *left, *right, *center, *titlebar, *grip, *tabtitles = NULL;
+    pane_class=__termic_mui_class(MUIMasterBase,NULL,MUIC_Group,NULL,0,(APTR)pane_dispatch);
+    if(!pane_class)return 0;
     chrome_init_scale(bodyfont);
     profiles_load(&profile_live);
     app = ApplicationObject, MUIA_Application_Title, "Termic", MUIA_Application_Base, "TERMIC",
@@ -1138,29 +1204,31 @@ static int build_ui(void)
         if (!tabtitles)
             return 0;
     }
-    left = VGroup, MUIA_Group_Spacing, 8, MUIA_Weight, 22, Child, VGroup, GroupFrame, Child,
+    left = VGroup, MUIA_Group_Spacing, 8, MUIA_Weight, 22, Child, PaneGroup, GroupFrame, Child,
     label("\33bProjects"), InnerSpacing(6, 6), MUIA_Group_Spacing, 6, Child, list(&projects), Child,
     projectname = entry(120), Child, HGroup, Child, button("New project", NEWPROJECT), Child,
-    button("Rename", RENAMEPROJECT), End, Child, button("Import source drawer...", IMPORTPROJECT),
-    End, Child, VGroup, GroupFrame, Child, label("\33bTasks"), InnerSpacing(6, 6),
+    button("Rename", RENAMEPROJECT), Child, HVSpace, End, Child, HGroup, Child, button("Import source drawer...", IMPORTPROJECT), Child, HVSpace, End,
+    End, Child, PaneGroup, GroupFrame, Child, label("\33bTasks"), InnerSpacing(6, 6),
     MUIA_Group_Spacing, 6, Child, list(&tasks), Child, taskname = entry(120), Child, HGroup, Child,
-    button("New task", NEWTASK), Child, button("Rename", RENAMETASK), End, Child,
-    button("Mark done", MARKDONE), End, End;
+    button("New task", NEWTASK), Child, button("Rename", RENAMETASK), Child, HVSpace, End, Child,
+    HGroup, Child, button("Mark done", MARKDONE), Child, HVSpace, End, End, End;
     center = VGroup, MUIA_Weight, 65, Child, heading = label("Termic workspace"), Child,
     pages = MUI_NewObject(tabtitles ? MUIC_Group : MUIC_Register,
     tabtitles ? TAG_IGNORE : MUIA_Register_Titles, tabs, MUIA_Group_PageMode, TRUE,
     MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal,
     tabtitles ? Child : TAG_IGNORE, tabtitles, Child, VGroup, Child,
-    editor(&transcript, 1), Child, label("\33bTask instructions"), Child, editor(&prompt, 0), Child,
+    editor(&transcript, 1), Child, HGroup, Child, history_find=entry(120),
+    Child, button("Find history", HISTORYNEXT), Child, button("Prompts", PL_OPEN), Child, button("Shortcuts", SHORTCUTS), End,
+    Child, label("\33bTask instructions"), Child, editor(&prompt, 0), Child,
     HGroup, Child, profile_picker=cycle(kinds), Child, label("YOLO"), Child, profile_fast=cycle(yesno), End, Child,
     HGroup, Child, button("Save task", SAVETASK), Child, button("Start agent", AGENT), Child,
-    button("Cancel", CANCEL), Child, button("New conversation", NEWSESSION), End, End, Child,
+    button("Cancel", CANCEL), Child, button("New conversation", NEWSESSION), Child, HVSpace, End, End, Child,
     VGroup, Child, filename = label("main.c"), Child, editor(&source, 0), Child, HGroup, Child,
     findtext = entry(120), Child, button("Find", FIND), Child, button("Next", FINDNEXT), End, End,
     Child, VGroup, Child, editor(&output, 1), Child,
     label("CLI command, or script path and arguments (runs in this workspace)"), Child, HGroup,
     Child, command_mode=cycle(command_modes), Child, command = entry(1024), End, Child, HGroup,
-    Child, button("Execute", SHELL), Child, button("Cancel job", CANCEL), End, End, Child, VGroup,
+    Child, button("Execute", SHELL), Child, button("Cancel job", CANCEL), Child, HVSpace, End, End, Child, VGroup,
     Child, HGroup, Child, button("Status", GITSTATUS), Child, button("Diff", DIFF), Child,
     button("Init repository", GITINIT), End, Child, editor(&review, 1), Child,
     label("Commit message (configure Git identity in the shell first)"), Child, commit = entry(256),
@@ -1177,15 +1245,15 @@ static int build_ui(void)
     projectdrawer = entry(180), Child, label("Build command"), Child, buildcommand = entry(512),
     End, Child,
     label("Restart after changing the project drawer. Builds must produce Program.new."), Child,
-    button("Save build command", SAVEBUILD), End, Child,
+    HGroup, Child, button("Save build command", SAVEBUILD), Child, HVSpace, End, End, Child,
     label("Builds run locally with VBCC / NDK. Tasks have independent source copies.\n"
           "Cloud inference needs an API key and internet access.\n"
           "ZZ9000 supplies the RTG display; ARM compute is not enabled."),
     Child, HVSpace, Child, HGroup, Child, button("Save", SAVECONFIG), Child,
-    button("Use", USECONFIG), Child, button("Cancel", CANCELCONFIG), End, End, End, End;
-    right = VGroup, GroupFrame, Child, label("\33bFiles"), InnerSpacing(6, 6), MUIA_Group_Spacing,
+    button("Use", USECONFIG), Child, button("Cancel", CANCELCONFIG), Child, HVSpace, End, End, End, End;
+    right = PaneGroup, GroupFrame, Child, label("\33bFiles"), InnerSpacing(6, 6), MUIA_Group_Spacing,
     6, MUIA_Weight, 23, Child, list(&files), Child, newname = entry(180), Child,
-    button("Create file", NEWFILE), Child, button("Refresh files", REFRESH), Child,
+    HGroup, Child, button("Create file", NEWFILE), Child, button("Refresh files", REFRESH), Child, HVSpace, End, Child,
     label("C/H, Python, ARexx,\ntext and Markdown.\nSaves keep .bak copies."), End;
     body = VGroup, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, MUIA_Group_Spacing, 7, InnerSpacing(8, 6), Child, HGroup, Child,
     label("\33bTERMIC / AMIGA " TERMIC_VERSION), Child, HVSpace, Child, button("Build", BUILD),
@@ -1242,6 +1310,7 @@ static int build_ui(void)
         for (i = 0; i < 10; i++)
             notify(win, MUIA_Window_InputEvent, (ULONG)keys[i], ids[i]);
     }
+    notify(history_find, MUIA_String_Acknowledge, MUIV_EveryTime, HISTORYNEXT);
     notify(newname, MUIA_String_Acknowledge, MUIV_EveryTime, NEWFILE);
     notify(commit, MUIA_String_Acknowledge, MUIV_EveryTime, GITCOMMIT);
     notify(command, MUIA_String_Acknowledge, MUIV_EveryTime, SHELL);
@@ -1395,6 +1464,8 @@ int main(int argc, char **argv)
             char *name;
             if(id>=AC_OPEN && id<=AC_CANCEL) {access_event(id);continue;}
             if(id>=PF_OPEN && id<=PF_ADDPYTHON) {profile_event(id);continue;}
+            if (shortcut_event(id)) continue;
+            if(id>=PL_OPEN && id<=PL_INSERT) {prompts_event(id);continue;}
             switch (id)
             {
             case WINDOW_DEPTH:
@@ -1599,7 +1670,9 @@ int main(int argc, char **argv)
                 launch("--run", 2);
                 break;
             case AGENT:
-                if (save_editor(prompt, "task.txt", 8192) && profile_prepare_launch())
+                if (prompt_command()) break;
+                if (save_editor(prompt, "task.txt", 8192) && profile_prepare_launch() &&
+                    save_editor(prompt, "last-prompt.txt", 8192))
                     launch("--agent", 2);
                 break;
             case CANCEL:
@@ -1765,6 +1838,11 @@ cleanup:
         DeleteMsgPort(timer_port);
     if (app)
         MUI_DisposeObject(app);
+    cJSON_Delete(prompts_items);
+    cJSON_Delete(prompts_defaults);
+    if(keyeditor_class)__termic_mui_unclass(MUIMasterBase,keyeditor_class);
+    if(pane_class)__termic_mui_unclass(MUIMasterBase,pane_class);
+    if(action_icon_class)__termic_mui_unclass(MUIMasterBase,action_icon_class);
     chrome_cleanup();
     if (codefont)
         CloseFont(codefont);

@@ -3,10 +3,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+const char *guidance_files[GUIDANCE_COUNT] = {
+    "AGENTS.md", "CLAUDE.md", ".agents/skills/termic/SKILL.md",
+    ".agents/skills/termic/.termic-version",
+    ".agents/skills/termic/references/development.md",
+    ".agents/skills/termic/references/mcp.md"
+};
+int guidance_name(const char *name)
+{
+    int i;
+    if (!name) return 0;
+    for (i=0;i<GUIDANCE_COUNT;i++) if (!strcmp(name,guidance_files[i])) return 1;
+    return 0;
+}
 int source_name(const char *s)
 {
     const char *p = s, *dot;
     unsigned n = 0;
+    if (guidance_name(s)) return 1;
     if (!s || !*s || *s == '.' || *s == '/')
         return 0;
     for (; *p; ++p)

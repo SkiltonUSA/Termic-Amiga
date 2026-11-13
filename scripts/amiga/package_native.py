@@ -88,6 +88,7 @@ def main():
         shutil.copytree(SOURCE / "Project", stage / "Template")
         shutil.copytree(SOURCE / "Project", stage / "Source/Template")
         shutil.copytree(SOURCE / "Examples", stage / "Examples")
+        shutil.copytree(SOURCE / "Prompts", stage / "Prompts")
         (stage / "Tools/MicroPython").mkdir(parents=True)
         for name in runtime_lock['files']:
             shutil.copyfile(runtime/name, stage/"Tools/MicroPython"/name)

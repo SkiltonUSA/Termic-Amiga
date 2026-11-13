@@ -5,8 +5,8 @@ Workbench 3.2.3, MUI 3.8 and subsequently MUI 5.0 (muimaster 21.227),
 TextEditor.mcc 15.56, AmiSSL 5.27 and ZZ9000 RTG.
 The screenshots show synthetic fixtures on that machine.
 
-The new Agents / CLI / Scripts and Agent access / MCP implementation cross-builds
-for 68k and passes 11 portable test groups, including profile persistence,
+The earlier CLI/script update cross-built
+for 68k and passed 11 portable test groups, including profile persistence,
 credential separation, read-only API enforcement, MCP protocol handling and
 filesystem boundaries. After a physical reboot, the written `accept_agents.py`
 hardware suite passed profile Save/Use/Cancel, the MCP enable setting, task
@@ -42,7 +42,8 @@ upstream README and pinned provenance accompany the installation.
 ARexx used the system RX command and the already-running RexxMast.
 MicroPython networking, TLS, third-party modules and interactive REPL behavior
 have not been exercised by this suite. Script execution adds no new custom
-Termic ARexx host commands; API/MCP source access remains limited to C/H.
+Termic ARexx host commands; API/MCP writes remain limited to C/H; the instruction update also permits
+reading the six named project guidance files.
 
 Verified through the written hardware suites:
 
@@ -137,3 +138,57 @@ screen height at launch; a resolution change requires restarting Termic.
 The installed executable and guide matched host CRC32 checks. Editor and
 preferences screenshots were inspected, and the user's maximized window
 rectangle was restored after the windowed acceptance run.
+
+
+## Prompt library, instructions, shortcuts and action icons
+
+The combined update cross-builds for 68k and passes 14 portable groups. These
+include shipped/default prompt resolution, edited/default separation across
+updates, custom persistence, ordering, disable/delete state, invalid contents,
+keyboard context boundaries, guidance serialization and MCP guidance file
+copy/read/write restrictions. The skill template passes quick_validate.py.
+
+The written accept_agents.py suite calls accept_workflow.py in its isolated
+installation. The final A4000TX run passed:
+
+- Installing guidance twice while preserving a project-owned AGENTS.md.
+- Tab-to-send and Ctrl J in the prompt, with missing credentials stopping the
+  request before network access; editor Tab does not launch another agent.
+- Commands and keyboard-reference windows opening and closing.
+- All 17 shipped prompts displayed; Review inserted without automatic send.
+- Prompt Save, Use, duplicate, repeated reopening and Cancel after draft removal.
+  Saving untouched defaults produces no overrides.
+- Agent profile Save/Use/Cancel and MCP enable, through native icon controls.
+- Native MCP task/file/scratchpad routines, traversal rejection, successful
+  compilation, failed-build preservation, and host stdio transport.
+- CLI environment inheritance, ARexx and MicroPython examples through profiles
+  and worker command actions.
+- Normal application close, public-port removal, and restoration of original
+  ENV settings, Termic assign and 1920x789 production window geometry.
+
+The final workspace, prompt library and shortcut screenshots were inspected.
+The sidebar groups retain readable widths with compact icon actions. Tooltips
+and descriptive menu commands accompany the icons. The prompt body is light
+text on black. The screenshots contain synthetic task data and default prompt
+examples, not findings from a review of the application.
+
+A test exposed a queued List_Active refresh loop when reopening Prompts.
+Notifications are now detached while rebuilding the list and reattached after
+selection is restored; repeated reopen/save/cancel passed after the fix.
+A title-bar key handler also ran after the active TextEditor handler; shortcuts
+now register on the editor itself, with a main-window/focus guard.
+
+Image paste, adjustable reasoning, subagent switching and custom keymaps remain
+unavailable. Ctrl G opens the built-in editor. Shift Tab changes profiles.
+Transcript search and selection use the native TextEditor widget; the suite
+exercises transcript/search focus, not every scroll/selection combination or
+physical-keyboard timing of double Escape. Cloud authentication is still not
+verified with a real user key. The action icons have been tested on MUI 5 at
+1920x800; other MUI versions and display resolutions need a separate check.
+
+The verified build was installed with checksum verification for every promoted
+file. Installed executable CRC32 values are EFC5E768 (GUI, 121848 bytes),
+F62B6823 (worker, 63564 bytes), and 8726B98B (MCP, 58716 bytes). Previous files
+are retained in SD032G:Dev/Termic/Backup/agents-1794598993. Missing project
+instructions were installed while existing files were preserved. The production
+application reopened successfully at 1920x789 with its control port present.

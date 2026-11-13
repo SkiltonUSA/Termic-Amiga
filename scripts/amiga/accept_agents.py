@@ -4,8 +4,9 @@
 Closes production normally, saves its window geometry, keeps ENV backup on the
 Amiga only, and restores ENV/assign/application in finally. Never enters a key.
 """
-import argparse, asyncio, json, re, subprocess, sys, time, urllib.parse, urllib.request
+import argparse, asyncio, json, re, subprocess, sys, time, urllib.parse, urllib.request, zlib
 from pathlib import Path
+import accept_workflow
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 ROOT=Path(__file__).resolve().parents[2]
@@ -20,7 +21,7 @@ async def main(args):
             async def call(n,a):
                 r=await s.call_tool(n,a);t='\n'.join(getattr(x,'text','') for x in r.content)
                 with (out/'evidence.log').open('a') as f:f.write(n+' '+t+'\n')
-                assert not r.isError and 'ERROR:' not in t and '[ERROR]' not in t and '[STILL RUNNING]' not in t,t
+                assert not r.isError and 'ERROR:' not in t and '[ERROR]' not in t and '[STILL RUNNING]' not in t and 'Cannot read remote file' not in t,t
                 await asyncio.sleep(.2);return t
             async def shell(script):return await call('amiga_run_script',{'script':'FailAt 10\nStack 262144\n'+script,'timeout':15})
             async def push(local,remote):await call('amiga_push_file',{'local_path':str(Path(local).resolve()),'amiga_path':remote})
@@ -37,6 +38,15 @@ async def main(args):
                 try:await call('amiga_input_click',{'button':'left','direction':'down'})
                 finally:await call('amiga_input_click',{'button':'left','direction':'up'})
                 await asyncio.sleep(.6)
+            async def menu(rawkey):
+                await state(front=True)
+                try:
+                    await call('amiga_input_key',{'rawkey':'67','direction':'down'})
+                    await call('amiga_input_key',{'rawkey':rawkey,'direction':'down'})
+                finally:
+                    await call('amiga_input_key',{'rawkey':rawkey,'direction':'up'})
+                    await call('amiga_input_key',{'rawkey':'67','direction':'up'})
+                await asyncio.sleep(.5)
             async def capture(title,name):
                 if args.skip_screenshots:return
                 query='?'+urllib.parse.urlencode({'window':title}) if title else ''
@@ -57,7 +67,7 @@ async def main(args):
                 raise AssertionError('Main window did not open')
             async def stop_candidate():
                 # Exercise normal MUI cleanup rather than an external break signal.
-                for title in ['Termic: Agents, CLI and Scripts','Termic: Agent access']:
+                for title in ['Termic: Commands','Termic: Keyboard shortcuts','Termic: Prompts','Termic: Agents, CLI and Scripts','Termic: Agent access']:
                     p=await state(title)
                     if p['address']:
                         await state(title,front=True)
@@ -89,48 +99,51 @@ async def main(args):
                 await push(args.worker,fixture+'/TermicAgent')
                 await push(args.mcp,fixture+'/TermicMCP')
                 await shell('MakeDir '+fixture+'/Tools\nMakeDir '+fixture+'/Tools/MicroPython\nMakeDir '+fixture+'/Examples')
-                await push(args.micropython,fixture+'/Tools/MicroPython/micropython')
+                runtime=await call('amiga_checksum',{'path':PROD+'/Tools/MicroPython/micropython'})
+                if f'{zlib.crc32(args.micropython.read_bytes()):08X}' in runtime:
+                    await shell('Copy '+PROD+'/Tools/MicroPython/micropython '+fixture+'/Tools/MicroPython/micropython')
+                else:await push(args.micropython,fixture+'/Tools/MicroPython/micropython')
                 await push(ROOT/'amiga/native/Examples/hello.py',fixture+'/Examples/hello.py')
                 await push(ROOT/'amiga/native/Examples/hello.rexx',fixture+'/Examples/hello.rexx')
                 await shell('Protect '+fixture+'/Tools/MicroPython/micropython +e')
+                await accept_workflow.stage(ROOT,out,fixture,shell,push,call)
                 await shell('Protect '+fixture+'/TermicProfilesTest +e\nProtect '+fixture+'/TermicAgent +e\nProtect '+fixture+'/TermicMCP +e\nRun >NIL: <NIL: '+fixture+'/TermicProfilesTest')
                 launched=True;p=await wait_main()
                 await call('amiga_window_move',{'window':format(p['address'],'08x'),'x':260,'y':75})
                 await call('amiga_window_resize',{'window':format(p['address'],'08x'),'width':1400,'height':650})
                 await state(front=True);p=await state()
-                await click(p['x']+890,p['y']+54)
-                # Positions pinned to the 1400x650 MUI acceptance layout.
-                await click(p['x']+480,p['y']+130)
+                await accept_workflow.exercise(ROOT,out,fixture,shell,push,call,state,click,capture)
+                await menu('12') # Right Amiga E: agent profiles
                 title='Termic: Agents, CLI and Scripts';a=await state(title)
                 assert a['address'] and a['active'],a
                 await capture(title,'agents-general.png')
                 # Native titlebar + header + add row. Save is at the lower left.
                 await click(a['x']+100,a['y']+80,title)
-                await click(a['x']+160,a['y']+a['height']-24,title)
+                await click(a['x']+30,a['y']+a['height']-24,title)
                 saved=out/'agents.json';await call('amiga_pull_file',{'amiga_path':fixture+'/Config/agents.json','local_path':str(saved)})
                 profiles=json.loads(saved.read_text());assert len(profiles['profiles'])==3,profiles
-                await state(front=True);p=await state();await click(p['x']+480,p['y']+130)
+                await menu('12')
                 a=await state(title)
                 await click(a['x']+740,a['y']+80,title) # duplicate into a separate account/profile
-                await click(a['x']+530,a['y']+a['height']-24,title) # Use only
+                await click(a['x']+68,a['y']+a['height']-24,title) # Use only
                 temporary=out/'agents-env.json';await call('amiga_pull_file',{'amiga_path':'ENV:Termic/agents.json','local_path':str(temporary)})
                 assert len(json.loads(temporary.read_text())['profiles'])==4
                 await call('amiga_pull_file',{'amiga_path':fixture+'/Config/agents.json','local_path':str(saved)})
                 assert len(json.loads(saved.read_text())['profiles'])==3
-                await state(front=True);p=await state();await click(p['x']+480,p['y']+130)
+                await menu('12')
                 a=await state(title)
                 await click(a['x']+530,a['y']+80,title) # unsaved MicroPython profile
-                await click(a['x']+a['width']-150,a['y']+a['height']-24,title) # Cancel
+                await click(a['x']+106,a['y']+a['height']-24,title) # Cancel
                 await call('amiga_pull_file',{'amiga_path':'ENV:Termic/agents.json','local_path':str(temporary)})
                 assert len(json.loads(temporary.read_text())['profiles'])==4
-                await state(front=True);p=await state();await click(p['x']+480,p['y']+130)
+                await menu('12')
                 a=await state(title);await click(a['x']+550,a['y']+105,title);await capture(title,'agents-launch.png')
-                await click(a['x']+a['width']-150,a['y']+a['height']-24,title)
-                await state(front=True);p=await state();await click(p['x']+890,p['y']+130)
+                await click(a['x']+106,a['y']+a['height']-24,title)
+                await menu('37')
                 title='Termic: Agent access';a=await state(title);assert a['address'],a
                 await capture(title,'agent-access.png')
                 await click(a['x']+464,a['y']+92,title)
-                await click(a['x']+150,a['y']+a['height']-34,title)
+                await click(a['x']+32,a['y']+a['height']-34,title)
                 assert not (await state(title))['address'],'Access Save did not close the window'
                 enabled=out/'mcp-enabled';await call('amiga_pull_file',{'amiga_path':fixture+'/Config/mcp-enabled','local_path':str(enabled)})
                 assert enabled.read_text()=='1'
@@ -220,7 +233,7 @@ async def main(args):
                 assert len(replies)==3 and len(replies[1]['result']['tools'])==15,replies
                 assert not replies[2]['result']['isError'],replies
                 (out/'bridge-replies.json').write_bytes(stdout)
-                (out/'passed.json').write_text(json.dumps({'fixture':fixture,'profiles_saved':3,'native_mcp':True,'native_build':True,'failed_build_preserves_program':True,'stdio_bridge':True,'arexx':True,'micropython':True},indent=2))
+                (out/'passed.json').write_text(json.dumps({'fixture':fixture,'profiles_saved':3,'native_mcp':True,'native_build':True,'failed_build_preserves_program':True,'stdio_bridge':True,'arexx':True,'micropython':True,'workflow':True},indent=2))
             finally:
                 if launched:await stop_candidate()
                 if prepared:

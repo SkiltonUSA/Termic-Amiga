@@ -118,7 +118,7 @@ Source files have a 32 KiB limit. Files containing literal ESC bytes or
 unreadable/binary/oversize content are not editable. Instructions have an
 8 KiB limit. A failed save leaves the previous file available.
 
-See @{"Clipboard" LINK Sharing} and @{"Keyboard shortcuts" LINK Menus}.
+See @{"Prompts and instructions" LINK Prompts}, @{"Clipboard" LINK Sharing} and @{"Keyboard shortcuts" LINK Menus}.
 @ENDNODE
 
 @NODE Build "Build and run"
@@ -162,7 +162,7 @@ are included there. It runs on the 68k CPU, with no ZZ9000 ARM offload.
 Python packages written for desktop CPython may need adaptation.
 
 The editor opens .py, .rexx and .rx files as plain text. API and MCP file
-tools still only expose C/H sources. No Termic-specific ARexx commands
+tools expose C/H sources and read-only named project guidance. No Termic-specific ARexx commands
 are added to the application host port.
 
 This is a command runner. Interactive
@@ -253,6 +253,10 @@ Preset files and SETTINGS ToolTypes/CLI overrides are not implemented.
 Hold the right mouse button to access the normal Amiga menu strip.
 Project and Edit come first; Settings is next to the rightmost Help menu.
 Separators group commands and unavailable actions are ghosted.
+Common buttons use icons with hover tooltips: floppy Save, triangle Run,
+square Stop, hammer Build, gear Settings, magnifier Find, speech bubble
+Prompts and keyboard Shortcuts. Dialog Save/Use/Cancel use floppy/check/cross.
+The menu names and keyboard commands remain descriptive.
 
 Project: New, Open... (import source drawer), Save, About..., Quit.
 Edit: Cut, Copy, Paste, Erase, Select All, Undo, Redo.
@@ -262,6 +266,21 @@ View: Agent, Editor, Build / CLI, Changes.
 Settings: Preferences, MUI Settings..., Save Settings, Use Settings,
           Cancel Edits (the last three apply while Settings is open).
 Help: Contents... opens this AmigaGuide manual in MultiView.
+      Keyboard shortcuts opens the black grouped reference.
+
+@{"Prompt library and project instructions" LINK Prompts}
+Right Amiga P opens Prompts; Right Amiga K opens keyboard shortcuts.
+Right Amiga E opens Agents / CLI / Scripts; Right Amiga M opens MCP settings.
+In the prompt, Tab sends and Shift Tab changes agent profile. Ctrl J adds
+a newline, Ctrl G opens the editor, Ctrl R searches history and F4 shows
+activity. Two Esc presses recall the last sent message. In an empty prompt,
+/ opens commands, @ mentions the open file, ! opens CLI, ? shows shortcuts.
+Ctrl T focuses transcript. F3 then finds text, PgUp/PgDn scroll, and
+Ctrl Home/End or Shift Alt comma/period go to top/latest. Ctrl Space starts
+line selection; Up/Down extends; Ctrl Space finishes; Right Amiga C copies.
+Esc returns to prompt. Ctrl C quits from prompt/transcript with save handling.
+These keys do not replace editor Tab. Image paste, reasoning adjustment,
+subagents and keymap customization are not available.
 
 Right-Amiga + N New project     O Open/import    S Save
 Right-Amiga + X Cut             C Copy           V Paste
@@ -518,7 +537,7 @@ file_write, scratchpad_write, scratchpad_read and scratchpad_list.
 Task routines take project and task drawer IDs. task_new copies sources
 without launching an agent. task_send starts a direct API profile.
 Writes require idle MCP-created tasks that are not selected in the editor.
-File tools are limited to task C/H files; keys and arbitrary shell commands
+File tools edit task C/H files and read named project guidance; keys and arbitrary shell commands
 are not exposed. Scratchpads live in .scratchpads, excluded from new-task
 Git tracking. Read them through MCP; there is no scratchpad editor tab yet.
 
@@ -527,4 +546,38 @@ the current editor. See docs/agents-and-mcp.md in the repository for the
 client configuration example and protocol compatibility details.
 
 @{"Agent profiles" LINK Profiles}  @{"Projects" LINK Projects}  @{"Contents" LINK MAIN}
+@ENDNODE
+
+@NODE Prompts "Prompts and project instructions"
+Open Prompts beside the composer, Settings > Prompts, or Right Amiga P.
+The 17 defaults come from desktop Termic, with Amiga tool-limit guidance.
+Review, Deep review, Write tests, Security review, Explain the changes,
+Commit, Commit and push, Fix merge conflicts, Verify end to end,
+Fix the bug, Work on the issue, Simplify, What is the state?,
+Continue from last, Hand off to another agent, Update the docs,
+and Research first are included.
+
+Edit titles and bodies. New/Duplicate add prompts; Remove, Reset selected,
+Restore missing defaults, Up/Down and Enabled manage the list.
+Save persists in Termic:Config/prompts.json and ENV:Termic/prompts.json.
+Use lasts until reboot; Cancel discards library edits.
+Insert + Use appends to the task composer and uses library edits until
+reboot. It does not send. Select the agent profile and press Tab to send.
+The composer holds 8192 bytes. Disabled prompts cannot be inserted.
+
+These are instructions for agents, not executable scripts. Native API tools
+cannot run Git, push, browse, manage PRs or dispatch subagents. Upstream
+shell examples need a capable external agent and AmigaDOS adaptation.
+
+Workspace > Install agent instructions adds missing files to the active
+project/task, preserving existing edits:
+  AGENTS.md and CLAUDE.md
+  .agents/skills/termic/SKILL.md and .termic-version
+  .agents/skills/termic/references/development.md and mcp.md
+
+New projects include these files and new tasks copy them. The Files list
+shows them for editing. API requests load current AGENTS.md and SKILL.md
+(up to 8192 bytes each). Missing or unreadable files are skipped. Agent/MCP
+file tools can read the six named files; only C/H files can be written.
+CLAUDE.md is a compatibility pointer, not an installed agent executable.
 @ENDNODE

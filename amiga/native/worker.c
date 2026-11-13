@@ -57,18 +57,12 @@ static int same_prefix(const char *a, const char *b, unsigned n)
     }
     return 1;
 }
-int project_source_allowed(const char *path)
+static int project_inside(const char *path)
 {
     char root[512], resolved[512], parent[184];
     BPTR l;
-    const char *ext;
     char *slash;
     int ok;
-    if (!source_name(path))
-        return 0;
-    ext = strrchr(path, '.');
-    if (strcmp(ext, ".c") && strcmp(ext, ".h"))
-        return 0;
     l = Lock((STRPTR) "", ACCESS_READ);
     if (!l)
         return 0;
@@ -97,6 +91,43 @@ int project_source_allowed(const char *path)
         return 1;
     strcat(root, "/");
     return strlen(resolved) >= strlen(root) && same_prefix(root, resolved, strlen(root));
+}
+int project_source_allowed(const char *path)
+{
+    const char *ext;
+    if (!source_name(path)) return 0;
+    ext=strrchr(path,'.');
+    return ext && (!strcmp(ext,".c") || !strcmp(ext,".h")) && project_inside(path);
+}
+int project_guidance_allowed(const char *path)
+{
+    return guidance_name(path) && project_inside(path);
+}
+static int install_guidance(void)
+{
+    const char *dirs[]={".agents",".agents/skills",".agents/skills/termic",".agents/skills/termic/references"};
+    int i,ok=1; BPTR l;
+    char path[384],temp[384],*text;
+    for(i=0;i<4;i++) {
+        l=Lock((STRPTR)dirs[i],ACCESS_READ);
+        if(l) UnLock(l);
+        else {l=CreateDir((STRPTR)dirs[i]);if(!l)return 20;UnLock(l);}
+        if(!project_inside(dirs[i])) {puts("Instruction drawer is outside the workspace.");return 20;}
+    }
+    for(i=0;i<GUIDANCE_COUNT;i++) {
+        l=Lock((STRPTR)guidance_files[i],ACCESS_READ);
+        if(l) {UnLock(l);continue;} /* Preserve project-owned files. */
+        if(!project_guidance_allowed(guidance_files[i])) {ok=0;continue;}
+        snprintf(temp,sizeof(temp),"%s.new",guidance_files[i]);
+        l=Lock((STRPTR)temp,ACCESS_READ);
+        if(l) {UnLock(l);ok=0;continue;}
+        snprintf(path,sizeof(path),"Termic:Template/%s",guidance_files[i]);
+        text=read_text(path,8192);
+        if(!text || !save_text(guidance_files[i],text,8192))ok=0;
+        free(text);
+    }
+    puts(ok?"Project instruction files installed; existing files preserved.":"Some instruction files could not be installed.");
+    return ok?0:20;
 }
 static void collect_sources(const char *dir, const char *prefix, char *out, unsigned *used,
                             int depth)
@@ -201,14 +232,14 @@ int main(int argc, char **argv)
     else if (argc > 2)
     {
         puts("Usage: TermicAgent "
-             "--agent|--build|--run|--probe|--status|--diff|--init|--commit|--shell|--rexx|--python [--project "
+             "--agent|--build|--run|--probe|--status|--diff|--init|--commit|--shell|--rexx|--python|--instructions [--project "
              "drawer]");
         return 20;
     }
     if (strcmp(action, "--agent") && strcmp(action, "--build") && strcmp(action, "--run") &&
         strcmp(action, "--probe") && strcmp(action, "--status") && strcmp(action, "--diff") &&
         strcmp(action, "--init") && strcmp(action, "--commit") && strcmp(action, "--shell") &&
-        strcmp(action, "--rexx") && strcmp(action, "--python"))
+        strcmp(action, "--rexx") && strcmp(action, "--python") && strcmp(action,"--instructions"))
         return 20;
     lock = Lock((STRPTR)path, ACCESS_READ);
     if (!lock)
@@ -236,7 +267,8 @@ int main(int argc, char **argv)
     Forbid();
     {struct MsgPort *ui=FindPort((STRPTR)"TermicWorkspaceUI");if(ui)Signal(ui->mp_SigTask,SIGBREAKF_CTRL_D);}
     Permit();
-    if (!strcmp(action, "--probe"))
+    if (!strcmp(action,"--instructions")) result=install_guidance();
+    else if (!strcmp(action, "--probe"))
     {
         char *reply = NULL;
         int status = cloud_request(NULL, NULL, &reply);

@@ -22,6 +22,7 @@ int cloud_request(const char *key, const char *json, char **reply);
 int run_agent(void);
 char *list_project_sources(void);
 int project_source_allowed(const char *path);
+int project_guidance_allowed(const char *path);
 int build_project(void);
 int cancel_requested(void);
 #endif

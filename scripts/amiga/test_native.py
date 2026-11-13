@@ -11,6 +11,23 @@ SOURCE = ROOT / "amiga/native"
 
 
 class NativeProtocolTests(unittest.TestCase):
+    def test_prompts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            binary = str(Path(directory) / "prompts")
+            subprocess.run(["cc", "-std=c99", "-Wall", "-Wextra", "-Werror",
+                "-Wno-deprecated-declarations", "-fsanitize=address,undefined", "-I", str(SOURCE)]
+                + [str(SOURCE / f) for f in ["prompts.c", "files.c", "vendor/cJSON.c", "tests/test_prompts.c"]]
+                + ["-o", binary], check=True)
+            subprocess.run([binary, str(SOURCE / "Prompts/defaults.json")], check=True)
+
+    def test_shortcuts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            binary = str(Path(directory) / "shortcuts")
+            subprocess.run(["cc", "-std=c99", "-Wall", "-Wextra", "-Werror",
+                "-fsanitize=address,undefined", "-I", str(SOURCE),
+                str(SOURCE / "tests/test_shortcuts.c"), "-o", binary], check=True)
+            subprocess.run([binary], check=True)
+
     def test_profiles(self):
         with tempfile.TemporaryDirectory() as directory:
             work=Path(directory)
@@ -133,11 +150,12 @@ class NativeProtocolTests(unittest.TestCase):
                 check=True,
             )
             (work / "Project").mkdir()
+            (work / "Project/.agents/skills/termic").mkdir(parents=True)
             (work / "Config").mkdir()
             (work / "Config/model").write_text("fixture-model\n")
             (work / "Project/task.txt").write_text("Compile a synthetic fixture.\n")
             (work / "Project/build.log").write_text("Fixture compiler succeeded.\n")
-            for mode in range(14):
+            for mode in range(15):
                 with self.subTest(mode=mode):
                     (work / "Config/api-key").write_text(
                         "" if mode == 6 else "test-key\n"

@@ -112,3 +112,18 @@ The title font and resize grip scale too; editor and other UI fonts stay unchang
 This is resolution-based sizing, not physical-DPI detection. Restart Termic after
 changing screen resolution; resizing or zooming the window does not change its
 control scale. A missing title font falls back to the existing UI font.
+
+
+## Action icons
+
+Common actions use compact, pixel-aligned MUI icon buttons: floppy disk for
+Save, triangle for Run/Execute, square for Stop, hammer for Build, gear for
+Settings, magnifier for Find, speech bubble for Prompts and a keyboard for
+Shortcuts. Dialog Save/Use/Cancel use floppy/check/cross symbols. Library
+management uses new, duplicate, trash, refresh and arrow symbols.
+
+Hover for the action name and applicable shortcut. Native MUI handles focus,
+pressed and disabled states; the menu strip retains descriptive names.
+The icons are drawn locally with the current MUI text pen, without an icon
+font, image files or another class dependency. Agent-type selectors and
+command-palette entries keep their descriptive labels.

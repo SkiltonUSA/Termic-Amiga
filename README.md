@@ -6,7 +6,7 @@ This repository contains the Amiga implementation, separated from the desktop
 [Termic project](https://github.com/simion/termic). It runs on the Amiga using
 MUI and native 68k tools. It does not require the desktop React/Tauri application.
 
-![Termic Amiga workspace](docs/screenshots/workspace.png)
+![Termic Amiga workspace with native action icons](docs/screenshots/workspace-icons.png)
 
 ## Features
 
@@ -20,8 +20,11 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 - Agents / CLI / Scripts profiles with separate credentials, launch arguments, sessions and access limits.
 - CLI, ARexx and MicroPython script execution, with a pinned native MicroPython runtime.
 - Native MCP/CLI routines for task orchestration, builds, source files and scratchpads.
+- Editable prompt library with all 17 desktop Termic defaults and Save/Use/Cancel.
+- Project-local AGENTS.md and Termic SKILL.md guidance loaded by the API worker.
+- Compose, Session and Transcript keyboard reference, with Tab-to-send in the prompt.
 - Persistent workspace selection, task status, model settings and an About window.
-- Native Project/Edit/Workspace/View/Settings/Help menus and Right-Amiga shortcuts.
+- Compact action icons with tooltips, native menus and Right-Amiga shortcuts.
 - Editor commands in the menu strip, crisp Helvetica/Courier fonts and framed MUI panels.
 - Save/Use/Cancel preferences and shared Amiga IFF text clipboard.
 - Linked AmigaGuide manual available with Help or Help > Contents... .
@@ -29,6 +32,13 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 ![About Termic Amiga](docs/screenshots/about.png)
 
 ![Amiga preferences with Save, Use and Cancel](docs/screenshots/preferences.png)
+
+See [Prompts, instructions and keyboard shortcuts](docs/prompts-and-instructions.md)
+for the prompt library, project guidance and screenshot-style key bindings.
+
+![Termic prompt library with black editor and action icons](docs/screenshots/prompts.png)
+
+![Compose, Session and Transcript shortcuts](docs/screenshots/keyboard-shortcuts.png)
 
 See [Agents, CLI, scripts and MCP](docs/agents-and-mcp.md) for setup, client connections
 and differences from desktop Termic.

@@ -16,8 +16,10 @@ char *list_project_sources(void)
 }
 int project_source_allowed(const char *p)
 {
-    return source_name(p);
+    const char *ext = strrchr(p, '.');
+    return source_name(p) && ext && (!strcmp(ext,".c") || !strcmp(ext,".h"));
 }
+int project_guidance_allowed(const char *p) { return guidance_name(p); }
 int cancel_requested(void)
 {
     return mode == 5;
@@ -41,6 +43,12 @@ int cloud_request(const char *key, const char *json, char **reply)
         assert(
             !strcmp(cJSON_GetObjectItem(r, "previous_response_id")->valuestring, "fixture_resume"));
     if(mode==13&&!step)assert(!cJSON_GetObjectItem(r,"previous_response_id"));
+    if(mode==14 && !step) {
+        cJSON *input=cJSON_GetObjectItem(r,"input");
+        assert(cJSON_GetArraySize(input)==3);
+        assert(strstr(cJSON_GetObjectItem(cJSON_GetArrayItem(input,0),"content")->valuestring,"fixture project guidance"));
+        assert(strstr(cJSON_GetObjectItem(cJSON_GetArrayItem(input,1),"content")->valuestring,"fixture skill guidance"));
+    }
     cJSON_Delete(r);
     if (mode == 1)
     {
@@ -113,13 +121,17 @@ int main(int argc, char **argv)
         }
         json=profiles_json(p);assert(json&&save_text("Config/agents.json",json,PROFILE_LIMIT));free(json);free(p);
     }
+    if(mode==14) {
+        assert(save_text("Project/AGENTS.md","fixture project guidance",8192));
+        assert(save_text("Project/.agents/skills/termic/SKILL.md","fixture skill guidance",8192));
+    }
     code = run_agent();
     if(mode>=11) {
         char *source=read_text("Project/main.c",SOURCE_LIMIT);
         assert(source&&!strcmp(source,"/* fixture source */\n"));free(source);
         if(mode==11)assert(code==0&&step==4&&builds==0);
         if(mode==12)assert(code==20&&step==2&&builds==0);
-        if(mode==13)assert(code==0&&step==1);
+        if(mode==13 || mode==14)assert(code==0&&step==1);
         return 0;
     }
     if (mode >= 7)

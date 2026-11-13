@@ -83,6 +83,30 @@ class MCPTests(unittest.TestCase):
         (self.cwd/'Config/last-workspace').write_text(str(task.resolve()))
         self.assertTrue(self.call('file_write',project='demo',task='fixture',path='main.c',content='oops')['isError'])
         self.assertEqual((self.cwd/'Config/api-key').read_text(),'fixture-secret')
+    def test_guidance_copy_read_and_write_boundaries(self):
+        project=self.cwd/'Projects/demo'
+        for name in ['AGENTS.md','CLAUDE.md','.agents/skills/termic/SKILL.md',
+                     '.agents/skills/termic/.termic-version',
+                     '.agents/skills/termic/references/development.md',
+                     '.agents/skills/termic/references/mcp.md']:
+            path=project/name;path.parent.mkdir(parents=True,exist_ok=True)
+            path.write_text('Fixture guidance: '+name)
+        task=self.create()
+        for original in [p for p in project.rglob('*') if p.is_file() and 'Tasks' not in p.parts and p.name!='main.c']:
+            name=str(original.relative_to(project))
+            self.assertEqual((task/name).read_text(),original.read_text())
+            self.assertEqual(self.call('file_read',project='demo',task='fixture',path=name)['content'][0]['text'],original.read_text())
+            self.assertTrue(self.call('file_write',project='demo',task='fixture',path=name,content='overwrite')['isError'])
+        (task/'AGENTS.md').unlink()
+        (self.cwd/'Config/private').write_text('fixture-private')
+        (task/'AGENTS.md').symlink_to(self.cwd/'Config/private')
+        self.assertTrue(self.call('file_read',project='demo',task='fixture',path='AGENTS.md')['isError'])
+        (project/'AGENTS.md').unlink()
+        (project/'AGENTS.md').symlink_to(self.cwd/'Config/private')
+        self.assertFalse(self.call('task_new',project='demo',name='linked-guidance')['isError'])
+        self.assertFalse((project/'Tasks/linked-guidance/AGENTS.md').exists())
+        self.assertTrue(self.call('file_read',project='demo',task='fixture',path='.agents/skills/termic/../../private')['isError'])
+
     def test_disable_and_no_credentials(self):
         r=self.call('agent_list');self.assertNotIn('api-key',json.dumps(r))
         (self.cwd/'Env/mcp-enabled').write_text('0')

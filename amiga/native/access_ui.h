@@ -37,8 +37,8 @@ static Object *build_access_window(void)
               "editor-selected tasks.\nAPI keys, profile environment values and arbitrary "
               "shell commands are not exposed.\nDisable access to reject further tool calls; "
               "already-running workers continue."),
-        End, Child, HVSpace, Child, HGroup, Child, button("Save", AC_SAVE), Child,
-        button("Use", AC_USE), Child, button("Cancel", AC_CANCEL), End, End, End;
+        End, Child, HVSpace, Child, HGroup, MUIA_Group_Spacing, 6, Child, button("Save", AC_SAVE), Child,
+        button("Use", AC_USE), Child, button("Cancel", AC_CANCEL), Child, HVSpace, End, End, End;
     if (o)
     {
         DoMethod(app, OM_ADDMEMBER, o);

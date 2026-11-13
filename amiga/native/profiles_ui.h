@@ -376,7 +376,7 @@ static Object *build_profiles_window(void)
     Child,VGroup,InnerSpacing(8,8),Child,ColGroup(2),Child,label("Report API token usage"),Child,profile_usage=cycle(yesno),End,
     Child,label("\33bAgent state"),Child,label("The native worker reports Running, completion and failure in the task list.\nBuild / CLI contains its output. Cancel requests an orderly stop.\nAPI usage reports actual input/output tokens for each response when supplied.\nSubscription plan quotas and total context-window capacity are not reported.\nExternal CLI hook installation and live YOLO switching need an interactive host.\nNative CLI consoles open their own console; their lifetime is not tracked here."),Child,HVSpace,End,End,
     Child,profile_info=label(""),End,End,
-    Child,HGroup,Child,button("Save",PF_SAVE),Child,button("Use",PF_USE),Child,button("Cancel",PF_CANCEL),End,End,End;
+    Child,HGroup,MUIA_Group_Spacing,6,Child,button("Save",PF_SAVE),Child,button("Use",PF_USE),Child,button("Cancel",PF_CANCEL),Child,HVSpace,End,End,End;
     if(o) {
         DoMethod(app, OM_ADDMEMBER, o);
         notify(o, MUIA_Window_CloseRequest, TRUE, PF_CANCEL);

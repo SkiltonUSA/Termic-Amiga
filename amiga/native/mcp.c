@@ -41,7 +41,7 @@ static const struct Tool tools[] = {
     {"task_log", "Read native build/worker output.", "project task", 1},
     {"task_build", "Build an MCP-created task with its native build command.", "project task",
      0},
-    {"file_read", "Read a C/H source in a task. Path is relative to the task.",
+    {"file_read", "Read C/H source or named project guidance in a task. Paths are task-relative.",
      "project task path", 1},
     {"file_write", "Save C/H source in an idle MCP-created task, retaining a backup.",
      "project task path content", 0},
@@ -314,6 +314,26 @@ static int copy_sources(const char *from, const char *to, int depth)
     cJSON_Delete(dirs);
     return ok;
 }
+/* Instruction snapshots remain local to each source-copy task. */
+static int copy_guidance(const char *from, const char *to)
+{
+    const char *dirs[]={".agents",".agents/skills",".agents/skills/termic",".agents/skills/termic/references"};
+    char a[512],b[512];char *text;int i,j;
+    for(i=0;i<GUIDANCE_COUNT;i++) {
+        if(!pathjoin(a,sizeof(a),from,guidance_files[i]) || kind(a)!=1)continue;
+        if(!within(from,a))return 0;
+        if(i>=2)for(j=0;j<4;j++) {
+            if(!pathjoin(b,sizeof(b),to,dirs[j]))return 0;
+            if(kind(b)!=2 && !make_dir(b))return 0;
+            if(!within(to,b))return 0;
+        }
+        if(!pathjoin(b,sizeof(b),to,guidance_files[i]))return 0;
+        text=read_text(a,8192);
+        if(!text || !mcp_save(b,text,8192)){free(text);return 0;}
+        free(text);
+    }
+    return 1;
+}
 static int busy_task(const char *task)
 {
     char p[512];
@@ -465,7 +485,7 @@ static cJSON *run_tool(const struct Tool *tool, cJSON *args)
             return content("Tasks drawer is outside project storage.", 1);
         if (!pathjoin(task, sizeof(task), path, id) || !make_dir(task))
             return content("Task already exists or cannot be created.", 1);
-        if (!copy_sources(base, task, 0))
+        if (!copy_sources(base, task, 0) || !copy_guidance(base, task))
             return content(
                 "Source copy incomplete. Task left for inspection; agent not started.", 1);
         pathjoin(path, sizeof(path), base, "build-command.txt");
@@ -567,7 +587,9 @@ static cJSON *run_tool(const struct Tool *tool, cJSON *args)
     }
     if (!strcmp(name, "file_read") || !strcmp(name, "file_write"))
     {
-        if (!source_path(task, str(args, "path"), path))
+        if (!( !strcmp(name,"file_read") && guidance_name(str(args,"path")) &&
+               pathjoin(path,sizeof(path),task,str(args,"path")) && kind(path)==1 && within(task,path)) &&
+            !source_path(task, str(args, "path"), path))
             return content("Only relative C/H files inside this task are accessible.", 1);
         if (!strcmp(name, "file_write"))
         {
