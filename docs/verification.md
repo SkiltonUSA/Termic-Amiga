@@ -8,17 +8,30 @@ The screenshots show synthetic fixtures on that machine.
 The new Agents & Terminals and Agent access / MCP implementation cross-builds
 for 68k and passes 11 portable test groups, including profile persistence,
 credential separation, read-only API enforcement, MCP protocol handling and
-filesystem boundaries. An initial hardware run verified profile Save/Use/Cancel,
-the MCP enable setting, task creation, source writes and scratchpad round trips.
-Worker-local environment inheritance was separately checked with AmigaDOS Get.
+filesystem boundaries. After a physical reboot, the written `accept_agents.py`
+hardware suite passed profile Save/Use/Cancel, the MCP enable setting, task
+creation, source writes, scratchpad round trips and traversal rejection.
+The native command profile passed a worker-local environment value to AmigaDOS
+Get. The host stdio connector completed initialization, listed all 15 tools and
+called project_list through the real DevBench bridge and native TermicMCP.
 
-The complete new acceptance run is **pending a reboot and repeat test**. Its
-cleanup left an orphan candidate window and a stale public control port; the
-cause is not established. The test now uses normal MUI close events, and task-list
-refresh notifications have been corrected. Original settings and the production
-assign were restored. The new GUI, worker and TermicMCP have **not been promoted
-to the production installation**. End-to-end stdio bridge operation, asynchronous
-MCP builds and authenticated API calls remain unverified on hardware.
+Asynchronous MCP builds produced a native Hunk executable with VBCC on the Amiga.
+An intentional compiler failure returned exit code 20 and left the previous
+executable byte-for-byte intact. Tests use absolute SDK paths without changing
+system compiler assigns. The final fixture closed normally, its public control
+port disappeared, and original settings, assign and production window geometry
+were restored. Screenshots show synthetic fixtures without API credentials.
+
+An earlier test cleanup left an orphan window and stale control port; its cause
+was not established. The test now closes through normal MUI events and checks
+that the public port is removed. Task-list refresh notifications were also
+corrected before the successful post-reboot runs. Authenticated API calls remain
+unverified without a user key. Peer discovery, desktop pairing and automatic
+client registration are not part of this native implementation.
+The tested GUI, worker and TermicMCP were installed with a rollback backup.
+Their installed CRC32 values are FE05C6DF, C3CE380A and 6D30552D respectively;
+the installed guide and changed source files also match the host copies.
+The production window was restored to 1920 by 789 at (0, 11).
 See [Agents and MCP](agents-and-mcp.md) for implemented features and limitations.
 
 Verified through the written hardware suites:

@@ -38,6 +38,7 @@ async def main(args):
                 finally:await call('amiga_input_click',{'button':'left','direction':'up'})
                 await asyncio.sleep(.6)
             async def capture(title,name):
+                if args.skip_screenshots:return
                 query='?'+urllib.parse.urlencode({'window':title}) if title else ''
                 for attempt in range(2):
                     try:
@@ -63,7 +64,8 @@ async def main(args):
                 p=await state(front=True)
                 if p['address']:await click(p['x']+20,p['y']+20)
                 for _ in range(15):
-                    if not (await state())['address']:return
+                    p=await state()
+                    if not p['address'] and not p['control']:return
                     await asyncio.sleep(1)
                 raise AssertionError('Candidate did not close; retain fixture assign')
             await push(args.probe,PROD+'/ChromeProbe');await shell('Protect '+PROD+'/ChromeProbe +e')
@@ -132,13 +134,50 @@ async def main(args):
                     local=out/'request.json';local.write_text(json.dumps({'jsonrpc':'2.0','id':1,'method':'tools/call','params':{'name':tool,'arguments':arguments}})+'\n')
                     await push(local,fixture+'/request.json')
                     await shell('Termic:TermicMCP --request '+fixture+'/request.json --reply '+fixture+'/reply.json')
-                    reply=out/'reply.json';await call('amiga_pull_file',{'amiga_path':fixture+'/reply.json','local_path':str(reply)})
+                    reply=out/'reply.json';reply.unlink(missing_ok=True)
+                    await call('amiga_pull_file',{'amiga_path':fixture+'/reply.json','local_path':str(reply)})
                     data=json.loads(reply.read_text());assert 'result' in data,data;return data['result']
                 result=await rpc('task_new',{'project':'fixture','name':'mcp-test'});assert not result['isError'],result
                 result=await rpc('file_write',{'project':'fixture','task':'mcp-test','path':'main.c','content':'int main(void) { return 0; }\n'});assert not result['isError'],result
                 result=await rpc('scratchpad_write',{'project':'fixture','task':'mcp-test','pad':'notes','content':'Hardware MCP fixture'});assert not result['isError'],result
                 result=await rpc('scratchpad_read',{'project':'fixture','task':'mcp-test','pad':'notes'});assert result['content'][0]['text']=='Hardware MCP fixture',result
                 result=await rpc('file_read',{'project':'fixture','task':'mcp-test','path':'../../Config/api-key'});assert result['isError'],result
+                # Compile on the real Amiga with absolute SDK paths. The test
+                # config avoids changing VBCC/vinclude/vlib system assigns.
+                sdk=PROD+'/SDK';binpath=sdk+'/vbcc_bin_amigaos68k/bin/'
+                target=sdk+'/vbcc_target_m68k-amigaos/targets/m68k-amigaos/'
+                config='\n'.join([
+                    '-cc='+binpath+'vbccm68k -quiet %s -o= %s %s -O=%ld -I'+target+'include',
+                    '-as='+binpath+'vasmm68k_mot -quiet -Fhunk -nowarn=62 %s -o %s',
+                    '-rm=delete quiet %s',
+                    '-ld='+binpath+'vlink -bamigahunk -x -Bstatic -Cvbcc -nostdlib -mrel '+target+'lib/startup.o %s %s -L'+target+'lib -lvc -o %s',
+                    '-ldnodb=-s -Rshort','-ul=-l%s','-cf=-F%s','-ml=500','-hunkdebug','-amiga-softfloat',''])
+                config_file=out/'native-build.config';config_file.write_text(config)
+                await push(config_file,fixture+'/native-build.config')
+                setup=out/'Setup';setup.write_text('Stack 262144\n')
+                await push(setup,fixture+'/Setup')
+                await push(ROOT/'amiga/native/BuildProject',fixture+'/BuildProject')
+                command=out/'build-command.txt';command.write_text(binpath+'vc +'+fixture+'/native-build.config -cpu=68020 -O1 main.c -o Program.new -lamiga\n')
+                await push(command,fixture+'/Projects/fixture/Tasks/mcp-test/build-command.txt')
+                async def build(expected):
+                    r=await rpc('task_build',{'project':'fixture','task':'mcp-test'});assert not r['isError'],r
+                    for _ in range(30):
+                        r=await rpc('task_status',{'project':'fixture','task':'mcp-test'});assert not r['isError'],r
+                        status=json.loads(r['content'][0]['text'])
+                        if not status['busy'] and status['exit'].strip():break
+                        await asyncio.sleep(1)
+                    else:raise AssertionError('MCP build did not finish')
+                    log=await rpc('task_log',{'project':'fixture','task':'mcp-test'})
+                    assert int(status['exit'])==expected,(status,log)
+                    (out/('build-success.json' if expected==0 else 'build-failure.json')).write_text(json.dumps(log))
+                await build(0)
+                program=out/'Program';await call('amiga_pull_file',{'amiga_path':fixture+'/Projects/fixture/Tasks/mcp-test/Program','local_path':str(program)})
+                executable=program.read_bytes();assert executable[:4]==b'\x00\x00\x03\xf3'
+                result=await rpc('file_write',{'project':'fixture','task':'mcp-test','path':'main.c','content':'#error intentional acceptance failure\n'});assert not result['isError'],result
+                await build(20)
+                program.unlink()
+                await call('amiga_pull_file',{'amiga_path':fixture+'/Projects/fixture/Tasks/mcp-test/Program','local_path':str(program)})
+                assert program.read_bytes()==executable,'Failed build replaced the previous executable'
                 # Run the native command profile through the same worker used by the launcher.
                 registry=json.loads(temporary.read_text());cli=dict(registry['profiles'][0])
                 cli.update(id='fixture-cli',name='Fixture CLI',kind=1,command='C:Get',args='TERMIC_FIXTURE',env='TERMIC_FIXTURE=amiga-cli-fixture',resume_args='',yolo='')
@@ -160,7 +199,7 @@ async def main(args):
                 assert len(replies)==3 and len(replies[1]['result']['tools'])==15,replies
                 assert not replies[2]['result']['isError'],replies
                 (out/'bridge-replies.json').write_bytes(stdout)
-                (out/'passed.json').write_text(json.dumps({'fixture':fixture,'profiles_saved':3,'native_mcp':True},indent=2))
+                (out/'passed.json').write_text(json.dumps({'fixture':fixture,'profiles_saved':3,'native_mcp':True,'native_build':True,'failed_build_preserves_program':True,'stdio_bridge':True},indent=2))
             finally:
                 if launched:await stop_candidate()
                 if prepared:
@@ -176,4 +215,5 @@ async def main(args):
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
     for name in ['gui','worker','mcp','probe']:p.add_argument('--'+name,type=Path,required=True)
+    p.add_argument('--skip-screenshots',action='store_true')
     asyncio.run(main(p.parse_args()))

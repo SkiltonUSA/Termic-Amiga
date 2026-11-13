@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     struct Screen *s;
     struct Window *w;
     LONG x = 0, y = 0, width = 0, height = 0, top = 0, active = 0, mx = 0, my = 0, front = 0;
-    ULONG address = 0;
+    ULONG address = 0, control;
     const char *wanted = argc > 2 ? argv[2] : NULL;
     IntuitionBase = (struct IntuitionBase *)OpenLibrary("intuition.library", 37);
     if (!IntuitionBase)
@@ -34,6 +34,7 @@ int main(int argc, char **argv)
     }
     LockLayerInfo(&s->LayerInfo);
     Forbid();
+    control = FindPort((STRPTR)"TermicWorkspaceUI") != NULL;
     for (w = s->FirstWindow; w; w = w->NextWindow)
         if (wanted ? (w->Title && !strcmp(w->Title, wanted))
                    : (w->ScreenTitle && !strcmp(w->ScreenTitle, "Termic Amiga Workspace")))
@@ -63,7 +64,7 @@ int main(int argc, char **argv)
     CloseLibrary(LayersBase);
     CloseLibrary((struct Library *)IntuitionBase);
     printf("CHROME address=%08lx x=%ld y=%ld width=%ld height=%ld border=%ld active=%ld mx=%ld "
-           "my=%ld front=%ld\n",
-           address, x, y, width, height, top, active, mx, my, front);
+           "my=%ld front=%ld control=%lu\n",
+           address, x, y, width, height, top, active, mx, my, front, control);
     return 0;
 }

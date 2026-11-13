@@ -32,6 +32,10 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 See [Agents, terminals and MCP](docs/agents-and-mcp.md) for setup, client connections
 and differences from desktop Termic.
 
+![Native agent profiles with separate credentials and access settings](docs/screenshots/agents.png)
+
+![Amiga MCP access with Save, Use and Cancel](docs/screenshots/agent-access.png)
+
 [Amiga interface conventions](docs/amiga-interface.md) describes the menu,
 preferences and clipboard behavior and its remaining limitations.
 
