@@ -277,3 +277,15 @@ Common action buttons use icons with hover tooltips: floppy Save, triangle
 Run, square Stop, hammer Build, gear Settings, magnifier Find, speech bubble
 Prompts, and keyboard Shortcuts. Menu names and keyboard commands remain.
 Dialog Save/Use/Cancel use floppy, check and cross icons.
+
+CODEX ON MAC (CHATGPT SIGN-IN)
+Settings > Agents / CLI / Scripts > Add Codex creates a Mac relay profile.
+Start Termic Amiga Codex.command on the Mac, select Codex on Mac in the Amiga
+launcher, and send with Tab. Credentials stay on the Mac. The relay uses the
+existing DevBench MCP bridge and Codex app-server; no new network port opens.
+One task at a time. Native C/H read/write/build tools, file-access limits,
+backup saves, transcript updates, Stop and conversation resumption apply.
+Blank model uses Codex's default. API steps / relay calls limits tool calls;
+API token limits, usage reporting and CLI arguments do not apply.
+Install on the Mac: python3 scripts/amiga/install_codex_relay.py
+Full setup and limits: docs/codex-relay.md in the source repository.

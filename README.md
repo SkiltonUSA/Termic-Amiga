@@ -17,6 +17,7 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 - Native VBCC build/run and explicit AmigaDOS commands with captured output.
 - Native Git initialization, status, diffs and source commits.
 - OpenAI agent conversations with bounded C/header file tools and local builds.
+- Codex on Mac relay using ChatGPT sign-in, with prompts sent from the Amiga.
 - Agents / CLI / Scripts profiles with separate credentials, launch arguments, sessions and access limits.
 - CLI, ARexx and MicroPython script execution, with a pinned native MicroPython runtime.
 - Native MCP/CLI routines for task orchestration, builds, source files and scratchpads.
@@ -39,6 +40,10 @@ for the prompt library, project guidance and screenshot-style key bindings.
 ![Termic prompt library with black editor and action icons](docs/screenshots/prompts.png)
 
 ![Compose, Session and Transcript shortcuts](docs/screenshots/keyboard-shortcuts.png)
+
+For ChatGPT sign-in without an Amiga API key, see [Codex on Mac relay](docs/codex-relay.md).
+
+![Codex on Mac profile](docs/screenshots/codex-profile.png)
 
 See [Agents, CLI, scripts and MCP](docs/agents-and-mcp.md) for setup, client connections
 and differences from desktop Termic.

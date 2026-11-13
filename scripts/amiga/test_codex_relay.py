@@ -1,0 +1,110 @@
+import asyncio
+import copy
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import tempfile
+import unittest
+from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[2]
+spec = importlib.util.spec_from_file_location('relay', Path(__file__).with_name('codex_relay.py'))
+relay = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(relay)
+
+
+def job():
+    return {'protocol': 1, 'id': '12345678-12345678-1234', 'prompt': 'Fixture task',
+            'instructions': 'Fixture guidance', 'model': '', 'thread': '', 'readonly': False,
+            'limit': 2, 'guidance': []}
+
+
+class RelayTests(unittest.TestCase):
+    def test_native_protocol(self):
+        src = ROOT / 'amiga/native'
+        with tempfile.TemporaryDirectory() as d:
+            binary = str(Path(d) / 'relay')
+            subprocess.run(['cc', '-std=c99', '-Wall', '-Wextra', '-Werror', '-Wno-deprecated-declarations',
+                            '-fsanitize=address,undefined', '-I', str(src),
+                            *[str(src / f) for f in ['relay.c', 'vendor/cJSON.c', 'tests/test_relay.c']],
+                            '-o', binary], check=True)
+            subprocess.run([binary], check=True)
+
+    def test_job_boundaries(self):
+        relay.validate_job(job())
+        for key, value in [('id', '../Config'), ('thread', '../../auth.json'), ('prompt', 'x' * 8193),
+                           ('readonly', 1), ('limit', 0), ('limit', 33), ('protocol', 2),
+                           ('guidance', [{'path': 'Config/api-key', 'text': 'fixture'}])]:
+            data = job(); data[key] = value
+            with self.assertRaises(ValueError):
+                relay.validate_job(data)
+
+    def test_tool_permissions_and_text(self):
+        names = {x['name'] for x in relay.dynamic_tools(True)}
+        self.assertEqual(names, {'read_source', 'read_file', 'list_sources'})
+        self.assertEqual({x['name'] for x in relay.dynamic_tools(False)}, relay.TOOLS)
+        self.assertEqual(relay.display_text('Hello\x1b\x00\n'), 'Hello\n')
+        with self.assertRaises(ValueError):
+            relay.Bridge('http://localhost', 'DH0:Work\nDelete')
+
+    def test_auth_stays_local(self):
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d); source = base / 'source'; source.mkdir()
+            ((source / 'auth.json').resolve()).write_text('{"fixture":"not-a-credential"}')
+            home, work = relay.prepare_home(base / 'state', source)
+            self.assertTrue((home / 'auth.json').is_symlink())
+            self.assertEqual((home / 'auth.json').resolve(), (source / 'auth.json').resolve())
+            self.assertEqual(list(work.iterdir()), [])
+
+
+class FakeBridge:
+    def __init__(self):
+        self.frames = []; self.stop = False
+    async def read(self, name):
+        if name.endswith('.stopped'):
+            return 'stopped' if self.stop else None
+        if name.endswith('.out') and self.frames:
+            frame = self.frames[-1]
+            return json.dumps({'id': frame['id'], 'seq': frame['seq'], 'ok': True, 'text': 'fixture.c'})
+    async def write(self, name, value): self.frames.append(value)
+    async def remove(self, *names): pass
+
+
+class AsyncRelayTests(unittest.IsolatedAsyncioTestCase):
+    async def test_mailbox_order_and_stop(self):
+        bridge = FakeBridge(); box = relay.Mailbox(bridge, job())
+        await asyncio.gather(box.send('ping'), box.send('text', text='Fixture'))
+        self.assertEqual([f['seq'] for f in bridge.frames], [1, 2])
+        bridge.stop = True
+        with self.assertRaises(ConnectionError): await box.send('tool', name='build', arguments={})
+        self.assertEqual(len(bridge.frames), 2)
+
+    async def test_run_job_tool_call_completion_and_resume(self):
+        class FakeCodex:
+            def __init__(self, *args):
+                self.events = asyncio.Queue(); self.methods = []; self.closed = False
+            async def start(self): pass
+            async def rpc(self, method, params):
+                self.methods.append(method)
+                if method in ('thread/start', 'thread/resume'): return {'thread': {'id': 'abcdef-1234'}}
+                if method == 'turn/start':
+                    await self.events.put({'id': 7, 'method': 'item/tool/call', 'params': {
+                        'threadId': 'abcdef-1234', 'tool': 'list_sources', 'arguments': {}}})
+                    return {'turn': {'id': 'turn-1'}}
+            async def send(self, obj):
+                self.reply = obj
+                await self.events.put({'method': 'item/completed', 'params': {'item': {'type': 'agentMessage', 'text': 'Fixture complete'}}})
+                await self.events.put({'method': 'turn/completed', 'params': {'turn': {'id': 'turn-1', 'status': 'completed'}}})
+            async def close(self): self.closed = True
+        for resume in [False, True]:
+            bridge = FakeBridge(); data = job()
+            if resume: data['thread'] = 'abcdef-1234'
+            instance = FakeCodex()
+            with patch.object(relay, 'Codex', return_value=instance):
+                self.assertTrue(await relay.run_job(bridge, data, 'fixture', Path('/tmp'), Path('/tmp')))
+            self.assertIn('thread/resume' if resume else 'thread/start', instance.methods)
+            self.assertTrue(instance.closed)
+            self.assertEqual([f['name'] for f in bridge.frames if f['kind'] == 'tool'], ['list_sources'])
+            self.assertEqual(bridge.frames[-1]['status'], 'completed')
+            self.assertTrue(instance.reply['result']['success'])

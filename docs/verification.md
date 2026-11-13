@@ -192,3 +192,51 @@ F62B6823 (worker, 63564 bytes), and 8726B98B (MCP, 58716 bytes). Previous files
 are retained in SD032G:Dev/Termic/Backup/agents-1794598993. Missing project
 instructions were installed while existing files were preserved. The production
 application reopened successfully at 1920x789 with its control port present.
+
+## Codex on Mac relay
+
+Twenty portable test groups pass, including native relay frame ordering, stale
+IDs, session validation, call limits, host mailbox ordering, stopped jobs,
+read-only tool exposure, completion and resumption dispatch. All 68k binaries
+cross-build. Codex CLI 0.166.0 reports ChatGPT authentication in the isolated
+relay configuration; no API key or sign-in token was transferred to the Amiga.
+
+The existing core hardware checks passed during the integrated runs: profiles,
+prompts, shortcuts, native MCP, build/failure preservation, CLI, ARexx and
+MicroPython. Relay failures were then narrowed with a focused rerun of the
+written accept_codex.py checks in the same isolated installation. The final
+relay checks passed on the A4000TX:
+
+- The MUI composer launched the selected Codex on Mac profile with Tab.
+- A real signed-in Codex turn listed/read source and guidance, wrote a small
+  C89 console program, and compiled it with the native Amiga toolchain.
+  The resulting Program has an Amiga Hunk header. The program was not run.
+- A second turn resumed the saved thread and recalled the generated marker.
+- Shift F10 stopped a worker waiting for the Mac without starting inference.
+- Native read-only mode rejected write_source and build even when the test
+  client explicitly requested them. Source bytes were preserved.
+- A read_file request outside the task was rejected.
+- The clipboard, ENV preferences, Termic assign and production window geometry
+  were restored after the test.
+
+Native probes exposed two compatibility issues. Append/update fopen modes
+failed on this setup; the relay now uses bounded backup-and-replace transcript
+writes, closing the file between messages. Long temporary mailbox names could
+be created through stdio but failed native Rename with DOS error 205. A direct
+long/short comparison confirmed shorter names work; all generated mailbox
+filenames, including temporary suffixes, are now at most 30 characters.
+
+The direct API branch still uses append-mode transcript output and needs a
+separate repair/verification on this filesystem. The verified Codex relay does
+not use that branch. Its completed-message display is not token streaming.
+One relay task runs at a time. Live cancellation during inference/compiler
+execution, disconnect/reboot recovery and different MUI/display configurations
+remain additional hardware checks; stop-before-connection and portable
+disconnection handling were exercised. No AmiPkg release was published.
+
+Installed files were checksum-verified. GUI: 122308 bytes, CRC32 A4E31D38;
+worker: 68832 bytes, B200C168; MCP: 58760 bytes, 3793A0B3. The rollback
+backup is SD032G:Dev/Termic/Backup/agents-1794608665. The production app
+reopened at 1920x789 with its control port present. The installed MCP handshake,
+15-tool catalogue and disabled-by-default gate passed. The Mac launcher
+uses an installed copy of the tested relay and passes the sign-in check.

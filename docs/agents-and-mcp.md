@@ -11,7 +11,7 @@ of projects; the selected profile ID and YOLO choice are saved in the task when
 it starts. The supplied profiles are OpenAI API and Amiga CLI. Desktop Claude,
 Codex and other CLI executables are not bundled or marked as installed.
 
-- Add API, Add CLI, Add ARexx and Add MicroPython create editable profiles, up to 32.
+- Add API, Add Codex, Add CLI, Add ARexx and Add MicroPython create editable profiles, up to 32.
 - Duplicate makes a separate profile. API duplicates need their own credential;
   they do not silently inherit another account's key.
 - Built-ins can be edited and reset but not removed. Reset preserves credentials
@@ -27,7 +27,7 @@ An API profile chooses a model, key, source access, step limit (1–32), output
 limit (256–16384 tokens), session resumption and token reporting. The built-in
 OpenAI profile retains the existing main Settings key. An empty model uses the
 main Settings model. An empty key field retains that profile's existing key.
-Only OpenAI's Responses API is implemented; other providers need their own
+Only OpenAI's Responses API is implemented for direct API profiles; other providers need their own
 transport and request/response adapters.
 
 Read-only profiles advertise only reading/listing tools and reject writing or
@@ -36,6 +36,10 @@ existing bounded C/H file tools; neither mode gives the model a shell tool.
 API sessions are separated by profile and task. New conversation resets the
 selected profile's session. Usage displays actual input/output tokens supplied
 by the API for each response, not a subscription quota or context-capacity estimate.
+
+The **Codex on Mac** profile uses the [Mac relay](codex-relay.md) and ChatGPT
+sign-in. Its key, CLI arguments, token limit and usage controls are disabled;
+model, file access, tool-call limit and session resumption apply.
 
 Native CLI and script profiles run a configured Amiga executable in the task drawer.
 Default arguments are always passed. YOLO arguments are appended only when
@@ -143,8 +147,8 @@ stdio adapter does not add its own network authentication layer.
 The native UI is notified through an Exec signal when MCP changes tasks or a
 worker finishes. It refreshes the task list without reloading the current editor.
 Scratchpads are exposed through MCP; a native scratchpad editing tab is not yet
-implemented. Network inference and authenticated model access still require an
-API key and a separate live test.
+implemented. Direct API inference requires an API key. The separate Codex relay uses the
+Mac's ChatGPT sign-in; see its documentation and verification record.
 
 Protocol references: [stdio transport](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/stdio)
 and [Streamable HTTP](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http).

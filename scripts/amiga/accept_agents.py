@@ -233,6 +233,9 @@ async def main(args):
                 assert len(replies)==3 and len(replies[1]['result']['tools'])==15,replies
                 assert not replies[2]['result']['isError'],replies
                 (out/'bridge-replies.json').write_bytes(stdout)
+                if args.codex_relay:
+                    import accept_codex
+                    await accept_codex.exercise(ROOT,out,fixture,shell,push,call,state,click,capture,menu,args)
                 (out/'passed.json').write_text(json.dumps({'fixture':fixture,'profiles_saved':3,'native_mcp':True,'native_build':True,'failed_build_preserves_program':True,'stdio_bridge':True,'arexx':True,'micropython':True,'workflow':True},indent=2))
             finally:
                 if launched:await stop_candidate()
@@ -249,5 +252,6 @@ async def main(args):
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
     for name in ['gui','worker','mcp','probe','micropython']:p.add_argument('--'+name,type=Path,required=True)
+    p.add_argument('--codex-relay',action='store_true',help='Run an authenticated synthetic Codex read/write/build and resume test')
     p.add_argument('--skip-screenshots',action='store_true')
     asyncio.run(main(p.parse_args()))

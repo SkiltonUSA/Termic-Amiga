@@ -1463,7 +1463,7 @@ int main(int argc, char **argv)
             int n;
             char *name;
             if(id>=AC_OPEN && id<=AC_CANCEL) {access_event(id);continue;}
-            if(id>=PF_OPEN && id<=PF_ADDPYTHON) {profile_event(id);continue;}
+            if(id>=PF_OPEN && id<=PF_ADDCODEX) {profile_event(id);continue;}
             if (shortcut_event(id)) continue;
             if(id>=PL_OPEN && id<=PL_INSERT) {prompts_event(id);continue;}
             switch (id)

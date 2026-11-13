@@ -13,6 +13,7 @@ Native MUI development workspace for AmigaOS 3.2 / 68020+.
   @{"Troubleshooting" LINK Trouble}       @{"Limits and hardware" LINK Limits}
   @{"Workbench launchers" LINK Workbench}  @{"Version and credits" LINK About}
   @{"Agent profiles" LINK Profiles}     @{"MCP and CLI access" LINK MCP}
+  @{"Codex on Mac" LINK Codex}          @{"Prompts" LINK Prompts}
   @{"Alphabetical index" LINK Index}
 
 Use Contents to return here, Index for topics, Retrace to go back,
@@ -41,8 +42,8 @@ New task makes an independent copy of the selected workspace's source.
 The left pane selects projects and tasks. The right pane selects files.
 Drag the pane dividers to adjust widths. F1-F5 select centre tabs.
 
-You can build and edit locally without a cloud account. An API key is
-needed only for Start agent. Review generated changes before running them.
+You can build and edit locally without a cloud account. Direct API agents require an API key.
+Codex on Mac uses the Mac's ChatGPT sign-in through the relay. Review generated changes before running them.
 
 Next: @{"Projects" LINK Projects}  @{"Editor" LINK Editor}  @{"Build" LINK Build}
 @ENDNODE
@@ -580,4 +581,34 @@ shows them for editing. API requests load current AGENTS.md and SKILL.md
 (up to 8192 bytes each). Missing or unreadable files are skipped. Agent/MCP
 file tools can read the six named files; only C/H files can be written.
 CLAUDE.md is a compatibility pointer, not an installed agent executable.
+@ENDNODE
+
+@NODE Codex "Codex on Mac through MCP"
+Use your Mac's ChatGPT sign-in from the Amiga task composer.
+No API key or sign-in token is copied to the Amiga.
+
+On the Mac, sign into Codex CLI with codex login. From the source checkout:
+  python3 scripts/amiga/install_codex_relay.py
+Double-click Termic Amiga Codex.command in your Mac Applications drawer.
+Keep that Terminal window and the existing DevBench MCP bridge running.
+Ctrl C in the Mac window stops the relay. No startup service is installed.
+
+On the Amiga, open Settings > Agents / CLI / Scripts and choose Add Codex.
+Save, select Codex on Mac below the composer, enter a task and press Tab.
+A blank model uses Codex's default. Choose read-only or edit-and-build access.
+API steps / relay calls limits tool calls. Token/usage and CLI settings
+do not apply to this profile. ChatGPT plan access and limits still apply.
+
+The relay provides C/H reads, backup saves and native builds. Project guidance
+is included. Responses appear in the transcript after each assistant message.
+One relay task runs at a time. Stop (Shift F10) cancels; New conversation starts
+a separate thread. The Mac keeps conversation history and credentials.
+
+If the Mac is unavailable, the worker times out. Start the relay and send again.
+A failed conversation resume needs New conversation. Tasks are not retried
+automatically. Custom Amiga build commands retain ordinary AmigaOS access.
+The general MCP access setting governs external clients; a relay started by
+the user does not require it. Codex app-server is experimental.
+
+See also: @{"Profiles" LINK Profiles}  @{"MCP" LINK MCP}  @{"Cloud agent" LINK Agent}
 @ENDNODE

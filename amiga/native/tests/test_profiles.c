@@ -71,6 +71,10 @@ int main(void)
     assert(!script_command(4,"demo.py\nDelete",command,sizeof(command)));
     assert(!script_command(4,"demo.py",command,8));
     assert(!script_command(0,"demo.py",command,sizeof(command)));
+    n=profile_add(p,5,-1);
+    assert(profile_valid(&p->items[n]) && !strcmp(p->items[n].name,"Codex on Mac"));
+    assert(!profile_command(&p->items[n],0,0,command,sizeof(command)));
+    json=profiles_json(p);assert(json && profiles_parse(q,json) && q->items[n].kind==5);free(json);
     free(p);
     free(q);
     puts("Profiles: independent keys, persistence, validation and launch options passed.");
