@@ -57,8 +57,9 @@ WORKSPACE
 Left: projects, project naming/import, tasks and task status.
 Centre: Agent, Editor, Build / Shell, Changes and Settings tabs.
 Right: editable C, header, text and Markdown files, plus new-file controls.
-Drag the dividers to resize panes. Disk fonts improve readability when
-Helvetica and Courier are available; otherwise MUI fonts are used.
+Drag the dividers to resize panes. MUI preferences supply the interface fonts
+and colours, including the fixed-width editor font. Use Settings > MUI Settings...
+to customize them. The source editor retains its black syntax-colour background.
 
 New project uses the clean Template drawer. Import source drawer copies
 regular editable files into a managed project. New task copies the selected
@@ -69,8 +70,8 @@ command. Original Project/main.c remains available as the starter project.
 Names and task status are saved, and the last workspace reopens on launch.
 
 EDITOR
-Select a file to edit it in TextEditor.mcc. Save, Undo, Redo, Cut, Copy,
-Paste, Find and Next operate in the application. A successful save keeps
+Select a file to edit it in TextEditor.mcc. Use Project > Save and the Edit
+menu for Undo, Redo, Cut, Copy and Paste. Find and Next remain below the editor. A successful save keeps
 previous contents in file.bak. File/workspace switches save pending edits;
 a failed save prevents switching. Source files are limited to 32 KiB.
 The source editor has a black background and light plain text.

@@ -18,6 +18,7 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 - OpenAI agent conversations with bounded C/header file tools and local builds.
 - Persistent workspace selection, task status, model settings and an About window.
 - Native Project/Edit/Workspace/View/Settings/Help menus and Right-Amiga shortcuts.
+- Editor commands in the menu strip, with interface fonts and colours from MUI preferences.
 - Save/Use/Cancel preferences and shared Amiga IFF text clipboard.
 - Linked AmigaGuide manual available with Help or Help > Contents... .
 

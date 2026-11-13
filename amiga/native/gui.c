@@ -14,10 +14,8 @@
 #include <libraries/gadtools.h>
 #include <mui/TextEditor_mcc.h>
 #include <proto/asl.h>
-#include <proto/diskfont.h>
 #include <proto/dos.h>
 #include <proto/exec.h>
-#include <proto/graphics.h>
 #include <proto/icon.h>
 #include <proto/intuition.h>
 #include <stdio.h>
@@ -25,9 +23,7 @@
 #include <string.h>
 #include <workbench/workbench.h>
 
-struct Library *MUIMasterBase, *IconBase, *DiskfontBase, *AslBase;
-struct GfxBase *GfxBase;
-static struct TextFont *bodyfont, *codefont;
+struct Library *MUIMasterBase, *IconBase, *AslBase;
 struct IntuitionBase *IntuitionBase;
 const char version_tag[] = TERMIC_VERSION_TAG("TermicNative");
 const char stack_size[] = "$STACK:262144";
@@ -97,12 +93,7 @@ enum
     MUIPREFS,
     UPDATE_MENUS,
     SELECTALL,
-    ERASE,
-    SOURCE_UNDO,
-    SOURCE_REDO,
-    SOURCE_CUT,
-    SOURCE_COPY,
-    SOURCE_PASTE
+    ERASE
 };
 struct Job
 {
@@ -125,17 +116,14 @@ static void notify(Object *o, ULONG a, ULONG v, ULONG id)
 }
 static Object *label(const char *s)
 {
-    return TextObject, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, MUIA_Text_Contents,
-           s, End;
+    return TextObject, MUIA_Font, MUIV_Font_Normal, MUIA_Text_Contents, s, End;
 }
 static Object *button(const char *s, int id)
 {
-    Object *o = TextObject, ButtonFrame, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Button,
-           MUIA_InnerTop, 4, MUIA_InnerBottom, 4, MUIA_Background, MUII_ButtonBack, MUIA_InputMode,
+    Object *o = TextObject, ButtonFrame, MUIA_Font, MUIV_Font_Button, MUIA_InnerTop, 4,
+           MUIA_InnerBottom, 4, MUIA_Background, MUII_ButtonBack, MUIA_InputMode,
            MUIV_InputMode_RelVerify, MUIA_Text_Contents, s, MUIA_Text_PreParse, "\33c",
            MUIA_CycleChain, 1, End;
-    if (id == CUT || id == COPY || id == PASTE || id == UNDO || id == REDO)
-        id = SOURCE_UNDO + id - UNDO;
     if (id == SAVECONFIG || id == USECONFIG || id == CANCELCONFIG)
     {
         char key = id == SAVECONFIG ? 's' : id == USECONFIG ? 'u' : 'c';
@@ -146,21 +134,20 @@ static Object *button(const char *s, int id)
 }
 static Object *entry(unsigned max)
 {
-    return StringObject, StringFrame, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal,
-           MUIA_String_MaxLen, max, MUIA_CycleChain, 1, End;
+    return StringObject, StringFrame, MUIA_Font, MUIV_Font_Normal, MUIA_String_MaxLen, max,
+           MUIA_CycleChain, 1, End;
 }
 static Object *list(Object **o)
 {
     return ListviewObject, MUIA_Listview_List,
-           *o = ListObject, InputListFrame, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_List,
-           MUIA_List_ConstructHook, MUIV_List_ConstructHook_String, MUIA_List_DestructHook,
-           MUIV_List_DestructHook_String, End, End;
+           *o = ListObject, InputListFrame, MUIA_Font, MUIV_Font_List, MUIA_List_ConstructHook,
+           MUIV_List_ConstructHook_String, MUIA_List_DestructHook, MUIV_List_DestructHook_String,
+           End, End;
 }
 static Object *editor(Object **o, int readonly)
 {
     Object *slider;
-    Object *g = HGroup, Child, *o = TextEditorObject, InputListFrame, MUIA_Font,
-           codefont ? (ULONG)codefont : MUIV_Font_Fixed,
+    Object *g = HGroup, Child, *o = TextEditorObject, InputListFrame, MUIA_Font, MUIV_Font_Fixed,
            o == &source ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
            MUIA_TextEditor_ReadOnly, readonly, MUIA_TextEditor_ImportHook,
            MUIV_TextEditor_ImportHook_Plain, MUIA_TextEditor_ExportHook,
@@ -936,8 +923,7 @@ static void open_about(void)
         MUIA_Window_SizeGadget, FALSE, MUIA_Window_NoMenus, TRUE, MUIA_Window_LeftEdge,
         MUIV_Window_LeftEdge_Centered, MUIA_Window_TopEdge, MUIV_Window_TopEdge_Centered,
         WindowContents, VGroup, InnerSpacing(16, 14), MUIA_Group_Spacing, 10, MUIA_Font,
-        bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, Child,
-        label("\33c\33bTermic Amiga " TERMIC_VERSION), Child,
+        MUIV_Font_Normal, Child, label("\33c\33bTermic Amiga " TERMIC_VERSION), Child,
         label("\33cNative development workspace for AmigaOS"), Child, TextObject, TextFrame,
         MUIA_Text_Contents,
         "Version: " TERMIC_VERSION "   |   Build date: " TERMIC_VERSION_DATE "\n"
@@ -1089,16 +1075,13 @@ static int build_ui(void)
     list(&tasks), Child, taskname = entry(120), Child, HGroup, Child, button("New task", NEWTASK),
     Child, button("Rename", RENAMETASK), End, Child, button("Mark done", MARKDONE), End;
     center = VGroup, MUIA_Weight, 65, Child, heading = label("Termic workspace"), Child,
-    pages = RegisterGroup(tabs), MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, Child,
-    VGroup, Child, editor(&transcript, 1), Child, label("\33bTask instructions"), Child,
-    editor(&prompt, 0), Child, HGroup, Child, button("Save task", SAVETASK), Child,
-    button("Start agent", AGENT), Child, button("Cancel", CANCEL), Child,
-    button("New conversation", NEWSESSION), End, End, Child, VGroup, Child,
-    filename = label("main.c"), Child, HGroup, Child, button("Save", SAVE), Child,
-    button("Undo", UNDO), Child, button("Redo", REDO), Child, button("Cut", CUT), Child,
-    button("Copy", COPY), Child, button("Paste", PASTE), End, Child, editor(&source, 0), Child,
-    HGroup, Child, findtext = entry(120), Child, button("Find", FIND), Child,
-    button("Next", FINDNEXT), End, End, Child, VGroup, Child, editor(&output, 1), Child,
+    pages = RegisterGroup(tabs), MUIA_Font, MUIV_Font_Normal, Child, VGroup, Child,
+    editor(&transcript, 1), Child, label("\33bTask instructions"), Child, editor(&prompt, 0), Child,
+    HGroup, Child, button("Save task", SAVETASK), Child, button("Start agent", AGENT), Child,
+    button("Cancel", CANCEL), Child, button("New conversation", NEWSESSION), End, End, Child,
+    VGroup, Child, filename = label("main.c"), Child, editor(&source, 0), Child, HGroup, Child,
+    findtext = entry(120), Child, button("Find", FIND), Child, button("Next", FINDNEXT), End, End,
+    Child, VGroup, Child, editor(&output, 1), Child,
     label("AmigaDOS command (runs in this workspace)"), Child, command = entry(1024), Child, HGroup,
     Child, button("Execute", SHELL), Child, button("Cancel job", CANCEL), End, End, Child, VGroup,
     Child, HGroup, Child, button("Status", GITSTATUS), Child, button("Diff", DIFF), Child,
@@ -1114,7 +1097,7 @@ static int build_ui(void)
     Child, label("Build command for this workspace (must produce Program.new)"), Child,
     buildcommand = entry(512), Child, button("Save build command", SAVEBUILD), Child,
     label("VBCC / NDK 3.2. Build and Run execute on the Amiga.\nTasks use independent source "
-          "snapshots.\nReadable disk fonts are used when installed; MUI supplies colours and split "
+          "snapshots.\nMUI preferences supply interface fonts and colours. Resize the split "
           "panes.\nZZ9000 "
           "provides the RTG display. ARM jobs require an exclusive core lease.\nCloud inference "
           "needs an API key and an internet connection."),
@@ -1124,12 +1107,12 @@ static int build_ui(void)
     list(&files), Child, newname = entry(180), Child, button("Create file", NEWFILE), Child,
     button("Refresh files", REFRESH), Child,
     label("C, H, text and Markdown\nSelect to edit.\nSaves keep .bak copies."), End;
-    body = VGroup, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, MUIA_Group_Spacing, 7,
-    InnerSpacing(8, 6), Child, HGroup, Child, label("\33bTERMIC / AMIGA " TERMIC_VERSION), Child,
-    HVSpace, Child, button("Build", BUILD), Child, button("Run", RUN), Child,
-    button("Settings", SETTINGS), Child, button("About", ABOUT), Child, button("Quit", QUIT), End,
-    Child, HGroup, Child, left, Child, BalanceObject, End, Child, center, Child, BalanceObject, End,
-    Child, right, End, Child, status = label("Ready"), End;
+    body = VGroup, MUIA_Font, MUIV_Font_Normal, MUIA_Group_Spacing, 7, InnerSpacing(8, 6), Child,
+    HGroup, Child, label("\33bTERMIC / AMIGA " TERMIC_VERSION), Child, HVSpace, Child,
+    button("Build", BUILD), Child, button("Run", RUN), Child, button("Settings", SETTINGS), Child,
+    button("About", ABOUT), Child, button("Quit", QUIT), End, Child, HGroup, Child, left, Child,
+    BalanceObject, End, Child, center, Child, BalanceObject, End, Child, right, End, Child,
+    status = label("Ready"), End;
     win = WindowObject, MUIA_Window_Title, "Termic Amiga Workspace", MUIA_Window_ID,
     MAKE_ID('T', 'R', 'M', 'C'), MUIA_Window_Width, 1400, MUIA_Window_Height, 650,
     MUIA_Window_Menustrip, build_menus(), WindowContents, body, End;
@@ -1207,16 +1190,7 @@ int main(int argc, char **argv)
     MUIMasterBase = OpenLibrary((STRPTR) "muimaster.library", 19);
     if (!IntuitionBase || !MUIMasterBase)
         goto cleanup;
-    GfxBase = (struct GfxBase *)OpenLibrary((STRPTR) "graphics.library", 37);
     AslBase = OpenLibrary((STRPTR) "asl.library", 37);
-    DiskfontBase = OpenLibrary((STRPTR) "diskfont.library", 37);
-    if (GfxBase && DiskfontBase)
-    {
-        struct TextAttr a = {(STRPTR) "helvetica.font", 13, 0, FPF_DISKFONT},
-                        b = {(STRPTR) "courier.font", 13, 0, FPF_DISKFONT};
-        bodyfont = OpenDiskFont(&a);
-        codefont = OpenDiskFont(&b);
-    }
     {
         char *configured = read_preference("projects-drawer", 180);
         if (configured)
@@ -1551,11 +1525,6 @@ int main(int argc, char **argv)
                 else
                     message("Enter a commit message and wait for running jobs.");
                 break;
-            case SOURCE_UNDO:
-            case SOURCE_REDO:
-            case SOURCE_CUT:
-            case SOURCE_COPY:
-            case SOURCE_PASTE:
             case UNDO:
             case REDO:
             case CUT:
@@ -1564,9 +1533,7 @@ int main(int argc, char **argv)
             case SELECTALL:
             case ERASE:
             {
-                Object *target = id >= SOURCE_UNDO ? source : edit_target();
-                if (id >= SOURCE_UNDO)
-                    id = UNDO + id - SOURCE_UNDO;
+                Object *target = edit_target();
                 const char *cmd = id == UNDO        ? "UNDO"
                                   : id == REDO      ? "REDO"
                                   : id == CUT       ? "CUT"
@@ -1643,16 +1610,8 @@ cleanup:
         DeleteMsgPort(timer_port);
     if (app)
         MUI_DisposeObject(app);
-    if (codefont)
-        CloseFont(codefont);
-    if (bodyfont)
-        CloseFont(bodyfont);
     if (AslBase)
         CloseLibrary(AslBase);
-    if (DiskfontBase)
-        CloseLibrary(DiskfontBase);
-    if (GfxBase)
-        CloseLibrary((struct Library *)GfxBase);
     if (MUIMasterBase)
         CloseLibrary(MUIMasterBase);
     if (IntuitionBase)

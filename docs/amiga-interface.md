@@ -8,7 +8,11 @@ The full workspace remains available beneath the menu strip.
 Edit actions follow the focused TextEditor gadget, including task instructions
 and selectable log output. Single-line fields keep their MUI editing behavior;
 Tab to a button before using application keys that a field consumes.
-Toolbar editing buttons explicitly target the source editor.
+The editor has no duplicate command button row. Save is in Project; Undo, Redo,
+Cut, Copy and Paste are in Edit. Standard MUI font roles (normal, button, list
+and fixed-width) follow configured preferences instead of forcing Helvetica or
+Courier. Interface colours use MUI pens; the requested black source background
+and syntax palette remain local to the source editor.
 TextEditor handles IFF FTXT clipboard exchange. Source and task saves export
 without formatting, and pasted colours are disabled so clipboard styles do not
 become escape sequences in source files or task instructions.
@@ -45,6 +49,8 @@ The workspace is intended for the A4000TX's RTG desktop, not a 640x200 layout.
 
 References consulted:
 
+- [Workbench manual](https://wiki.amigaos.net/wiki/AmigaOS_Manual:_Workbench)
+- [Workbench Fonts](https://wiki.amigaos.net/wiki/AmigaOS_Manual:_Workbench_Fonts)
 - [Menus](https://wiki.amigaos.net/wiki/UI_Style_Guide_Menus)
 - [Preferences](https://wiki.amigaos.net/wiki/UI_Style_Guide_Preferences)
 - [Data Sharing](https://wiki.amigaos.net/wiki/UI_Style_Guide_Data_Sharing)

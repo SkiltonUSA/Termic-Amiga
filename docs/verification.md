@@ -13,6 +13,8 @@ Verified through the written hardware suites:
 - Quit/reopen with last-workspace restoration.
 - About opening from the editor, closing/reopening, and all three Amiga version tags.
 - Native menu order and command keys, ghosted Copy/Paste states, and menu shortcuts.
+  Rechecked after removing the editor command buttons and adopting MUI font preferences;
+  the updated workspace, Settings and About screenshots were visually inspected.
 - Clipboard output is an IFF FORM FTXT with the expected CHRS text; pasting into
   task instructions and saving produces exact plain text without colour codes.
 - Preferences Use leaves saved defaults unchanged; Cancel discards edits; Save

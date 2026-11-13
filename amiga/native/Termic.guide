@@ -98,7 +98,8 @@ Colours are applied when a file loads, not continuously while typing.
 Saved files are plain source without display style codes. Ordinary Save
 retains undo history and keeps the previous file as filename.bak.
 
-Use Edit for Cut, Copy, Paste, Erase, Select All, Undo and Redo.
+Use Project > Save and Edit for Cut, Copy, Paste, Erase, Select All, Undo
+and Redo. These commands live in the menu strip, not an editor button row.
 Menu actions target the focused text editor, including task instructions
 and read-only logs (Copy only). Click in the intended text before editing.
 String fields use their normal MUI editing keys. Unavailable editor menu
@@ -217,8 +218,10 @@ check storage and retry if Termic reports a preference write failure.
 
 Build commands have their own Save build command button because they are
 workspace data. Settings > MUI Settings... opens MUI's appearance editor.
-Other panels use MUI colours; source text retains the requested black
-background and readable syntax palette. System preferences are not changed.
+Interface fonts and colours follow MUI preferences, including its fixed-width
+font for editors. No Helvetica or Courier font is forced. Source text retains
+the requested black background and readable syntax palette. System
+preferences are not changed.
 
 Preset files and SETTINGS ToolTypes/CLI overrides are not implemented.
 @ENDNODE
@@ -410,6 +413,7 @@ Termic; third-party components retain their licences. See LICENSE.
 Manual structure follows AmigaGuide 101. Interface conventions draw on
 the AmigaOS UI Style Guide's Menus, Preferences and Data Sharing chapters:
 https://wiki.amigaos.net/wiki/AmigaGuide_101
+https://wiki.amigaos.net/wiki/AmigaOS_Manual:_Workbench_Fonts
 https://wiki.amigaos.net/wiki/UI_Style_Guide_Menus
 https://wiki.amigaos.net/wiki/UI_Style_Guide_Preferences
 https://wiki.amigaos.net/wiki/UI_Style_Guide_Data_Sharing
