@@ -325,3 +325,9 @@ Claude emits the same session ID on many events. The relay now saves it once
 per turn, avoiding redundant Amiga file writes, and rejects a changed ID
 within a turn. A subprocess protocol regression test covers repeated IDs.
 Cursor browser sign-in and authenticated Cursor execution remain pending.
+
+[Session update build 43529096729](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43529096729)
+passed portable, packaged MCP and desktop lifecycle/recovery checks on macOS
+and Windows. The updated Mac app was installed and restarted after restoring
+the production Amiga workspace and removing the temporary helper. The Windows
+archive was downloaded and integrity-checked. Cursor sign-in is still pending.
