@@ -12,6 +12,7 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 
 - Projects and independent source-copy task workspaces.
 - Embedded editor with a black background and C/header syntax colours on load.
+- Taller blue title bar with drag, close, back and zoom controls; black Files list.
 - Source backups, undo/redo, clipboard and search.
 - Native VBCC build/run and explicit AmigaDOS commands with captured output.
 - Native Git initialization, status, diffs and source commits.
@@ -62,11 +63,18 @@ Run portable tests on a host with a C compiler and AddressSanitizer:
 python3 -m unittest discover -s scripts/amiga -p 'test_*.py'
 ```
 
-The opt-in `accept_mui.py`, `accept_colours.py`, `accept_about.py` and
-`accept_style.py` scripts
-exercise a physical Amiga through an already-running DevBench MCP server.
-They require its Python MCP environment and create synthetic test fixtures.
-Do not run keyboard-injection tests while someone is using the Amiga.
+The opt-in `accept_chrome.py` checks the current custom window controls through
+an already-running DevBench MCP server. Compile `amiga/native/tests/inspect_chrome.c`
+with the Amiga compiler and `-lamiga`, then supply that helper with `--probe`.
+It expects the 1920x800 acceptance desktop and a 1400x650 Termic candidate.
+Keep the bridge window beneath Termic's upper-left corner for the depth check.
+Use `--close-at-end` to include the close-button check. It uses injected mouse
+input; do not run it while someone is using the Amiga.
+
+The earlier `accept_mui.py`, `accept_colours.py`, `accept_about.py` and
+`accept_style.py` preserve the native-title acceptance workflows. Their window
+name guards target the earlier native title bar and require adaptation before
+use with the current borderless window; do not bypass those guards.
 
 [Verification and limitations](docs/verification.md) distinguishes tested
 behavior from functionality still awaiting hardware or authenticated checks.

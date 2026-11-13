@@ -66,3 +66,18 @@ compiler output are sent to the selected cloud API when an agent runs.
 The installed GUI, worker and guide were checked against the host-built files
 using CRC32 after transfer. Previous executables and changed source files were
 retained in the installation's Backup drawer before promotion.
+
+## Custom title bar and Files list
+
+The custom bar was built for 68020+ and exercised on MUI 5 on the A4000TX.
+The written `accept_chrome.py` suite uses the same native window identifier as
+`inspect_chrome.c` and tests Zoom/restore, title-bar dragging, grip resizing,
+and Back/foreground restoration with actual injected input. Its optional final
+step clicks X and checks that the window is gone. Host tests cover movement at
+screen edges and resize limits, including a screen smaller than the minimum.
+The Files list was visually inspected with light text on black.
+
+Older native-title suites remain historical evidence for editor, clipboard and
+preferences behaviour; their window-name guards are not compatible with the
+new borderless main window. The custom bar has not been retested on MUI 3.8.
+The existing Poseidon/MultiView issues above are not resolved by this change.

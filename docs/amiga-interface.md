@@ -63,6 +63,19 @@ This is an adaptation of the applicable conventions, not a claim of complete
 style-guide compliance. Preset import/export, SETTINGS ToolTypes/CLI overrides,
 an IFF project format, live file notifications, clipboard unit selection and an
 application ARexx port remain unimplemented. Text source remains compiler-readable.
+The main window now draws its own taller blue title bar on Workbench. X uses
+the existing save-and-quit action; Back sends the window behind other windows;
+Zoom fits the screen and restores its previous rectangle. Drag the title text
+to move it and the lower-right blue grip to resize it. Movement stays below the
+screen bar and resize honours MUI's minimum dimensions. Workbench fonts and
+other applications' borders are untouched. The Files list uses a black background
+and light filenames; column formatting leaves the stored filenames unchanged.
+
+The custom bar uses a borderless native window with no native window title.
+Its ScreenTitle remains `Termic Amiga Workspace`; the native test helper uses
+that identifier. A window-list order is not a reliable indication of layer
+stacking, so the depth check uses the Layers library's `WhichLayer` query.
+
 The workspace is intended for the A4000TX's RTG desktop, not a 640x200 layout.
 
 References consulted:

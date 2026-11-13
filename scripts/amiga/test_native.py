@@ -11,6 +11,27 @@ SOURCE = ROOT / "amiga/native"
 
 
 class NativeProtocolTests(unittest.TestCase):
+    def test_chrome_geometry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            binary = str(Path(directory) / "chrome")
+            subprocess.run(
+                [
+                    "cc",
+                    "-std=c99",
+                    "-Wall",
+                    "-Wextra",
+                    "-Werror",
+                    "-fsanitize=address,undefined",
+                    "-I",
+                    str(SOURCE),
+                    str(SOURCE / "tests/test_chrome.c"),
+                    "-o",
+                    binary,
+                ],
+                check=True,
+            )
+            subprocess.run([binary], check=True)
+
     def test_preferences(self):
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)

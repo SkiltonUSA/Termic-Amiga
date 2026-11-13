@@ -29,6 +29,7 @@ struct Library *MUIMasterBase, *IconBase, *DiskfontBase, *AslBase;
 struct GfxBase *GfxBase;
 static struct TextFont *bodyfont, *codefont;
 struct IntuitionBase *IntuitionBase;
+#include "chrome.h"
 const char version_tag[] = TERMIC_VERSION_TAG("TermicNative");
 const char stack_size[] = "$STACK:262144";
 #define MAX_ITEMS 128
@@ -97,7 +98,9 @@ enum
     MUIPREFS,
     UPDATE_MENUS,
     SELECTALL,
-    ERASE
+    ERASE,
+    WINDOW_DEPTH,
+    WINDOW_ZOOM
 };
 struct Job
 {
@@ -137,6 +140,18 @@ static Object *button(const char *s, int id)
     notify(o, MUIA_Pressed, FALSE, id);
     return o;
 }
+static Object *chrome_button(const char *text, int id, int width)
+{
+    Object *o = TextObject, ButtonFrame, MUIA_Font,
+        bodyfont ? (ULONG)bodyfont : MUIV_Font_Button,
+        MUIA_FixWidth, width, MUIA_FixHeight, 32, MUIA_Text_SetVMax, FALSE,
+        MUIA_Background, MUII_ButtonBack, MUIA_InputMode, MUIV_InputMode_RelVerify,
+        MUIA_Text_Contents, text, MUIA_Text_PreParse, "\33c", MUIA_CycleChain, 1,
+        MUIA_ShortHelp, id == WINDOW_ZOOM ? "Fit screen / restore window"
+            : id == WINDOW_DEPTH ? "Send window behind other windows" : "Save and close", End;
+    notify(o, MUIA_Pressed, FALSE, id);
+    return o;
+}
 static Object *entry(unsigned max)
 {
     return StringObject, StringFrame, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal,
@@ -146,6 +161,9 @@ static Object *list(Object **o)
 {
     return ListviewObject, MUIA_Listview_List,
            *o = ListObject, InputListFrame, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_List,
+           o == &files ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
+           o == &files ? MUIA_List_Format : TAG_IGNORE,
+           MUIMasterBase->lib_Version >= 21 ? "P=\33P[EEEEEE]" : "P=\33" "3",
            MUIA_List_ConstructHook, MUIV_List_ConstructHook_String, MUIA_List_DestructHook,
            MUIV_List_DestructHook_String, End, End;
 }
@@ -1069,7 +1087,7 @@ static Object *build_menus(void)
 }
 static int build_ui(void)
 {
-    Object *body, *left, *right, *center, *tabtitles = NULL;
+    Object *body, *left, *right, *center, *titlebar, *grip, *tabtitles = NULL;
     app = ApplicationObject, MUIA_Application_Title, "Termic", MUIA_Application_Base, "TERMIC",
     MUIA_Application_Version, version_tag + 1, MUIA_Application_SingleTask, TRUE,
     MUIA_Application_Description, "Native Amiga development workspace", End;
@@ -1136,7 +1154,20 @@ static int build_ui(void)
     Child, button("Run", RUN), Child, button("Settings", SETTINGS), Child, button("About", ABOUT),
     Child, button("Quit", QUIT), End, Child, HGroup, Child, left, Child, BalanceObject, End, Child,
     center, Child, BalanceObject, End, Child, right, End, Child, status = label("Ready"), End;
-    win = WindowObject, MUIA_Window_Title, "Termic Amiga Workspace", MUIA_Window_ID,
+    titlebar = chrome_area(bodyfont, 0);
+    grip = chrome_area(bodyfont, 1);
+    if (!titlebar || !grip) return 0;
+    body = VGroup, MUIA_Group_Spacing, 0, InnerSpacing(2, 2), Child,
+        HGroup, MUIA_Group_Spacing, 2, MUIA_FixHeight, 32,
+        MUIA_Background, "2:r2d2d2d2d,5d5d5d5d,9d9d9d9d",
+        Child, chrome_button("X", QUIT, 32), Child, titlebar,
+        Child, chrome_button("Back", WINDOW_DEPTH, 54), Child, chrome_button("Zoom", WINDOW_ZOOM, 54), End,
+        Child, body, Child, HGroup, Child, HVSpace, Child, grip, End, End;
+    win = WindowObject, MUIA_Window_Title, NULL,
+    MUIA_Window_ScreenTitle, "Termic Amiga Workspace",
+    MUIA_Window_Borderless, TRUE, MUIA_Window_DragBar, FALSE,
+    MUIA_Window_CloseGadget, FALSE, MUIA_Window_DepthGadget, FALSE,
+    MUIA_Window_SizeGadget, FALSE, MUIA_Window_ID,
     MAKE_ID('T', 'R', 'M', 'C'), MUIA_Window_Width, 1400, MUIA_Window_Height, 650,
     MUIA_Window_Menustrip, build_menus(), WindowContents, body, End;
     if (!win)
@@ -1308,6 +1339,31 @@ int main(int argc, char **argv)
             char *name;
             switch (id)
             {
+            case WINDOW_DEPTH:
+            {
+                struct Window *w = (struct Window *)value(win, MUIA_Window_Window);
+                if (w) WindowToBack(w);
+                break;
+            }
+            case WINDOW_ZOOM:
+            {
+                static LONG left, top, width, height;
+                static int zoomed;
+                struct Window *w = (struct Window *)value(win, MUIA_Window_Window);
+                if (w)
+                {
+                    if (!zoomed)
+                    {
+                        left = w->LeftEdge; top = w->TopEdge;
+                        width = w->Width; height = w->Height;
+                        ChangeWindowBox(w, 0, w->WScreen->BarHeight + 1,
+                            w->WScreen->Width, w->WScreen->Height - w->WScreen->BarHeight - 1);
+                    }
+                    else ChangeWindowBox(w, left, top, width, height);
+                    zoomed = !zoomed;
+                }
+                break;
+            }
             case UPDATE_MENUS:
                 update_menus();
                 break;
@@ -1642,6 +1698,7 @@ cleanup:
         DeleteMsgPort(timer_port);
     if (app)
         MUI_DisposeObject(app);
+    chrome_cleanup();
     if (codefont)
         CloseFont(codefont);
     if (bodyfont)

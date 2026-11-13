@@ -190,3 +190,11 @@ ENV:Termic; Use writes ENV:Termic until reboot; Cancel discards unapplied
 edits. Restart for a changed project drawer. Build commands save separately.
 Keys saved with Use are plaintext in ENV:Termic/api-key.
 MagicMenu is optional; no system menu patch is installed by Termic.
+
+Main window controls
+--------------------
+Termic draws a taller blue title bar within its own Workbench window.
+Drag the title text to move; drag the lower-right blue grip to resize.
+X saves and closes, Back sends the window backwards, and Zoom fits the screen
+or restores its previous size. Workbench font preferences are not changed.
+The Files list has light filenames on black, matching the source editor.
