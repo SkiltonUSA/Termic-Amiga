@@ -1,6 +1,6 @@
-# Agents, terminals and MCP on Amiga
+# Agents, CLI, scripts and MCP on Amiga
 
-Settings now opens two native MUI windows: **Agents & Terminals** and
+Settings now opens two native MUI windows: **Agents / CLI / Scripts** and
 **Agent access / MCP**. Their controls adapt the desktop registry to the
 user-selected direct API and Amiga-native execution model.
 
@@ -8,17 +8,17 @@ user-selected direct API and Amiga-native execution model.
 
 The launcher on the Agent page selects a saved profile. Profiles are independent
 of projects; the selected profile ID and YOLO choice are saved in the task when
-it starts. The supplied profiles are OpenAI API and Amiga Shell. Desktop Claude,
+it starts. The supplied profiles are OpenAI API and Amiga CLI. Desktop Claude,
 Codex and other CLI executables are not bundled or marked as installed.
 
-- Add API, Add agent CLI and Add terminal create editable profiles, up to 32.
+- Add API, Add CLI, Add ARexx and Add MicroPython create editable profiles, up to 32.
 - Duplicate makes a separate profile. API duplicates need their own credential;
   they do not silently inherit another account's key.
 - Built-ins can be edited and reset but not removed. Reset preserves credentials
   and custom profiles. Removing a custom profile does not delete its credential
   file; profile IDs are not reused. Tasks naming a removed profile must choose
   another before running.
-- All / API and CLI agents / Terminals filters the list. Show in launcher controls
+- All / API and CLI agents / CLI and Scripts filters the list. Show in launcher controls
   new selections; a task's existing hidden selection is retained.
 - Save persists settings to Config and ENV. Use updates ENV until reboot. Cancel
   closes without applying draft changes. Launches use applied settings.
@@ -37,14 +37,14 @@ API sessions are separated by profile and task. New conversation resets the
 selected profile's session. Usage displays actual input/output tokens supplied
 by the API for each response, not a subscription quota or context-capacity estimate.
 
-Native CLI profiles run a configured Amiga executable in the task drawer.
+Native CLI and script profiles run a configured Amiga executable in the task drawer.
 Default arguments are always passed. YOLO arguments are appended only when
 selected in the launcher. Resume arguments apply after a successful launch of
 that profile when resumption is enabled. Arguments are AmigaDOS shell syntax,
 not POSIX syntax. Environment accepts one NAME=value per line (1023 bytes total)
 and sets worker-local variables inherited by its child command, without writing
 them to ENV:. Native commands have ordinary AmigaDOS access; they are not an OS
-sandbox. Amiga Shell opens its own console; Termic tracks the launcher exit,
+sandbox. Amiga CLI opens its own console; Termic tracks the launcher exit,
 not the separate console's entire lifetime.
 
 Desktop Keychain roles, Docker, host CLI login stores, live terminal YOLO
@@ -148,3 +148,41 @@ API key and a separate live test.
 
 Protocol references: [stdio transport](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/stdio)
 and [Streamable HTTP](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http).
+
+## CLI, ARexx and MicroPython
+
+Build / CLI offers three command modes. CLI runs the entered AmigaDOS command.
+ARexx prefixes the entered script path/arguments with `SYS:Rexxc/RX`.
+MicroPython prefixes them with `Termic:Tools/MicroPython/micropython`.
+All run in the selected workspace and capture output. For interactive input,
+open the Amiga CLI profile and run the interpreter in that separate console.
+
+Add CLI creates a `C:NewShell` profile. Add ARexx and Add MicroPython create
+profiles with `Termic:Examples/hello.rexx` and `Termic:Examples/hello.py`
+respectively. Set Default arguments to your own script path and arguments.
+Existing profile IDs and credentials are retained; the original built-in
+Amiga Shell display name becomes Amiga CLI, unless it was customized.
+
+The editor and project/task source copies accept `.py`, `.rexx` and `.rx`.
+These files use plain text; syntax colouring remains specific to C/H.
+The cloud agent and MCP file tools remain restricted to C/H sources.
+This adds script execution, not custom Termic ARexx automation commands.
+ARexx uses the system RX command and requires a running RexxMast.
+
+The MicroPython runtime is pinned in `amiga/native/micropython-lock.json`.
+Fetch it on the development host with:
+
+```sh
+python3 scripts/amiga/fetch_micropython.py --output /path/to/Termic/Tools/MicroPython
+```
+
+The fetcher verifies SHA-256 and includes upstream LICENSE, README and source
+revision metadata. Local installation kits also include this runtime and the
+sample scripts; `package_native.py --download` fetches missing dependencies.
+The native runtime runs on the 68k CPU, not the ZZ9000 ARM processor. It is
+MicroPython, not full desktop CPython; libraries must be checked for compatibility.
+The existing host MCP connector continues to require host CPython and its `mcp`
+package. Installing the native runtime does not replace that connector.
+
+Upstream: [MicroPython Amiga port](https://github.com/OoZe1911/micropython-amiga-port).
+ARexx command reference: [AmigaOS ARexx utilities](https://wiki.amigaos.net/wiki/AmigaOS_Manual:_ARexx_Command_Utilities).

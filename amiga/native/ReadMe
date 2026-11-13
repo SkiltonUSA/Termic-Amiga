@@ -58,7 +58,7 @@ native version and its Beta designation.
 
 WORKSPACE
 Left: projects, project naming/import, tasks and task status.
-Centre: Agent, Editor, Build / Shell, Changes and Settings tabs.
+Centre: Agent, Editor, Build / CLI, Changes and Settings tabs.
 Right: editable C, header, text and Markdown files, plus new-file controls.
 Drag the dividers to resize panes. Controls use Helvetica 13 and code uses
 Courier 13 when installed, with MUI fonts as fallback. Framed sections and
@@ -87,7 +87,7 @@ Task instructions are edited in the Agent tab, not in a second editor copy.
 
 BUILD AND RUN
 Build uses the current workspace, produces Program, and displays diagnostics
-in Build / Shell. The default compiles main.c with VBCC. Settings can save
+in Build / CLI. The default compiles main.c with VBCC. Settings can save
 a different build command per workspace, including additional C files and
 libraries. It must produce Program.new; BuildProject promotes it on success.
 A failed build retains the last executable, so Run would launch that older build.
@@ -131,7 +131,7 @@ and hostnames and requires TLS 1.2+. Test verified HTTPS expects HTTP 401
 without a key; it does not establish authenticated model access.
 
 SHORTCUTS
-F1 Agent; F2 Editor; F3 Build / Shell; F4 Changes; F5 Settings.
+F1 Agent; F2 Editor; F3 Build / CLI; F4 Changes; F5 Settings.
 F6 Build; F7 Run; F8 Save; F9 New task; F10 Quit.
 Shift+F1 starts the agent; Shift+F2 focuses the new filename (Enter creates).
 Shift+F3 focuses the shell command; Shift+F4 focuses the commit message.
@@ -205,8 +205,8 @@ Title-bar sizing follows the default public screen height at launch. On the
 larger controls. Restart after changing screen resolution. The editor font
 is unchanged. This is resolution scaling, not automatic monitor-DPI detection.
 
-AGENTS & TERMINALS
-Settings opens a profile manager for OpenAI API, Amiga agent CLI and terminal
+AGENTS / CLI / SCRIPTS
+Settings opens a profile manager for OpenAI API, CLI, ARexx and MicroPython
 profiles. Add, duplicate, remove custom profiles or reset the built-ins.
 Save persists settings; Use lasts until reboot; Cancel discards draft edits.
 The Agent page selects the applied profile and optional native YOLO arguments.
@@ -226,3 +226,19 @@ Tools list projects, create isolated source-copy tasks, send prompts, inspect
 results, build, edit C/H files and keep scratchpads. Writes refuse busy tasks
 and the editor-selected workspace, and only target MCP-created tasks.
 See the linked Agent profiles and MCP chapters in Termic.guide.
+
+CLI, AREXX AND MICROPYTHON
+Build / CLI has a mode selector: CLI, ARexx or MicroPython. In CLI mode,
+enter an AmigaDOS command. In script modes, enter the script path and arguments,
+then choose Execute. Output is captured; interactive input uses a separate CLI.
+For examples, choose ARexx with Termic:Examples/hello.rexx or MicroPython with
+Termic:Examples/hello.py. Add ARexx / Add MicroPython creates a launch profile
+with the corresponding example already selected. Change Default arguments to
+run your own script. Add CLI opens a separate C:NewShell console.
+The editor supports .py, .rexx and .rx alongside C/H and text files. C/H syntax
+colouring remains C-specific; script files use plain text. Cloud agent and MCP
+file tools remain limited to C/H. No Termic-specific ARexx host commands added.
+ARexx requires SYS:Rexxc/RX and RexxMast. MicroPython is installed under
+Termic:Tools/MicroPython with its license, upstream README and provenance.
+MicroPython runs on the 68k CPU; it is not full desktop CPython and does not
+use ZZ9000 ARM offload. The host MCP connector still runs in host CPython.

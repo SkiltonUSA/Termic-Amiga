@@ -5,7 +5,7 @@ Workbench 3.2.3, MUI 3.8 and subsequently MUI 5.0 (muimaster 21.227),
 TextEditor.mcc 15.56, AmiSSL 5.27 and ZZ9000 RTG.
 The screenshots show synthetic fixtures on that machine.
 
-The new Agents & Terminals and Agent access / MCP implementation cross-builds
+The new Agents / CLI / Scripts and Agent access / MCP implementation cross-builds
 for 68k and passes 11 portable test groups, including profile persistence,
 credential separation, read-only API enforcement, MCP protocol handling and
 filesystem boundaries. After a physical reboot, the written `accept_agents.py`
@@ -29,10 +29,20 @@ corrected before the successful post-reboot runs. Authenticated API calls remain
 unverified without a user key. Peer discovery, desktop pairing and automatic
 client registration are not part of this native implementation.
 The tested GUI, worker and TermicMCP were installed with a rollback backup.
-Their installed CRC32 values are FE05C6DF, C3CE380A and 6D30552D respectively;
+The CLI/script update's CRC32 values are DEACE341, 6421F5AB and 920AB511 respectively;
 the installed guide and changed source files also match the host copies.
 The production window was restored to 1920 by 789 at (0, 11).
 See [Agents and MCP](agents-and-mcp.md) for implemented features and limitations.
+
+The CLI/script acceptance run also passed ARexx and MicroPython example scripts
+through both saved launch profiles and the worker actions used by Build / CLI.
+Each printed the expected output and returned exit code zero. The tested native
+runtime identifies itself as MicroPython v1.28.0, build 239; its binary, license,
+upstream README and pinned provenance accompany the installation.
+ARexx used the system RX command and the already-running RexxMast.
+MicroPython networking, TLS, third-party modules and interactive REPL behavior
+have not been exercised by this suite. Script execution adds no new custom
+Termic ARexx host commands; API/MCP source access remains limited to C/H.
 
 Verified through the written hardware suites:
 

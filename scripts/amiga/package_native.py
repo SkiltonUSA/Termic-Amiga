@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import tempfile
 import urllib.request
+from fetch_micropython import fetch as fetch_micropython
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "amiga/native"
@@ -43,6 +44,13 @@ def main():
     args = parser.parse_args()
     manifest = json.loads((SOURCE / "sdk-lock.json").read_text())
     args.downloads.mkdir(parents=True, exist_ok=True)
+    runtime = args.downloads / "MicroPython"
+    if args.download:
+        fetch_micropython(runtime)
+    runtime_lock = json.loads((SOURCE / "micropython-lock.json").read_text())
+    for name, entry in runtime_lock['files'].items():
+        if hashlib.sha256((runtime/name).read_bytes()).hexdigest() != entry['sha256']:
+            raise ValueError("MicroPython checksum mismatch: " + name)
     for name, entry in manifest.items():
         path = args.downloads / name
         if not path.exists() and args.download:
@@ -79,6 +87,12 @@ def main():
         shutil.copytree(SOURCE / "Project", stage / "Project")
         shutil.copytree(SOURCE / "Project", stage / "Template")
         shutil.copytree(SOURCE / "Project", stage / "Source/Template")
+        shutil.copytree(SOURCE / "Examples", stage / "Examples")
+        (stage / "Tools/MicroPython").mkdir(parents=True)
+        for name in runtime_lock['files']:
+            shutil.copyfile(runtime/name, stage/"Tools/MicroPython"/name)
+        (stage/"Tools/MicroPython/micropython").chmod(0o755)
+        shutil.copyfile(SOURCE/"micropython-lock.json",stage/"Tools/MicroPython/provenance.json")
         (stage / "Config").mkdir()
         (stage / "Config/api-key").write_text("")
         (stage / "Config/model").write_text("gpt-5-mini\n")

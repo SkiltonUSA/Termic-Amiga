@@ -34,7 +34,7 @@ Restart after changing resolution. Editor and other UI fonts are unchanged. File
    template is copied into a managed project drawer.
 3. Select main.c in Files, or press F2 for the Editor.
 4. Edit the program and press F8 (or Right-Amiga-S) to save.
-5. Press F6 to build. Read the diagnostics in Build / Shell.
+5. Press F6 to build. Read the diagnostics in Build / CLI.
 6. After a successful build, press F7 to run Program.
 
 New task makes an independent copy of the selected workspace's source.
@@ -123,7 +123,7 @@ See @{"Clipboard" LINK Sharing} and @{"Keyboard shortcuts" LINK Menus}.
 
 @NODE Build "Build and run"
 Build (F6 or Right-Amiga-B) saves pending edits and invokes the native
-worker in the selected workspace. Diagnostics appear in Build / Shell.
+worker in the selected workspace. Diagnostics appear in Build / CLI.
 The default command compiles main.c with VBCC.
 
 Settings contains a per-workspace build command. For several sources:
@@ -143,8 +143,10 @@ Cancel job signals the worker; a running child application may need its
 own Quit action before the worker can finish. See @{"Troubleshooting" LINK Trouble}.
 @ENDNODE
 
-@NODE Shell "AmigaDOS commands"
-Build / Shell provides a command field. Enter a command and choose Execute
+@NODE Shell "CLI, ARexx and MicroPython"
+Build / CLI provides a mode selector and command field. Choose CLI for
+AmigaDOS commands, or ARexx / MicroPython for a script path and arguments.
+Choose Execute
 or press Return in that field. Shift-F3 focuses it directly. Commands run
 in the selected workspace and their output is captured in the log.
 
@@ -152,7 +154,18 @@ For example:
   List
   Version
 
-This is a command runner, not an interactive terminal or PTY. Interactive
+ARexx example: select ARexx and enter Termic:Examples/hello.rexx.
+Python example: select MicroPython and enter Termic:Examples/hello.py.
+RexxMast must be running for ARexx; RX lives in SYS:Rexxc.
+MicroPython lives in Termic:Tools/MicroPython; its license and provenance
+are included there. It runs on the 68k CPU, with no ZZ9000 ARM offload.
+Python packages written for desktop CPython may need adaptation.
+
+The editor opens .py, .rexx and .rx files as plain text. API and MCP file
+tools still only expose C/H sources. No Termic-specific ARexx commands
+are added to the application host port.
+
+This is a command runner. Interactive
 programs needing console input should be opened from a separate Shell.
 Commands have the normal access of AmigaOS programs; there is no sandbox.
 
@@ -173,7 +186,7 @@ and task metadata are excluded in newly initialized repositories.
 Existing .gitignore files are retained.
 
 Tasks are independent snapshots, not branches/worktrees. Native Git's
-other commands can be run explicitly in Build / Shell. Termic does not
+other commands can be run explicitly in Build / CLI. Termic does not
 push, fetch, publish a PR or contact a remote automatically.
 
 See @{"Storage" LINK Storage} and @{"Limits" LINK Limits}.
@@ -245,7 +258,7 @@ Project: New, Open... (import source drawer), Save, About..., Quit.
 Edit: Cut, Copy, Paste, Erase, Select All, Undo, Redo.
 Workspace: New Task, Mark Done, Build, Run, Start Agent, Cancel Job,
            Git Status, Git Diff.
-View: Agent, Editor, Build / Shell, Changes.
+View: Agent, Editor, Build / CLI, Changes.
 Settings: Preferences, MUI Settings..., Save Settings, Use Settings,
           Cancel Edits (the last three apply while Settings is open).
 Help: Contents... opens this AmigaGuide manual in MultiView.
@@ -254,10 +267,10 @@ Right-Amiga + N New project     O Open/import    S Save
 Right-Amiga + X Cut             C Copy           V Paste
 Right-Amiga + Z Undo            Q Quit           B Build
 Right-Amiga + R Run             , Preferences
-Right-Amiga + 1 Agent           2 Editor         3 Build / Shell
+Right-Amiga + 1 Agent           2 Editor         3 Build / CLI
 Right-Amiga + 4 Changes
 
-F1 Agent; F2 Editor; F3 Build / Shell; F4 Changes; F5 Settings.
+F1 Agent; F2 Editor; F3 Build / CLI; F4 Changes; F5 Settings.
 F6 Build; F7 Run; F8 Save; F9 New task; F10 Quit.
 Shift-F1 Start agent; Shift-F2 New filename; Shift-F3 Shell field;
 Shift-F4 Commit field; Shift-F5 Git init; Shift-F6 Git status;
@@ -366,7 +379,7 @@ SYS:Utilities/MultiView and the AmigaGuide datatype are installed.
 Cannot save: check free space, protection, file size and active jobs.
 Never overwrite the original with the explanatory read-only error text.
 
-Build fails: inspect Build / Shell, VBCC setup and the workspace command.
+Build fails: inspect Build / CLI, VBCC setup and the workspace command.
 It must write Program.new. The previous successful Program is retained.
 
 Git fails: check long-filename support, AmiSSL runtime and Git identity.
@@ -447,14 +460,15 @@ https://wiki.amigaos.net/wiki/UI_Style_Guide_Data_Sharing
   @{"Troubleshooting" LINK Trouble}     @{"ZZ9000" LINK Limits}
 @ENDNODE
 
-@NODE Profiles "Agents and terminals"
-Settings > Agents & Terminals opens the profile manager.
-The supplied profiles are OpenAI API and Amiga Shell. Desktop agent CLIs
+@NODE Profiles "Agents, CLI and scripts"
+Settings > Agents / CLI / Scripts opens the profile manager.
+The supplied profiles are OpenAI API and Amiga CLI. Desktop agent CLIs
 are not native Amiga programs and are not bundled.
 
-Add API, Add agent CLI, Add terminal, Duplicate and Remove manage profiles.
+Add API, Add CLI, Add ARexx, Add MicroPython, Duplicate and Remove
+manage profiles.
 Built-ins can be edited and reset, but not removed. Reset keeps credentials
-and custom profiles. All / agents / terminals filters the list.
+and custom profiles. All / agents / CLI and Scripts filters the list.
 Save persists Config and ENV; Use updates ENV until reboot; Cancel discards
 draft edits. Select an applied profile on the Agent page before starting.
 

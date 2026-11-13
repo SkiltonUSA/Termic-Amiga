@@ -14,6 +14,9 @@ int main(void)
     int i;
     assert(source_name("main.c"));
     assert(source_name("src/util.h"));
+    assert(source_name("scripts/demo.py"));
+    assert(source_name("scripts/demo.rexx"));
+    assert(source_name("scripts/demo.rx"));
     for (i = 0; bad[i]; i++)
         assert(!source_name(bad[i]));
     assert(save_text("fixture.c", "original", 32));

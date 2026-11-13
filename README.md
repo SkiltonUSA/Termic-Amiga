@@ -17,7 +17,8 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 - Native VBCC build/run and explicit AmigaDOS commands with captured output.
 - Native Git initialization, status, diffs and source commits.
 - OpenAI agent conversations with bounded C/header file tools and local builds.
-- Agents & Terminals profiles with separate credentials, launch arguments, sessions and access limits.
+- Agents / CLI / Scripts profiles with separate credentials, launch arguments, sessions and access limits.
+- CLI, ARexx and MicroPython script execution, with a pinned native MicroPython runtime.
 - Native MCP/CLI routines for task orchestration, builds, source files and scratchpads.
 - Persistent workspace selection, task status, model settings and an About window.
 - Native Project/Edit/Workspace/View/Settings/Help menus and Right-Amiga shortcuts.
@@ -29,7 +30,7 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 
 ![Amiga preferences with Save, Use and Cancel](docs/screenshots/preferences.png)
 
-See [Agents, terminals and MCP](docs/agents-and-mcp.md) for setup, client connections
+See [Agents, CLI, scripts and MCP](docs/agents-and-mcp.md) for setup, client connections
 and differences from desktop Termic.
 
 ![Native agent profiles with separate credentials and access settings](docs/screenshots/agents.png)

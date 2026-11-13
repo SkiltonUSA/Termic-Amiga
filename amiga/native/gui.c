@@ -38,13 +38,14 @@ const char stack_size[] = "$STACK:262144";
 static Object *app, *win, *projects, *tasks, *files, *pages, *source, *prompt, *output, *review,
     *transcript;
 static Object *status, *heading, *filename, *newname, *projectname, *taskname, *model, *keyfield,
-    *command, *commit, *findtext, *buildcommand, *projectdrawer;
+    *command, *command_mode, *commit, *findtext, *buildcommand, *projectdrawer;
 static char project_paths[MAX_ITEMS][PATH_SIZE], task_paths[MAX_ITEMS][PATH_SIZE],
     file_names[MAX_ITEMS][184];
 static char current[PATH_SIZE], opened[184], project[PATH_SIZE];
 static char project_root[PATH_SIZE] = "Termic:Projects";
 static int project_count, task_count, file_count, loading, source_loaded = 1, prompt_loaded = 1;
-static const char *tabs[] = {"Agent", "Editor", "Build / Shell", "Changes", "Settings", NULL};
+static const char *command_modes[] = {"CLI", "ARexx", "MicroPython", NULL};
+static const char *tabs[] = {"Agent", "Editor", "Build / CLI", "Changes", "Settings", NULL};
 enum
 {
     QUIT = 1,
@@ -817,7 +818,7 @@ static void poll_jobs(void)
                     set(prompt, MUIA_TextEditor_ReadOnly, !prompt_loaded);
                     message(atoi(s) == 0
                                 ? "Job completed successfully. Review changes before running."
-                                : "Job failed or was cancelled. See Build / Shell for details.");
+                                : "Job failed or was cancelled. See Build / CLI for details.");
                     join(path, current, "transcript.txt");
                     content(transcript, path, "No agent transcript for this task.");
                     refresh_files();
@@ -1105,7 +1106,7 @@ static Object *build_menus(void)
     menu = new_menu(strip, "View");
     menu_item(menu, "Agent", "1", PAGE_AGENT);
     menu_item(menu, "Editor", "2", PAGE_EDITOR);
-    menu_item(menu, "Build / Shell", "3", PAGE_OUTPUT);
+    menu_item(menu, "Build / CLI", "3", PAGE_OUTPUT);
     menu_item(menu, "Changes", "4", PAGE_CHANGES);
     menu = new_menu(strip, "Settings");
     menu_item(menu, "Preferences", ",", SETTINGS);
@@ -1157,13 +1158,14 @@ static int build_ui(void)
     VGroup, Child, filename = label("main.c"), Child, editor(&source, 0), Child, HGroup, Child,
     findtext = entry(120), Child, button("Find", FIND), Child, button("Next", FINDNEXT), End, End,
     Child, VGroup, Child, editor(&output, 1), Child,
-    label("AmigaDOS command (runs in this workspace)"), Child, command = entry(1024), Child, HGroup,
+    label("CLI command, or script path and arguments (runs in this workspace)"), Child, HGroup,
+    Child, command_mode=cycle(command_modes), Child, command = entry(1024), End, Child, HGroup,
     Child, button("Execute", SHELL), Child, button("Cancel job", CANCEL), End, End, Child, VGroup,
     Child, HGroup, Child, button("Status", GITSTATUS), Child, button("Diff", DIFF), Child,
     button("Init repository", GITINIT), End, Child, editor(&review, 1), Child,
     label("Commit message (configure Git identity in the shell first)"), Child, commit = entry(256),
     Child, button("Stage source and commit", GITCOMMIT), End, Child, VGroup, Child, VGroup,
-    GroupFrame, Child, HGroup, Child, button("Agents & Terminals...", PF_OPEN), Child, button("Agent access / MCP...", AC_OPEN), End, Child, label("\33bDefault API connection"), InnerSpacing(8, 8), MUIA_Group_Spacing, 6, Child,
+    GroupFrame, Child, HGroup, Child, button("Agents / CLI / Scripts...", PF_OPEN), Child, button("Agent access / MCP...", AC_OPEN), End, Child, label("\33bDefault API connection"), InnerSpacing(8, 8), MUIA_Group_Spacing, 6, Child,
     ColGroup(2), MUIA_Group_HorizSpacing, 10, MUIA_Group_VertSpacing, 6, Child, label("Model"),
     Child, model = entry(128), Child, label("API key"), Child, keyfield = StringObject, StringFrame,
     MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, MUIA_String_Secret, TRUE,
@@ -1184,7 +1186,7 @@ static int build_ui(void)
     right = VGroup, GroupFrame, Child, label("\33bFiles"), InnerSpacing(6, 6), MUIA_Group_Spacing,
     6, MUIA_Weight, 23, Child, list(&files), Child, newname = entry(180), Child,
     button("Create file", NEWFILE), Child, button("Refresh files", REFRESH), Child,
-    label("C, H, text and Markdown\nSelect to edit.\nSaves keep .bak copies."), End;
+    label("C/H, Python, ARexx,\ntext and Markdown.\nSaves keep .bak copies."), End;
     body = VGroup, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, MUIA_Group_Spacing, 7, InnerSpacing(8, 6), Child, HGroup, Child,
     label("\33bTERMIC / AMIGA " TERMIC_VERSION), Child, HVSpace, Child, button("Build", BUILD),
     Child, button("Run", RUN), Child, button("Settings", SETTINGS), Child, button("About", ABOUT),
@@ -1392,7 +1394,7 @@ int main(int argc, char **argv)
             int n;
             char *name;
             if(id>=AC_OPEN && id<=AC_CANCEL) {access_event(id);continue;}
-            if(id>=PF_OPEN && id<=PF_KIND) {profile_event(id);continue;}
+            if(id>=PF_OPEN && id<=PF_ADDPYTHON) {profile_event(id);continue;}
             switch (id)
             {
             case WINDOW_DEPTH:
@@ -1572,7 +1574,7 @@ int main(int argc, char **argv)
                 name = (char *)value(newname, MUIA_String_Contents);
                 if (!source_name(name) || strchr(name, '/'))
                 {
-                    message("Use a simple .c, .h, .txt or .md filename.");
+                    message("Use .c, .h, .py, .rexx, .rx, .txt or .md filenames.");
                     break;
                 }
                 join(path, current, name);
@@ -1656,7 +1658,8 @@ int main(int argc, char **argv)
                 name = (char *)value(command, MUIA_String_Contents);
                 join(path, current, "command.txt");
                 if (!busy(current) && save_text(path, name, 1024))
-                    launch("--shell", 2);
+                    launch(value(command_mode,MUIA_Cycle_Active)==1 ? "--rexx" :
+                           value(command_mode,MUIA_Cycle_Active)==2 ? "--python" : "--shell", 2);
                 break;
             case GITSTATUS:
                 launch("--status", 3);

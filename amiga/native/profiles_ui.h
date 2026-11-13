@@ -13,9 +13,9 @@ static int profile_row[PROFILE_MAX], profile_rows, profile_edit = -1, profile_lo
 static int picker_row[PROFILE_MAX], picker_count;
 static const char *picker_names[PROFILE_MAX + 1];
 static const char *yesno[] = {"Off", "On", NULL};
-static const char *kinds[] = {"OpenAI API", "Amiga agent CLI", "Amiga terminal", NULL};
+static const char *kinds[] = {"OpenAI API", "Amiga agent CLI", "Amiga CLI", "ARexx", "MicroPython", NULL};
 static const char *roles[] = {"Edit and build C/H files", "Read C/H files only", NULL};
-static const char *filters[] = {"All", "API / CLI agents", "Terminals", NULL};
+static const char *filters[] = {"All", "API / CLI agents", "CLI / Scripts", NULL};
 static const char *profile_tabnames[] = {"General", "Launch / Sessions", "Environment",
                                          "Status", NULL};
 enum
@@ -32,7 +32,9 @@ enum
     PF_SAVE,
     PF_USE,
     PF_CANCEL,
-    PF_KIND
+    PF_KIND,
+    PF_ADDREXX,
+    PF_ADDPYTHON
 };
 static Object *cycle(const char **choices)
 {
@@ -152,8 +154,9 @@ static void profile_show(int index)
         p->kind == 0
             ? "Direct OpenAI API. Blank model uses the main Settings model.\nBlank key retains "
               "this profile's credential. Copies need their own key."
-            : "Native AmigaDOS command. Install the executable before launching.\nDesktop "
-              "Claude/Codex CLIs need a different host; no remote execution is configured.");
+            : p->kind == 3 ? "ARexx: enter the script path and arguments under Launch / Sessions.\nRequires SYS:Rexxc/RX and a running RexxMast. No Termic-specific ARexx commands are added."
+            : p->kind == 4 ? "MicroPython: enter a script path or -c expression under Launch / Sessions.\nRuntime: Termic:Tools/MicroPython/micropython. Interactive use is through CLI."
+            : "Native AmigaDOS command. Install the executable before launching.\nCLI consoles open separately; desktop agent executables need a different host.");
     profile_loading = 0;
 }
 static void profile_refresh(int selected)
@@ -164,8 +167,8 @@ static void profile_refresh(int selected)
     DoMethod(profile_list, MUIM_List_Clear);
     profile_rows = 0;
     for (i = 0; i < profile_draft.count; i++)
-        if (filter == 0 || (filter == 1 && profile_draft.items[i].kind != 2) ||
-            (filter == 2 && profile_draft.items[i].kind == 2))
+        if (filter == 0 || (filter == 1 && profile_draft.items[i].kind < 2) ||
+            (filter == 2 && profile_draft.items[i].kind >= 2))
         {
             if (i == selected)
                 active = profile_rows;
@@ -322,7 +325,9 @@ static void profile_event(int id)
     else
     {
         index = profile_add(&profile_draft,
-                            id == PF_ADDTERM  ? 2
+                            id == PF_ADDREXX ? 3
+                            : id == PF_ADDPYTHON ? 4
+                            : id == PF_ADDTERM  ? 2
                             : id == PF_ADDCLI ? 1
                                               : 0,
                             id == PF_COPY ? profile_edit : -1);
@@ -347,11 +352,11 @@ static Object *build_profiles_window(void)
         if (!titles)
             return NULL;
     }
-    o=WindowObject,MUIA_Window_Title,"Termic: Agents & Terminals",MUIA_Window_ID,MAKE_ID('T','A','G','T'),
+    o=WindowObject,MUIA_Window_Title,"Termic: Agents, CLI and Scripts",MUIA_Window_ID,MAKE_ID('T','A','G','T'),
     MUIA_Window_Width,1060,MUIA_Window_Height,600,WindowContents,VGroup,InnerSpacing(10,10),
-    Child,HGroup,Child,label("\33bAgents & Terminals"),Child,HVSpace,Child,button("Reset built-ins",PF_RESET),End,
-    Child,label("Configure direct API agents and installed Amiga commands. Save keeps changes; Use lasts until reboot."),
-    Child,HGroup,Child,button("Add API",PF_ADDAPI),Child,button("Add agent CLI",PF_ADDCLI),Child,button("Add terminal",PF_ADDTERM),Child,button("Duplicate",PF_COPY),Child,button("Remove",PF_REMOVE),End,
+    Child,HGroup,Child,label("\33bAgents / CLI / Scripts"),Child,HVSpace,Child,button("Reset built-ins",PF_RESET),End,
+    Child,label("Configure API agents, CLI commands, ARexx and MicroPython scripts. Save keeps changes; Use lasts until reboot."),
+    Child,HGroup,Child,button("Add API",PF_ADDAPI),Child,button("Add CLI",PF_ADDTERM),Child,button("Add ARexx",PF_ADDREXX),Child,button("Add MicroPython",PF_ADDPYTHON),Child,button("Duplicate",PF_COPY),Child,button("Remove",PF_REMOVE),End,
     Child,HGroup,Child,VGroup,MUIA_Weight,24,Child,profile_filter=cycle(filters),Child,list(&profile_list),End,
     Child,VGroup,MUIA_Weight,76,Child,profile_tabs=MUI_NewObject(titles?MUIC_Group:MUIC_Register,
     titles?TAG_IGNORE:MUIA_Register_Titles,profile_tabnames,MUIA_Group_PageMode,TRUE,
@@ -369,7 +374,7 @@ static Object *build_profiles_window(void)
     Child,VGroup,InnerSpacing(8,8),Child,label("\33bNative command environment"),Child,label("One NAME=value per line. Values apply only to the launched worker and its children."),
     Child,editor(&profile_env,0),Child,label("Native commands have ordinary AmigaDOS access.\nmacOS Keychain roles, Docker and desktop sandbox rules are not available.\nAPI agents only access C/H files in the current task; read-only also disables builds."),End,
     Child,VGroup,InnerSpacing(8,8),Child,ColGroup(2),Child,label("Report API token usage"),Child,profile_usage=cycle(yesno),End,
-    Child,label("\33bAgent state"),Child,label("The native worker reports Running, completion and failure in the task list.\nBuild / Shell contains its output. Cancel requests an orderly stop.\nAPI usage reports actual input/output tokens for each response when supplied.\nSubscription plan quotas and total context-window capacity are not reported.\nExternal CLI hook installation and live YOLO switching need an interactive host.\nNative terminals open their own console; their lifetime is not tracked here."),Child,HVSpace,End,End,
+    Child,label("\33bAgent state"),Child,label("The native worker reports Running, completion and failure in the task list.\nBuild / CLI contains its output. Cancel requests an orderly stop.\nAPI usage reports actual input/output tokens for each response when supplied.\nSubscription plan quotas and total context-window capacity are not reported.\nExternal CLI hook installation and live YOLO switching need an interactive host.\nNative CLI consoles open their own console; their lifetime is not tracked here."),Child,HVSpace,End,End,
     Child,profile_info=label(""),End,End,
     Child,HGroup,Child,button("Save",PF_SAVE),Child,button("Use",PF_USE),Child,button("Cancel",PF_CANCEL),End,End,End;
     if(o) {

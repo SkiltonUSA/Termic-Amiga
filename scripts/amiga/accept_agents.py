@@ -47,6 +47,7 @@ async def main(args):
                     except TimeoutError:
                         if attempt:raise
                         await asyncio.sleep(2)
+                assert 'path' in d,d
                 subprocess.run(['sips','-s','format','png',d['path'],'--out',str(out/name)],check=True,capture_output=True)
             async def wait_main():
                 for _ in range(20):
@@ -56,7 +57,7 @@ async def main(args):
                 raise AssertionError('Main window did not open')
             async def stop_candidate():
                 # Exercise normal MUI cleanup rather than an external break signal.
-                for title in ['Termic: Agents & Terminals','Termic: Agent access']:
+                for title in ['Termic: Agents, CLI and Scripts','Termic: Agent access']:
                     p=await state(title)
                     if p['address']:
                         await state(title,front=True)
@@ -87,6 +88,11 @@ async def main(args):
                 await push(args.gui,fixture+'/TermicProfilesTest')
                 await push(args.worker,fixture+'/TermicAgent')
                 await push(args.mcp,fixture+'/TermicMCP')
+                await shell('MakeDir '+fixture+'/Tools\nMakeDir '+fixture+'/Tools/MicroPython\nMakeDir '+fixture+'/Examples')
+                await push(args.micropython,fixture+'/Tools/MicroPython/micropython')
+                await push(ROOT/'amiga/native/Examples/hello.py',fixture+'/Examples/hello.py')
+                await push(ROOT/'amiga/native/Examples/hello.rexx',fixture+'/Examples/hello.rexx')
+                await shell('Protect '+fixture+'/Tools/MicroPython/micropython +e')
                 await shell('Protect '+fixture+'/TermicProfilesTest +e\nProtect '+fixture+'/TermicAgent +e\nProtect '+fixture+'/TermicMCP +e\nRun >NIL: <NIL: '+fixture+'/TermicProfilesTest')
                 launched=True;p=await wait_main()
                 await call('amiga_window_move',{'window':format(p['address'],'08x'),'x':260,'y':75})
@@ -95,7 +101,7 @@ async def main(args):
                 await click(p['x']+890,p['y']+54)
                 # Positions pinned to the 1400x650 MUI acceptance layout.
                 await click(p['x']+480,p['y']+130)
-                title='Termic: Agents & Terminals';a=await state(title)
+                title='Termic: Agents, CLI and Scripts';a=await state(title)
                 assert a['address'] and a['active'],a
                 await capture(title,'agents-general.png')
                 # Native titlebar + header + add row. Save is at the lower left.
@@ -113,7 +119,7 @@ async def main(args):
                 assert len(json.loads(saved.read_text())['profiles'])==3
                 await state(front=True);p=await state();await click(p['x']+480,p['y']+130)
                 a=await state(title)
-                await click(a['x']+530,a['y']+80,title) # unsaved terminal
+                await click(a['x']+530,a['y']+80,title) # unsaved MicroPython profile
                 await click(a['x']+a['width']-150,a['y']+a['height']-24,title) # Cancel
                 await call('amiga_pull_file',{'amiga_path':'ENV:Termic/agents.json','local_path':str(temporary)})
                 assert len(json.loads(temporary.read_text())['profiles'])==4
@@ -188,6 +194,21 @@ async def main(args):
                 await shell('Termic:TermicAgent --agent --project '+fixture+'/Projects/fixture/Tasks/mcp-test >'+fixture+'/cli.log')
                 cli_log=out/'cli.log';await call('amiga_pull_file',{'amiga_path':fixture+'/cli.log','local_path':str(cli_log)})
                 assert 'amiga-cli-fixture' in cli_log.read_text() and 'Finished with exit code 0' in cli_log.read_text()
+                # Exercise script profiles and command-panel actions on native workers.
+                for kind,action,executable,script,expected in [
+                    (3,'--rexx','SYS:Rexxc/RX','hello.rexx','Hello from Termic ARexx'),
+                    (4,'--python','Termic:Tools/MicroPython/micropython','hello.py','Hello from Termic MicroPython')]:
+                    profile=dict(cli);profile.update(id='fixture-script',name='Fixture script',kind=kind,command=executable,args='Termic:Examples/'+script)
+                    registry['profiles'][-1]=profile
+                    cli_registry.write_text(json.dumps(registry));await push(cli_registry,'ENV:Termic/agents.json')
+                    selected.write_text('fixture-script');await push(selected,fixture+'/Projects/fixture/Tasks/mcp-test/agent-profile')
+                    for mode in ['--agent',action]:
+                        cmd=out/'command.txt';cmd.write_text('Termic:Examples/'+script)
+                        await push(cmd,fixture+'/Projects/fixture/Tasks/mcp-test/command.txt')
+                        await shell('Termic:TermicAgent '+mode+' --project '+fixture+'/Projects/fixture/Tasks/mcp-test >'+fixture+'/script.log')
+                        log=out/(script+mode+'.log');log.unlink(missing_ok=True)
+                        await call('amiga_pull_file',{'amiga_path':fixture+'/script.log','local_path':str(log)})
+                        assert expected in log.read_text() and 'Finished with exit code 0' in log.read_text(),log.read_text()
                 # Real stdio connector, including upstream MCP handshake and native dispatch.
                 child=await asyncio.create_subprocess_exec(sys.executable,str(ROOT/'scripts/amiga/mcp_bridge.py'),stdin=asyncio.subprocess.PIPE,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.PIPE)
                 requests=[{'jsonrpc':'2.0','id':1,'method':'initialize','params':{'protocolVersion':'2025-11-25','capabilities':{}}},
@@ -199,7 +220,7 @@ async def main(args):
                 assert len(replies)==3 and len(replies[1]['result']['tools'])==15,replies
                 assert not replies[2]['result']['isError'],replies
                 (out/'bridge-replies.json').write_bytes(stdout)
-                (out/'passed.json').write_text(json.dumps({'fixture':fixture,'profiles_saved':3,'native_mcp':True,'native_build':True,'failed_build_preserves_program':True,'stdio_bridge':True},indent=2))
+                (out/'passed.json').write_text(json.dumps({'fixture':fixture,'profiles_saved':3,'native_mcp':True,'native_build':True,'failed_build_preserves_program':True,'stdio_bridge':True,'arexx':True,'micropython':True},indent=2))
             finally:
                 if launched:await stop_candidate()
                 if prepared:
@@ -214,6 +235,6 @@ async def main(args):
                 (out/'restored.json').write_text(json.dumps(restored))
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
-    for name in ['gui','worker','mcp','probe']:p.add_argument('--'+name,type=Path,required=True)
+    for name in ['gui','worker','mcp','probe','micropython']:p.add_argument('--'+name,type=Path,required=True)
     p.add_argument('--skip-screenshots',action='store_true')
     asyncio.run(main(p.parse_args()))

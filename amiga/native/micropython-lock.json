@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/OoZe1911/micropython-amiga-port",
+  "revision": "bd6ef2bcbf091d239bc0edbc71aeab08c618b82f",
+  "files": {
+    "micropython": {
+      "url": "https://raw.githubusercontent.com/OoZe1911/micropython-amiga-port/bd6ef2bcbf091d239bc0edbc71aeab08c618b82f/ports/amiga/build/micropython",
+      "sha256": "555267c92c3e2594181fd154a8b97da876ffe0719198407d23d078f6a66e4bfd",
+      "bytes": 443476
+    },
+    "LICENSE": {
+      "url": "https://raw.githubusercontent.com/OoZe1911/micropython-amiga-port/bd6ef2bcbf091d239bc0edbc71aeab08c618b82f/LICENSE",
+      "sha256": "c7273a4675e28b40547b4814bf68da41954632ebbc38b3fff69f22d69850f690",
+      "bytes": 3389
+    },
+    "README.md": {
+      "url": "https://raw.githubusercontent.com/OoZe1911/micropython-amiga-port/bd6ef2bcbf091d239bc0edbc71aeab08c618b82f/README.md",
+      "sha256": "1ee32889bb21eb70d9d9a349fbfc8aea2fd115056ebc31fbed82c689f7073402",
+      "bytes": 5457
+    }
+  }
+}

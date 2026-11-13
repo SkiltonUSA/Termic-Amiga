@@ -23,7 +23,7 @@ void profiles_defaults(struct AgentProfiles *p)
     p->count = 2;
     p->next_id = 1;
     init(&p->items[0], "openai", "OpenAI API", 0);
-    init(&p->items[1], "shell", "Amiga Shell", 2);
+    init(&p->items[1], "shell", "Amiga CLI", 2);
     strcpy(p->items[1].command, "C:NewShell");
 }
 int profile_builtin(const struct AgentProfile *p)
@@ -43,7 +43,7 @@ static int single(const char *s)
 int profile_valid(const struct AgentProfile *p)
 {
     const char *s = p->id, *e;
-    if (!*s || !*p->name || p->kind < 0 || p->kind > 2 || p->steps < 1 || p->steps > 32 ||
+    if (!*s || !*p->name || p->kind < 0 || p->kind > 4 || p->steps < 1 || p->steps > 32 ||
         p->tokens < 256 || p->tokens > 16384 || p->visible < 0 || p->visible > 1 ||
         p->readonly < 0 || p->readonly > 1 || p->resume < 0 || p->resume > 1 || p->usage < 0 ||
         p->usage > 1)
@@ -111,8 +111,14 @@ int profile_add(struct AgentProfiles *p, int kind, int copy)
         init(&p->items[i], id,
              kind == 0   ? "New API agent"
              : kind == 1 ? "New Amiga CLI"
-                         : "New terminal",
+                         : kind == 2 ? "New CLI"
+             : kind == 3 ? "New ARexx script" : "New MicroPython script",
              kind);
+    if (copy < 0) {
+        if (kind == 2) strcpy(p->items[i].command, "C:NewShell");
+        if (kind == 3) { strcpy(p->items[i].command, "SYS:Rexxc/RX"); strcpy(p->items[i].args, "Termic:Examples/hello.rexx"); }
+        if (kind == 4) { strcpy(p->items[i].command, "Termic:Tools/MicroPython/micropython"); strcpy(p->items[i].args, "Termic:Examples/hello.py"); }
+    }
     p->next_id = n;
     p->count++;
     return i;
@@ -228,6 +234,11 @@ int profiles_load(struct AgentProfiles *p)
         return 1;
     ok = profiles_parse(p, s);
     free(s);
+    if (ok) {
+        int cli = profile_find(p, "shell");
+        if (cli >= 0 && !strcmp(p->items[cli].name, "Amiga Shell"))
+            strcpy(p->items[cli].name, "Amiga CLI");
+    }
     return ok;
 }
 char *profile_key(const struct AgentProfile *p)
@@ -265,5 +276,14 @@ int profile_command(const struct AgentProfile *p, int yolo, int resume, char *ou
         return 0;
     n = snprintf(out, size, "\"%s\" %s %s %s", p->command, p->args, yolo ? p->yolo : "",
                  resume ? p->resume_args : "");
+    return n >= 0 && (unsigned)n < size;
+}
+int script_command(int kind, const char *args, char *out, unsigned size)
+{
+    int n;
+    const char *runtime = kind == 3 ? "SYS:Rexxc/RX" : "Termic:Tools/MicroPython/micropython";
+    if ((kind != 3 && kind != 4) || !args || !*args || !single(args))
+        return 0;
+    n = snprintf(out, size, "\"%s\" %s", runtime, args);
     return n >= 0 && (unsigned)n < size;
 }

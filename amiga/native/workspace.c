@@ -23,7 +23,8 @@ int source_name(const char *s)
     }
     dot = strrchr(s, '.');
     return dot && (!strcmp(dot, ".c") || !strcmp(dot, ".h") || !strcmp(dot, ".txt") ||
-                   !strcmp(dot, ".md"));
+                   !strcmp(dot, ".md") || !strcmp(dot, ".py") ||
+                   !strcmp(dot, ".rexx") || !strcmp(dot, ".rx"));
 }
 int save_text(const char *path, const char *text, unsigned long limit)
 {

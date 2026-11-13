@@ -26,4 +26,6 @@ int profile_command(const struct AgentProfile *p, int yolo, int resume, char *ou
                     unsigned size);
 char *profile_key(const struct AgentProfile *p);
 int profile_selected(struct AgentProfiles *p);
+/* Build an explicit user-requested script command, never an API tool call. */
+int script_command(int kind, const char *args, char *out, unsigned size);
 #endif

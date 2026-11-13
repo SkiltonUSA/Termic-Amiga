@@ -157,9 +157,13 @@ static int run_profile(void)
     }
     p=&r->items[i];
     if(p->kind==0) { free(r); return run_agent(); }
+    if ((p->kind == 3 || p->kind == 4) && !*p->args) {
+        puts("Enter a script path and arguments in Launch / Sessions. Use a CLI for interactive input.");
+        free(r);return 20;
+    }
     mode=read_text("agent-yolo",8); previous=read_text("cli-started",64);
     if(!profile_command(p,mode && !strcmp(mode,"1"),p->resume && previous && !strcmp(previous,p->id),line,sizeof(line))) {
-        puts("Configure an Amiga executable and valid arguments in Agents & Terminals.");
+        puts("Configure an Amiga executable and valid arguments in Agents / CLI / Scripts.");
         goto done;
     }
     /* Per-process local variables are inherited by the command; ENV: is untouched. */
@@ -197,13 +201,14 @@ int main(int argc, char **argv)
     else if (argc > 2)
     {
         puts("Usage: TermicAgent "
-             "--agent|--build|--run|--probe|--status|--diff|--init|--commit|--shell [--project "
+             "--agent|--build|--run|--probe|--status|--diff|--init|--commit|--shell|--rexx|--python [--project "
              "drawer]");
         return 20;
     }
     if (strcmp(action, "--agent") && strcmp(action, "--build") && strcmp(action, "--run") &&
         strcmp(action, "--probe") && strcmp(action, "--status") && strcmp(action, "--diff") &&
-        strcmp(action, "--init") && strcmp(action, "--commit") && strcmp(action, "--shell"))
+        strcmp(action, "--init") && strcmp(action, "--commit") && strcmp(action, "--shell") &&
+        strcmp(action, "--rexx") && strcmp(action, "--python"))
         return 20;
     lock = Lock((STRPTR)path, ACCESS_READ);
     if (!lock)
@@ -245,7 +250,7 @@ int main(int argc, char **argv)
         result = run_command("Program");
     else if (!strcmp(action, "--agent"))
         result = run_profile();
-    else if (!strcmp(action, "--shell"))
+    else if (!strcmp(action, "--shell") || !strcmp(action, "--rexx") || !strcmp(action, "--python"))
     {
         char *command = read_text("command.txt", 1024);
         if (command && *command)
@@ -253,8 +258,13 @@ int main(int argc, char **argv)
             size_t n = strlen(command);
             while (n && isspace((unsigned char)command[n - 1]))
                 command[--n] = 0;
-            if (n)
-                result = run_command(command);
+            if (n) {
+                char script[1200];
+                if (!strcmp(action,"--shell")) result = run_command(command);
+                else if (script_command(!strcmp(action,"--rexx") ? 3 : 4,command,script,sizeof(script)))
+                    result = run_command(script);
+                else puts("Enter a script path and arguments on one line.");
+            }
         }
         free(command);
     }
