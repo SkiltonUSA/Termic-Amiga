@@ -93,11 +93,17 @@ class CLIAsyncTests(unittest.IsolatedAsyncioTestCase):
                 async def spawn(*command, **kw):
                     self.assertEqual(command[command.index('--model')+1], data['model'])
                     self.assertEqual(command[command.index('--resume')+1], data['thread'])
+                    if provider == 'cursor':
+                        config = json.loads((kw['cwd'] / '.cursor/mcp.json').read_text())
+                        self.assertEqual(list(config['mcpServers']), ['amiga'])
+                        endpoint = Path(config['mcpServers']['amiga']['args'][-1])
+                        self.assertTrue(endpoint.is_file())
                     return proc
                 with tempfile.TemporaryDirectory() as temp, patch.object(cli_relay, 'check_login', login), patch.object(cli_relay.asyncio, 'create_subprocess_exec', spawn):
                     ok = await cli_relay.run_cli_job(bridge, data, provider, Path(temp))
                     self.assertEqual(ok, not failed)
                     self.assertFalse(list(Path(temp).glob('termic-job-*')))
+                    self.assertFalse((Path(temp) / 'cursor-workspace/.cursor/mcp.json').exists())
                 self.assertEqual(bridge.frames[-1]['status'], 'failed' if failed else 'completed')
                 self.assertEqual([f['thread'] for f in bridge.frames if f['kind']=='session'], ['abcd-1234'])
 

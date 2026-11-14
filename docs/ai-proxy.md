@@ -118,6 +118,10 @@ for these tasks. Cursor uses a dedicated empty workspace and configuration,
 with local shell, file reads/writes and web fetch denied. This is provider
 permission configuration, not an OS sandbox or a guarantee about every future
 Cursor built-in tool. Native Amiga bounds remain enforced independently.
+The proxy registers its MCP adapter in the dedicated workspace's
+`.cursor/mcp.json` for each turn and removes that registration afterward.
+`CURSOR_CONFIG_DIR` keeps CLI settings and authentication separate; it does
+not replace the documented [workspace MCP location](https://cursor.com/docs/mcp).
 
 Limits, cancellation behavior and transcript handling are shared with the
 [Codex relay](codex-relay.md). One task runs at a time. No ARM offload or

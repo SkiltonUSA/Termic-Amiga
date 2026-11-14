@@ -134,7 +134,7 @@ async def terminate(proc):
 async def run_cli_job(bridge, job, executable, state):
     provider = job['provider']; label = NAMES[provider]
     mailbox = Mailbox(bridge, job)
-    proc = heartbeat = reader_task = server = None
+    proc = heartbeat = reader_task = server = cursor_config = None
     tools = ToolServer(mailbox, job)
     status = 'failed'
     state.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -164,7 +164,13 @@ async def run_cli_job(bridge, job, executable, state):
                     'allow': ['Mcp(amiga:' + t['name'] + ')' for t in dynamic_tools(job['readonly'])],
                     'deny': ['Shell(*)', 'Read(**)', 'Write(**)', 'WebFetch(*)']}})
                 path.write_text(json.dumps(settings)); path.chmod(0o600)
-                (cfg / 'mcp.json').write_text(config.read_text())
+                # CURSOR_CONFIG_DIR selects CLI settings/auth, but MCP discovery
+                # uses the workspace's .cursor/mcp.json on current Cursor CLI.
+                project_config = work / '.cursor'
+                project_config.mkdir(exist_ok=True, mode=0o700)
+                cursor_config = project_config / 'mcp.json'
+                cursor_config.write_text(config.read_text())
+                cursor_config.chmod(0o600)
             command = command_for(provider, executable, job, work, config)
             proc = await asyncio.create_subprocess_exec(*command, cwd=work, env=clean_env(provider, state),
                 stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
@@ -217,6 +223,8 @@ async def run_cli_job(bridge, job, executable, state):
         await asyncio.gather(*[t for t in (heartbeat, reader_task) if t], return_exceptions=True)
         if server: server.close(); await server.wait_closed()
         await tools.close()
+        if cursor_config:
+            cursor_config.unlink(missing_ok=True)
         try:
             await mailbox.send('done', status=status)
             await bridge.remove(job['id'] + '.in', job['id'] + '.out', job['id'] + '.stopped')

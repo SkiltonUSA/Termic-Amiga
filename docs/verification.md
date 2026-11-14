@@ -331,3 +331,24 @@ passed portable, packaged MCP and desktop lifecycle/recovery checks on macOS
 and Windows. The updated Mac app was installed and restarted after restoring
 the production Amiga workspace and removing the temporary helper. The Windows
 archive was downloaded and integrity-checked. Cursor sign-in is still pending.
+
+## Cursor subscription authentication completed
+
+Cursor browser sign-in is now saved in the proxy's dedicated configuration.
+The first authenticated smoke test exposed missing MCP discovery: the CLI
+did not load the adapter from the custom CLI configuration directory.
+Registering it in the dedicated workspace's `.cursor/mcp.json` fixed the
+failure. The regression test checks discovery configuration at subprocess
+launch and cleanup after both successful and failed turns.
+
+The real Cursor smoke test then called list_sources successfully. On the
+A4000TX, authenticated acceptance passed GUI submission, read_source,
+write_source, native VBCC compilation, conversation resume, Stop while waiting,
+native read-only enforcement and path-traversal rejection. The resulting
+Hunk executable was compiled, not run. Settings, clipboard, assign and the
+production window were restored. This supersedes the earlier pending-Cursor
+results. All three host providers have now passed authenticated Amiga tests.
+
+All 18 portable proxy tests, the rebuilt macOS GUI/MCP smoke test and packaged
+connection-recovery/Start/Stop/restart/close checks passed. The Mac application
+was backed up and updated with the MCP discovery fix.
