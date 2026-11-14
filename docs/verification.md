@@ -423,3 +423,17 @@ clipboard and window geometry were restored. The refreshed Mac bundle passed
 GUI/MCP smoke and Start/Stop/reconnect/restart/close checks.
 
 ![Synthetic response and tool activity while the task is still running](screenshots/live-feedback.png)
+
+The final GUI and worker were installed with matching source files, ReadMe
+and AmigaGuide, after staging and checksum verification. Installed GUI:
+124144 bytes, CRC32 `4C9A117E`; worker: 69496 bytes, CRC32 `15796181`.
+The rollback backup is
+`SD032G:Dev/Termic/Backup/live-feedback-1794668662`. The production window
+reopened at 1920x789, and the Mac proxy bundle was backed up and updated.
+This supersedes the earlier completed-message-only display limitation.
+
+[Live feedback build 43608154271](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43608154271)
+passed portable tests, packaging, bundled MCP and desktop lifecycle/recovery
+checks on macOS and Windows. The Windows archive passed integrity and
+executable/dependency-layout checks. A physical Windows 11 connection to the
+Amiga remains untested.
