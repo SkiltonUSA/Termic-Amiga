@@ -7,14 +7,15 @@ DevBench bridge are separate prerequisites.
 
 ![Termic AI Proxy with synthetic account status](screenshots/ai-proxy.png)
 
-Proxy build f7e89b2 fixes pending task pickup and retries read-only mailbox
-checks after transient bridge errors. It retains Cursor operation polling
-and the native execution and hardware-query tools:
-[macOS download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43641003631/artifacts/14131768008)
-and [Windows download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43641003631/artifacts/14131659088).
-Both passed portable tests, packaging, MCP, task-pickup and desktop lifecycle
-checks. This mailbox fix changes only the host proxy. The native worker from
-ba2bdf4 remains current, including its session-save and Stop fixes.
+Proxy build cfbf4f0 reduces task pickup and live-text delays. With the matching
+Amiga worker it negotiates alternating reply files, removing shell cleanup
+between messages. Existing profiles and conversations continue to work:
+[macOS download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43644759972/artifacts/14133680786)
+and [Windows download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43644759972/artifacts/14133353965).
+Both passed portable tests, packaging, MCP, legacy/fast task-pickup and desktop
+lifecycle checks. Update both proxy and native worker for the faster reply
+mode; older peers automatically retain the compatible exchange. Native
+worker source is in the same revision and builds with `BuildNative`.
 GitHub sign-in is required; artifacts expire after 30 days.
 
 ## Start the app

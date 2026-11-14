@@ -626,3 +626,20 @@ The native protocol rejects invalid reply slots before invoking tools.
 Older hosts and workers retain the `.out` exchange. Both modes passed the
 packaged worker acceptance; all 36 portable proxy checks and the native
 protocol checks passed locally.
+
+
+A repeat on the installed worker measured a 1.73-second median and then
+saved and executed a synthetic ARexx script successfully through the fast
+mailbox. An earlier attempt overlapped app autostart and was discarded;
+the repeat held exclusive proxy ownership. The installed app also picked
+up and completed a synthetic Codex task through the new reply mode.
+The updated native worker is 76380 bytes, CRC32 `6C934D91`; it and the Mac
+proxy were installed with rollback backups. The activity-scroll GUI remains
+unchanged. Physical Windows-to-Amiga connectivity remains untested.
+
+[Fast reply build 43644759972](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43644759972)
+passed all 36 portable proxy tests, packaging, bundled MCP smoke, both
+legacy and slot-based packaged mailbox tests, and desktop lifecycle checks
+on macOS and Windows. Updated downloads are in [AI Proxy setup](ai-proxy.md).
+Final checks confirmed the installed Mac app matches the build, the worker
+matches its deployed checksum, the GUI remains active, and the relay is idle.
