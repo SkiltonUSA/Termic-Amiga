@@ -7,15 +7,16 @@ DevBench bridge are separate prerequisites.
 
 ![Termic AI Proxy with synthetic account status](screenshots/ai-proxy.png)
 
-Proxy build cfbf4f0 reduces task pickup and live-text delays. With the matching
-Amiga worker it negotiates alternating reply files, removing shell cleanup
-between messages. Existing profiles and conversations continue to work:
-[macOS download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43644759972/artifacts/14133680786)
-and [Windows download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43644759972/artifacts/14133353965).
+Proxy build 58d0f75 batches mailbox checks to further reduce bridge delays.
+It retains the faster task pickup, live-text batching and alternating reply
+files introduced in cfbf4f0. Existing profiles and conversations continue to work:
+[macOS download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43652953017/artifacts/14136628709)
+and [Windows download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43652953017/artifacts/14136752120).
 Both passed portable tests, packaging, MCP, legacy/fast task-pickup and desktop
 lifecycle checks. Update both proxy and native worker for the faster reply
-mode; older peers automatically retain the compatible exchange. Native
-worker source is in the same revision and builds with `BuildNative`.
+mode; older peers automatically retain the compatible exchange. If the
+cfbf4f0 worker is already installed, this update needs only the host proxy.
+Native worker source builds with `BuildNative`.
 GitHub sign-in is required; artifacts expire after 30 days.
 
 ## Start the app

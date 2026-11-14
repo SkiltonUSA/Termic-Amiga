@@ -661,3 +661,17 @@ All 39 portable proxy tests passed, including new Stop-during-upload,
 snapshot-refresh and pending-request preservation checks. The rebuilt Mac
 bundle passed both mailbox modes, MCP smoke and desktop lifecycle acceptance.
 The Amiga GUI and worker require no update for this change.
+
+
+The repeat using the installed worker measured a 1.36-second median with
+37 directory reads and passed the ARexx save/run check again. The native
+worker and activity-scroll GUI are unchanged. The Mac proxy was replaced
+with the tested bundle after a rollback backup.
+
+[Batch-check build 43652953017](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43652953017)
+passed all 39 portable proxy tests, packaging, bundled MCP smoke, both mailbox
+modes and desktop lifecycle checks on macOS and Windows. Final local checks
+confirmed the installed app matches the tested build, the proxy is running,
+the native binaries retain their previous checksums and the relay is idle.
+Downloads are updated in [AI Proxy setup](ai-proxy.md). A physical Windows
+to Amiga connection remains untested.
