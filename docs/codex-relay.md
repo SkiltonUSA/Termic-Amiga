@@ -136,6 +136,19 @@ unconsumed requests are never overwritten. Deletion is checked against a
 fresh directory listing. Commands and tool executions are not replayed
 when a reply is lost.
 
+Updated workers advertise optional `reply_slots`. An updated host then
+requests alternating `.r0` and `.r1` replies. The next input acknowledges
+consumption of the previous reply, which the native worker deletes locally.
+The host polls the other filename, avoiding both shell cleanup per message
+and file-lock races during replacement. Older peers continue using `.out`.
+Final cleanup removes both slots. ID, sequence and checksum checks apply in
+both modes; invalid slot/sequence combinations never execute a tool.
+
+Pending tasks are checked every 0.5 seconds (plus bridge round-trip time),
+and streamed deltas are coalesced for 0.2 seconds before transfer. These
+reduce transport delays; cloud model reasoning and native builds still take
+their own time.
+
 ## Checks
 
 `codex_relay.py --check` verifies ChatGPT authentication without model inference.

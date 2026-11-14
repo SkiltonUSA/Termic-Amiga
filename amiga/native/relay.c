@@ -21,7 +21,7 @@ static int thread_id(const char *id)
 }
 int relay_message(struct RelayState *s,const char *json,char **reply)
 {
-    cJSON *m=cJSON_Parse(json),*seq,*out;
+    cJSON *m=cJSON_Parse(json),*seq,*slot,*out;
     const char *id,*kind,*text,*name;
     char *args=NULL,*result=NULL;
     int done=0,ok=1;
@@ -30,6 +30,11 @@ int relay_message(struct RelayState *s,const char *json,char **reply)
     id=field(m,"id");kind=field(m,"kind");seq=cJSON_GetObjectItemCaseSensitive(m,"seq");
     if(!id || strcmp(id,s->id) || !kind || !cJSON_IsNumber(seq) ||
        seq->valuedouble!=s->seq+1 || s->seq>=10000) {cJSON_Delete(m);return -1;}
+    slot=cJSON_GetObjectItemCaseSensitive(m,"reply_slot");
+    if(slot && (!cJSON_IsNumber(slot) || slot->valuedouble!=((s->seq+1)&1))) {
+        cJSON_Delete(m);return -1;
+    }
+    s->reply_slot=slot?slot->valueint:-1;
     if(!strcmp(kind,"ping")) {}
     else if(!strcmp(kind,"text")) {
         text=field(m,"text");
@@ -137,6 +142,7 @@ int run_relay(void)
     request=cJSON_CreateObject();guides=cJSON_CreateArray();
     if(!request || !guides) {puts("Not enough memory for relay request.");goto end;}
     cJSON_AddNumberToObject(request,"protocol",p->kind==5?1:2);
+    cJSON_AddBoolToObject(request,"reply_slots",1);
     cJSON_AddStringToObject(request,"provider",profile_provider(p->kind));
     cJSON_AddStringToObject(request,"id",s.id);
     cJSON_AddStringToObject(request,"prompt",task);
@@ -165,6 +171,12 @@ int run_relay(void)
             int result;DeleteFile((STRPTR)in);
             result=relay_message(&s,message,&reply);free(message);
             if(result<0) {free(reply);puts("Invalid relay frame; stopping.");break;}
+            /* A new input acknowledges the previous reply. Slot-aware hosts
+             * poll the other filename, so no reader holds this old file open.
+             * Legacy hosts still remove .out themselves before sending. */
+            DeleteFile((STRPTR)out);
+            if(s.reply_slot>=0)sprintf(out,RELAY "%s.r%d",s.id,s.reply_slot);
+            else sprintf(out,RELAY "%s.out",s.id);
             if(!publish(out,reply)) {free(reply);break;}
             free(reply);idle=0;done=result;
         } else if(++idle>(s.seq?1200:600)) {

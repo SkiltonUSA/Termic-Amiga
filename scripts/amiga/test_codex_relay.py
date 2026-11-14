@@ -34,7 +34,7 @@ class RelayTests(unittest.TestCase):
     def test_job_boundaries(self):
         relay.validate_job(job())
         for key, value in [('id', '../Config'), ('thread', '../../auth.json'), ('prompt', 'x' * 8193),
-                           ('readonly', 1), ('limit', 0), ('limit', 33), ('protocol', 3),
+                           ('readonly', 1), ('reply_slots', 1), ('limit', 0), ('limit', 33), ('protocol', 3),
                            ('guidance', [{'path': 'Config/api-key', 'text': 'fixture'}])]:
             data = job(); data[key] = value
             with self.assertRaises(ValueError):
@@ -67,7 +67,7 @@ class FakeBridge:
     async def read(self, name):
         if name.endswith('.stopped'):
             return 'stopped' if self.stop else None
-        if name.endswith('.out') and self.frames:
+        if name.endswith(('.out', '.r0', '.r1')) and self.frames:
             frame = self.frames[-1]
             return json.dumps({'id': frame['id'], 'seq': frame['seq'], 'ok': True, 'text': 'fixture.c'})
     async def write(self, name, value):
@@ -85,6 +85,16 @@ class AsyncRelayTests(unittest.IsolatedAsyncioTestCase):
         bridge.stop = True
         with self.assertRaises(ConnectionError): await box.send('tool', name='build', arguments={})
         self.assertEqual(len(bridge.frames), 2)
+
+    async def test_reply_slots_avoid_per_frame_host_cleanup(self):
+        bridge = FakeBridge(); data = job(); data['reply_slots'] = True
+        box = relay.Mailbox(bridge, data)
+        for _ in range(4): await box.send('ping')
+        self.assertEqual([frame['reply_slot'] for frame in bridge.frames], [1,0,1,0])
+        self.assertEqual([op[0] for op in bridge.operations], ['write']*4)
+        bridge.stop = True
+        with self.assertRaises(ConnectionError): await box.send('tool', name='build', arguments={})
+        self.assertEqual(len(bridge.frames),4)
 
     async def test_run_job_tool_call_completion_and_resume(self):
         class FakeCodex:

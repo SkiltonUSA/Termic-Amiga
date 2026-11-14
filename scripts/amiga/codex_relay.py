@@ -40,6 +40,8 @@ def validate_job(job):
         raise ValueError('Invalid prompt or conversation identifier')
     if type(job.get('readonly')) is not bool or type(job.get('limit')) is not int or not 1 <= job['limit'] <= 32:
         raise ValueError('Invalid relay access limits')
+    if type(job.get('reply_slots', False)) is not bool:
+        raise ValueError('Invalid reply capability')
     guides = job.get('guidance')
     if not isinstance(guides, list) or len(guides) > 2:
         raise ValueError('Invalid project guidance')
@@ -276,11 +278,19 @@ class Mailbox:
         # The previous response has been consumed. Remove it before publishing
         # the next request so polling never holds that old file while the
         # native worker replaces its reply on classic Amiga filesystems.
-        await self.bridge.remove(ident + '.out')
-        await self.bridge.write(ident + '.in', {'id': ident, 'seq': self.seq, 'kind': kind, **fields})
+        frame = {'id': ident, 'seq': self.seq, 'kind': kind, **fields}
+        if self.job.get('reply_slots', False):
+            # The worker deletes the previous slot only after this next input
+            # arrives. We never poll a file while it is being replaced.
+            frame['reply_slot'] = self.seq & 1
+            response_name = ident + '.r' + str(self.seq & 1)
+        else:
+            await self.bridge.remove(ident + '.out')
+            response_name = ident + '.out'
+        await self.bridge.write(ident + '.in', frame)
         deadline = time.monotonic() + (180 if kind == 'tool' else 45)
         while time.monotonic() < deadline:
-            raw = await self.bridge.read(ident + '.out')
+            raw = await self.bridge.read(response_name)
             if raw:
                 reply = json.loads(raw)
                 if reply.get('id') == ident and reply.get('seq') == self.seq:
@@ -304,7 +314,7 @@ class LiveText:
     One bounded buffer, one writer, and explicit barriers before tools/done.
     Never retry an uncertain mailbox delivery (that could duplicate text).
     """
-    def __init__(self, mailbox, interval=1.0):
+    def __init__(self, mailbox, interval=.2):
         self.mailbox, self.interval = mailbox, interval
         self.pending = ''
         self.total = 0
@@ -577,7 +587,7 @@ async def run_job(bridge, job, executable, home, work):
         await codex.close()
         try:
             await mailbox.send('done', status=status if status in ('completed', 'failed', 'interrupted') else 'failed')
-            await bridge.remove(job['id'] + '.in', job['id'] + '.out', job['id'] + '.stopped')
+            await bridge.remove(*(job['id'] + suffix for suffix in ('.in', '.out', '.r0', '.r1', '.stopped')))
         except Exception:
             pass
     return status == 'completed'
@@ -651,7 +661,7 @@ async def serve(args):
                                 ok = False
                             print('Task completed.' if ok else 'Task failed or stopped.', flush=True)
                             if args.once: return 0 if ok else 1
-                    await asyncio.sleep(2)
+                    await asyncio.sleep(.5)
         except Exception as error:
             if not connection_failure(error): raise
             print('Bridge unavailable: ' + connection_reason(error) +

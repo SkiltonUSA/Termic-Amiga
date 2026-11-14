@@ -39,5 +39,11 @@ int main(void)
     assert(send(&s,s.id,6,"text",",\"text\":\"Hello\\n\"",&ok)==0 && ok);
     assert(send(&s,s.id,7,"done",",\"status\":\"unknown\"",&ok)==0 && !ok);
     assert(send(&s,s.id,8,"done",",\"status\":\"completed\"",&ok)==1 && ok && !s.result);
+    memset(&s,0,sizeof(s));strcpy(s.id,"fixture");s.append=append;s.limit=1;
+    assert(send(&s,s.id,1,"tool",",\"reply_slot\":0,\"name\":\"build\",\"arguments\":{}",&ok)==-1 && executed==1);
+    assert(send(&s,s.id,1,"ping",",\"reply_slot\":1",&ok)==0 && ok && s.reply_slot==1);
+    assert(send(&s,s.id,2,"ping",",\"reply_slot\":0",&ok)==0 && ok && s.reply_slot==0);
+    assert(send(&s,s.id,2,"tool",",\"reply_slot\":0,\"name\":\"build\",\"arguments\":{}",&ok)==-1 && executed==1);
+    assert(send(&s,s.id,3,"ping","",&ok)==0 && ok && s.reply_slot==-1);
     fclose(transcript);puts("Relay: stale IDs, sequence, limits, session and completion passed.");return 0;
 }

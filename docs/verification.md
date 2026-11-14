@@ -606,3 +606,23 @@ classes. The tested GUI, matching sources, ReadMe and AmigaGuide were
 installed after staging, checksum verification and a rollback backup.
 The GUI is 126304 bytes, CRC32 `A694DF95`. Production reopened at its original
 window geometry and AI Proxy was restarted. No worker or proxy code changed.
+
+
+## Proxy transport latency
+
+A nine-frame physical Amiga benchmark used four pings, four synthetic text
+updates and one source read, without cloud inference. The previous transport
+had a median round trip of 3.80 seconds. With negotiated alternating reply
+files the median was 1.55 seconds, about 59% lower (2.4 times faster). Repeating
+the legacy mode against the candidate worker gave 3.91 seconds. These are
+short local transport measurements, not end-to-end model response timings.
+The fast run used no shell calls during the measured exchanges, versus eight
+for the legacy run, and reduced directory calls from 73 to 54.
+
+The proxy checks idle tasks every 0.5 seconds instead of two seconds, and
+coalesces live output for 0.2 seconds instead of one second. Messages still
+use checksum verification, strict sequence/ID checks and no automatic replay.
+The native protocol rejects invalid reply slots before invoking tools.
+Older hosts and workers retain the `.out` exchange. Both modes passed the
+packaged worker acceptance; all 36 portable proxy checks and the native
+protocol checks passed locally.

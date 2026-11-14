@@ -51,7 +51,8 @@ tools, execution results and hardware detection. Cursor collects slow operations
 through bounded polling; start a **New conversation** after updating the proxy
 and worker to load the revised tools. The proxy now checks task mailboxes
 using direct file operations, with bounded retries for read-only bridge
-errors. See [transport details](docs/codex-relay.md#mailbox-transport).
+errors. Updated proxy/worker pairs use alternating reply files to reduce
+per-message bridge traffic and follow streamed output sooner. See [transport details](docs/codex-relay.md#mailbox-transport).
 
 Start with [Termic AI Proxy for macOS and Windows 11](docs/ai-proxy.md) for
 Codex, Claude and Cursor setup, downloads and model selection.

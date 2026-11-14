@@ -310,6 +310,11 @@ Codex, Claude and Cursor host profiles show text while the response is being
 generated. Small chunks are combined on the host before transfer; update
 speed depends on the Amiga bridge. Tool start and return markers appear in
 the transcript, and the CLI log shows native tool activity immediately.
+Updated host proxies and workers negotiate alternating reply files to
+avoid shell cleanup for each message. Older peers remain compatible.
+Task pickup polls every half-second; live text batches every 0.2 seconds.
+These improve bridge responsiveness, not the model's thinking speed.
+
 Replies wrap to the transcript width. Activity opens at the latest line
 and follows new output automatically. Selected text is held for copying;
 releasing the selection catches up to the latest line.

@@ -17,7 +17,8 @@ if len(sys.argv)>1 and sys.argv[1]=='--server':
     state=Path(sys.argv[3]); root='Termic:Relay'
     job={'protocol':2,'provider':'claude','id':'12345678-12345678-1234',
          'prompt':'Synthetic mailbox pickup check.','instructions':'Use only supplied tools.',
-         'model':'','thread':'','readonly':True,'limit':2,'guidance':[]}
+         'model':'','thread':'','readonly':True,'limit':2,'guidance':[],
+         'reply_slots':bool(int(sys.argv[4]))}
     files={root+'/request.json':json.dumps(job).encode()}; frames=[]; first=[True]; checksum_error=[True]
     mcp=FastMCP('fixture-mailbox',host='127.0.0.1',port=int(sys.argv[2]))
     @mcp.tool()
@@ -55,7 +56,14 @@ if len(sys.argv)>1 and sys.argv[1]=='--server':
         assert new_path==root+'/'+job['id']+'.in' and old_path==new_path+'.tmp'
         frame=json.loads(files.pop(old_path)); frames.append(frame)
         assert frame['id']==job['id'] and frame['seq']==len(frames)
-        files[root+'/'+job['id']+'.out']=json.dumps({'id':job['id'],'seq':frame['seq'],'ok':True,'text':'OK'}).encode()
+        for suffix in ('.out','.r0','.r1'):files.pop(root+'/'+job['id']+suffix,None)
+        if job['reply_slots']:
+            assert frame['reply_slot']==frame['seq'] & 1
+            suffix='.r'+str(frame['reply_slot'])
+        else:
+            assert 'reply_slot' not in frame
+            suffix='.out'
+        files[root+'/'+job['id']+suffix]=json.dumps({'id':job['id'],'seq':frame['seq'],'ok':True,'text':'OK'}).encode()
         if frame['kind']=='done':
             assert frame['status']=='failed'
             files.pop(root+'/request.json')
@@ -65,37 +73,38 @@ if len(sys.argv)>1 and sys.argv[1]=='--server':
     mcp.run(transport='streamable-http')
 else:
     binary=str(Path(sys.argv[1]).resolve())
-    with tempfile.TemporaryDirectory(prefix='termic-mailbox-') as temp:
-        state=Path(temp)
-        with socket.socket() as s:
-            s.bind(('127.0.0.1',0));port=s.getsockname()[1]
-        server=subprocess.Popen([sys.executable,__file__,'--server',str(port),temp],
-                                stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-        worker=None
-        try:
-            url=f'http://127.0.0.1:{port}/mcp'
-            for _ in range(100):
-                try:urllib.request.urlopen(url,timeout=.2);break
-                except urllib.error.HTTPError:break
-                except urllib.error.URLError:time.sleep(.1)
-            else:raise RuntimeError('Fixture MCP server did not start')
-            (state/'proxy.json').write_text(json.dumps({'bridge':url,'autostart':False,
-                'claude':str(state/'missing-agent-executable')}))
-            worker=subprocess.Popen([binary,'--relay-worker',temp],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-            for _ in range(100):
-                if (state/'mailbox-passed.json').exists():break
-                if worker.poll() is not None:raise AssertionError((state/'proxy.log').read_text())
-                time.sleep(.2)
-            else:raise AssertionError('Packaged proxy did not consume the fixture task: '+(state/'proxy.log').read_text())
-            (state/'proxy.stop').touch();worker.wait(timeout=15)
-            evidence=json.loads((state/'mailbox-passed.json').read_text())
-            assert evidence['task_pickup'] and evidence['ordered_replies'] and evidence['provider_failure_reported']
-            assert evidence['kinds'][0]=='ping' and evidence['kinds'][-1]=='done' and 'text' in evidence['kinds']
-            assert 'Processing claude task.' in (state/'proxy.log').read_text()
-            print('Packaged task pickup, ordered mailbox replies and provider-failure completion passed.')
-        finally:
-            for process in (worker,server):
-                if process and process.poll() is None:
-                    process.terminate()
-                    try:process.wait(timeout=5)
-                    except subprocess.TimeoutExpired:process.kill();process.wait()
+    for slots in (False, True):
+        with tempfile.TemporaryDirectory(prefix='termic-mailbox-') as temp:
+            state=Path(temp)
+            with socket.socket() as s:
+                s.bind(('127.0.0.1',0));port=s.getsockname()[1]
+            server=subprocess.Popen([sys.executable,__file__,'--server',str(port),temp,str(int(slots))],
+                                    stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+            worker=None
+            try:
+                url=f'http://127.0.0.1:{port}/mcp'
+                for _ in range(100):
+                    try:urllib.request.urlopen(url,timeout=.2);break
+                    except urllib.error.HTTPError:break
+                    except urllib.error.URLError:time.sleep(.1)
+                else:raise RuntimeError('Fixture MCP server did not start')
+                (state/'proxy.json').write_text(json.dumps({'bridge':url,'autostart':False,
+                    'claude':str(state/'missing-agent-executable')}))
+                worker=subprocess.Popen([binary,'--relay-worker',temp],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                for _ in range(100):
+                    if (state/'mailbox-passed.json').exists():break
+                    if worker.poll() is not None:raise AssertionError((state/'proxy.log').read_text())
+                    time.sleep(.2)
+                else:raise AssertionError('Packaged proxy did not consume the fixture task: '+(state/'proxy.log').read_text())
+                (state/'proxy.stop').touch();worker.wait(timeout=15)
+                evidence=json.loads((state/'mailbox-passed.json').read_text())
+                assert evidence['task_pickup'] and evidence['ordered_replies'] and evidence['provider_failure_reported']
+                assert evidence['kinds'][0]=='ping' and evidence['kinds'][-1]=='done' and 'text' in evidence['kinds']
+                assert 'Processing claude task.' in (state/'proxy.log').read_text()
+                print('Packaged task pickup, ordered mailbox replies and provider-failure completion passed.')
+            finally:
+                for process in (worker,server):
+                    if process and process.poll() is None:
+                        process.terminate()
+                        try:process.wait(timeout=5)
+                        except subprocess.TimeoutExpired:process.kill();process.wait()

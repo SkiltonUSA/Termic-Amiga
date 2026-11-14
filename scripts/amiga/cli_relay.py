@@ -351,6 +351,6 @@ async def run_cli_job(bridge, job, executable, state):
             cursor_config.unlink(missing_ok=True)
         try:
             await mailbox.send('done', status=status)
-            await bridge.remove(job['id'] + '.in', job['id'] + '.out', job['id'] + '.stopped')
+            await bridge.remove(*(job['id'] + suffix for suffix in ('.in', '.out', '.r0', '.r1', '.stopped')))
         except Exception: pass
     return status == 'completed'

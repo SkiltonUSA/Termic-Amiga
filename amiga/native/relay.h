@@ -3,7 +3,7 @@
 #include <stdio.h>
 struct RelayState {
     char id[40], session[96];
-    int seq, calls, limit, readonly, result;
+    int seq, calls, limit, readonly, result, reply_slot;
     int (*append)(const char *text);
 };
 /* Invalid/stale frames never execute tools. Returns -1 invalid, 0 continue, 1 done. */

@@ -629,6 +629,11 @@ The proxy combines small text chunks; bridge speed affects update frequency.
 Tool start and return markers show the current activity. Build / CLI and the
 CLI panel show native tool activity without waiting for the whole agent turn.
 Replies wrap to the transcript width without changing the saved text.
+Updated host proxies and workers negotiate alternating reply files to
+avoid shell cleanup for each message. Older peers remain compatible.
+Task pickup polls every half-second; live text batches every 0.2 seconds.
+These improve bridge responsiveness, not the model's thinking speed.
+
 Activity opens at the latest line and follows new output automatically.
 Select text to hold it for copying. Release selection to catch up to the bottom.
 The Agent page combines cyan [Agent] responses and amber [Log] worker
