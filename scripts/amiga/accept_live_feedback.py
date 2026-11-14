@@ -81,6 +81,7 @@ async def exercise(root, out, fixture, shell, push, call, state, click, capture,
                 await live.finish()
                 assert await busy()
                 first=await copy_transcript()
+                assert '[Agent]' in first and '[Log]' in first and 'Waiting for the host agent.' in first, first
                 assert first_marker in first and '[Mac relay completed]' not in first[first.index(first_marker):], first
                 # Hold the selection while another chunk arrives. Copy stays stable.
                 live.add(' ' + second_marker + ' More text arrived while the first part was selected.\n')
@@ -100,6 +101,7 @@ async def exercise(root, out, fixture, shell, push, call, state, click, capture,
                 assert await busy()
                 text=await copy_transcript()
                 assert '[Amiga: list_sources]' in text and '[Amiga tool returned: list_sources]' in text
+                assert 'Mac agent tool: list_sources' in text and 'Mac agent tool returned: list_sources' in text, text
                 assert ready_marker in text
                 await key('4e'); await key('50')
                 await capture('','live-feedback-desktop.png')
@@ -116,8 +118,12 @@ async def exercise(root, out, fixture, shell, push, call, state, click, capture,
                 await key('33',('67',))
                 assert await clipboard_text()==held, 'Completion replaced selected text'
                 await key('4e')
-                await asyncio.sleep(1)
-                final=await copy_transcript()
+                for _ in range(5):
+                    await asyncio.sleep(1)
+                    final=await copy_transcript()
+                    if '[Mac relay completed]' in final and 'Finished with exit code 0.' in final:break
+                    await key('4e')
+                assert 'Finished with exit code 0.' in final, final
                 assert '[Mac relay completed]' in final and final.count(first_marker)==1,final
                 await key('4e')
                 await bridge.remove(job['id']+'.out')
@@ -142,11 +148,15 @@ async def exercise(root, out, fixture, shell, push, call, state, click, capture,
                 except ConnectionError:
                     pass
                 else:raise AssertionError('Stopped task accepted more text')
+                stopped_view=await copy_transcript()
+                assert 'Mac relay cancelled.' in stopped_view and 'Finished with exit code 20.' in stopped_view, stopped_view
+                assert 'Mac agent tool: list_sources' not in stopped_view, 'Previous worker log remained after restart'
+                await key('4e')
                 saved=(await pull(project+'/transcript.txt','live-final-transcript.txt')).decode()
                 assert 'MUST_NOT_APPEAR' not in saved
                 await bridge.remove(stopped['id']+'.out',stopped['id']+'.stopped')
                 report.write_text(json.dumps({'fixture':fixture,'before_completion':True,'incremental':True,
-                    'selection_preserved':True,'completion_selection_preserved':True,'tool_activity':True,'final_no_duplicates':True,'stop_midstream':True},indent=2))
+                    'selection_preserved':True,'completion_selection_preserved':True,'tool_activity':True,'final_no_duplicates':True,'stop_midstream':True,'combined_log_live':True,'combined_log_completion':True,'combined_log_reset':True},indent=2))
             finally:
                 await live.close(); await tools.close()
                 if await busy():

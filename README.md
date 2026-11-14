@@ -19,6 +19,7 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 - Native Git initialization, status, diffs and source commits.
 - OpenAI agent conversations with bounded C/header file tools and local builds.
 - Codex, Claude and Cursor host profiles, with model selection and live response/tool feedback on the Amiga.
+- One black Agent activity pane with cyan responses, amber worker logs and a narrower instruction field beside the controls.
 - Standalone Termic AI Proxy desktop app for macOS and Windows 11.
 - Agents / CLI / Scripts profiles with separate credentials, launch arguments, sessions and access limits.
 - CLI, ARexx and MicroPython script execution, with a pinned native MicroPython runtime.
@@ -116,7 +117,8 @@ CLI command entry, success/failure output, editor focus, copy, save/undo and
 window resizing in an isolated Amiga installation. It restores the production
 settings and clipboard afterward and requires no cloud credentials.
 `--live-feedback-only` checks incremental transcript display before completion,
-clipboard selection during updates and tool start/return markers. Compile
+clipboard selection during updates, combined worker logs, tool start/return markers,
+completion, cancellation and clearing the previous run's log. Compile
 `amiga/native/tests/inspect_ui.c` with the Amiga compiler and `-lamiga` to
 `.context/inspect-ui` for its clipboard checks. Stop the AI Proxy before
 running hardware acceptance, then restart it after production is restored.

@@ -47,5 +47,25 @@ int main(void)
     assert(v && strstr(v, "E6EDF3") && !strstr(v, "FF7B8B"));
     free(v);
     assert(!syntax_colours("\033p[1]text", 1));
+    {
+        struct ActivityView activity = {0};
+        int replace;
+        char *chunk;
+        chunk = activity_update(&activity, "Hello", "Waiting\n", &replace);
+        assert(chunk && replace && strstr(chunk, "P[8BD5FF][Agent]") && strstr(chunk, "P[FFCC80]"));
+        assert(strstr(chunk, "\n\033P[FFCC80][Log]") && strstr(chunk, "Waiting")); free(chunk);
+        chunk = activity_update(&activity, "Hello", "Waiting\n", &replace);
+        assert(chunk && !replace && !*chunk); free(chunk);
+        chunk = activity_update(&activity, "Hello world", "Waiting\n", &replace);
+        assert(chunk && !replace && strstr(chunk, "[Agent]") && strstr(chunk, " world") && !strstr(chunk, "Hello")); free(chunk);
+        chunk = activity_update(&activity, "Hello world!", "Waiting\n", &replace);
+        assert(chunk && !replace && strstr(chunk, "!") && !strstr(chunk, "[Agent]")); free(chunk);
+        chunk = activity_update(&activity, "Hello world!", "", &replace);
+        assert(chunk && replace && strstr(chunk, "Hello world!") && !strstr(chunk, "Waiting")); free(chunk);
+        chunk = activity_update(&activity, "Hello world!", "Error\n\033P[000000]bad", &replace);
+        assert(chunk && !replace && strstr(chunk, "?P[000000]") && !strstr(chunk, "\033P[000000]")); free(chunk);
+        activity_clear(&activity);
+        assert(!activity.agent && !activity.log && !activity.bytes);
+    }
     return 0;
 }

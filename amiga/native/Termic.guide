@@ -616,6 +616,13 @@ CLI panel show native tool activity without waiting for the whole agent turn.
 Replies wrap to the transcript width without changing the saved text.
 At the bottom, the transcript follows new text. Scroll up to read earlier text;
 select text to hold it for copying. Release selection to catch up.
+The Agent page combines cyan [Agent] responses and amber [Log] worker
+messages in one black activity pane. Live entries appear in polling order;
+opening a saved task shows its transcript followed by its latest job log.
+Scrollback and selected text stay stable while updates arrive. The narrower
+instruction box sits beside the profile selector and action buttons.
+The log comes from local job.log. Mac proxy diagnostics remain in the
+AI Proxy app when the bridge cannot deliver them to the Amiga.
 The direct API profile does not stream tokens.
 One relay task runs at a time. Stop (Shift F10) cancels; New conversation starts
 a separate thread. The host keeps conversation history and credentials.

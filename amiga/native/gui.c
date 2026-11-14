@@ -114,7 +114,7 @@ struct Job
     int active, polls;
     long bytes;
 } jobs[16];
-static long transcript_bytes = -1;
+static struct ActivityView activity;
 static int transcript_pending;
 static struct MsgPort *timer_port;
 static struct timerequest *timer_io;
@@ -215,7 +215,7 @@ static Object *editor(Object **o, int readonly)
     if(!keyeditor_class)return NULL;
     g = HGroup, Child, *o = NewObject(keyeditor_class->mcc_Class, NULL, InputListFrame, MUIA_Font,
            codefont ? (ULONG)codefont : MUIV_Font_Fixed,
-           (o == &source || o == &prompts_body) ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
+           (o == &source || o == &prompts_body || o == &transcript) ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
            MUIA_TextEditor_ReadOnly, readonly, MUIA_TextEditor_ActiveObjectOnClick, TRUE,
            MUIA_TextEditor_ImportHook,
            MUIV_TextEditor_ImportHook_Plain, MUIA_TextEditor_ExportHook,
@@ -305,13 +305,23 @@ static void content(Object *o, const char *p, const char *fallback)
         free(styled);
         set(o, MUIA_TextEditor_Pen, 0xffe6edf3UL);
     }
+    else if (o == transcript)
+    {
+        char logpath[PATH_SIZE], *log, *styled;
+        int replace;
+        join(logpath, current, "job.log");
+        log = read_text(logpath, RESPONSE_LIMIT);
+        activity_clear(&activity);
+        styled = activity_update(&activity, s ? s : fallback, log ? log : "", &replace);
+        set(o, MUIA_TextEditor_Contents, styled ? styled : "");
+        free(styled); free(log);
+    }
     else if (o == output)
         job_output(s ? s : fallback);
     else
         set(o, MUIA_TextEditor_Contents, s ? s : fallback);
     if (o == transcript)
     {
-        transcript_bytes = s ? (long)strlen(s) : -1;
         transcript_pending = 0;
     }
     free(s);
@@ -835,7 +845,7 @@ static void launch(const char *action, int page)
     if (page >= 0)
         set(pages, MUIA_Group_ActivePage, page);
     job_output("Starting native worker...\n");
-    message(page == 0 ? "Agent running. Responses and tool activity appear live in the transcript."
+    message(page == 0 ? "Agent running. Cyan responses and amber logs appear together."
                       : "Running. You can switch tasks while this worker continues.");
     arm_timer();
 }
@@ -843,11 +853,9 @@ static void launch(const char *action, int page)
  * clipboard selection stable; catch up when selection is released. */
 static void refresh_transcript(void)
 {
-    char path[PATH_SIZE], *text;
-    struct FileInfoBlock fib;
-    BPTR lock;
-    long size, first, visible, entries;
-    int follow;
+    char path[PATH_SIZE], *agent, *log, *styled;
+    long first, visible, entries;
+    int follow, replace;
     if (value(transcript, MUIA_TextEditor_AreaMarked))
     {
         transcript_pending = 1;
@@ -855,29 +863,29 @@ static void refresh_transcript(void)
     }
     transcript_pending = 0;
     join(path, current, "transcript.txt");
-    lock = Lock((STRPTR)path, ACCESS_READ);
-    if (!lock) return;
-    size = Examine(lock, &fib) ? fib.fib_Size : -1;
-    UnLock(lock);
-    if (size < 0 || size > RESPONSE_LIMIT || size == transcript_bytes)
-        return;
-    text = read_text(path, RESPONSE_LIMIT);
-    if (!text) return; /* Backup/replace may be between renames. Keep the view. */
-    size = strlen(text);
+    agent = read_text(path, RESPONSE_LIMIT);
+    if (!agent && exists(path)) return;
+    join(path, current, "job.log");
+    log = read_text(path, RESPONSE_LIMIT);
+    if (!log && exists(path)) { free(agent); return; }
+    /* Backup-and-replace writes briefly remove a file. Keep its last
+     * snapshot during that gap, so the combined history is not reset. */
+    styled = activity_update(&activity, agent ? agent : (activity.agent ? activity.agent : ""),
+                             log ? log : (activity.log ? activity.log : ""), &replace);
+    free(agent); free(log);
+    if (!styled) return;
+    if (!*styled && !replace) { free(styled); return; }
     first = value(transcript, MUIA_TextEditor_Prop_First);
     visible = value(transcript, MUIA_TextEditor_Prop_Visible);
     entries = value(transcript, MUIA_TextEditor_Prop_Entries);
     follow = first + visible >= entries;
-    if (transcript_bytes >= 0 && size > transcript_bytes)
-        DoMethod(transcript, MUIM_TextEditor_InsertText, text + transcript_bytes,
-                 MUIV_TextEditor_InsertText_Bottom);
-    else
-        set(transcript, MUIA_TextEditor_Contents, text);
-    transcript_bytes = size;
+    if (replace) set(transcript, MUIA_TextEditor_Contents, styled);
+    else DoMethod(transcript, MUIM_TextEditor_InsertText, styled,
+                  MUIV_TextEditor_InsertText_Bottom);
     set(transcript, MUIA_TextEditor_HasChanged, FALSE);
     set(transcript, MUIA_TextEditor_Prop_First,
         follow ? value(transcript, MUIA_TextEditor_Prop_Entries) : first);
-    free(text);
+    free(styled);
 }
 static void poll_jobs(void)
 {
@@ -929,7 +937,7 @@ static void poll_jobs(void)
                     editor_readonly(prompt, !prompt_loaded);
                     message(atoi(s) == 0
                                 ? "Job completed successfully. Review changes before running."
-                                : "Job failed or was cancelled. See Build / CLI for details.");
+                                : "Job failed or was cancelled. See the amber log on Agent.");
                     refresh_transcript();
                     refresh_files();
                     if (*opened && !value(source, MUIA_TextEditor_HasChanged))
@@ -1286,12 +1294,16 @@ static int build_ui(void)
     tabtitles ? TAG_IGNORE : MUIA_Register_Titles, tabs, MUIA_Group_PageMode, TRUE,
     MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal,
     tabtitles ? Child : TAG_IGNORE, tabtitles, Child, VGroup, Child,
-    editor(&transcript, 1), Child, HGroup, Child, history_find=entry(120),
+    VGroup, MUIA_Weight, 80, Child, label("\33bActivity: Agent (cyan) / Log (amber)"), Child,
+    editor(&transcript, 1), End, Child, HGroup, Child, history_find=entry(120),
     Child, button("Find history", HISTORYNEXT), Child, button("Prompts", PL_OPEN), Child, button("Shortcuts", SHORTCUTS), End,
-    Child, label("\33bTask instructions"), Child, editor(&prompt, 0), Child,
-    HGroup, Child, profile_picker=cycle(kinds), Child, label("YOLO"), Child, profile_fast=cycle(yesno), End, Child,
+    Child, HGroup, MUIA_Weight, 20, Child, VGroup, MUIA_Weight, 65,
+    Child, label("\33bTask instructions"), Child, editor(&prompt, 0), End, Child,
+    VGroup, MUIA_Weight, 35, Child, label("Agent profile"), Child, profile_picker=cycle(kinds),
+    Child, HGroup, Child, label("YOLO"), Child, profile_fast=cycle(yesno), End, Child,
     HGroup, Child, button("Save task", SAVETASK), Child, button("Start agent", AGENT), Child,
-    button("Cancel", CANCEL), Child, button("New conversation", NEWSESSION), Child, HVSpace, End, End, Child,
+    button("Cancel", CANCEL), Child, button("New conversation", NEWSESSION), Child, HVSpace, End,
+    Child, HVSpace, End, End, End, Child,
     VGroup, Child, filename = label("main.c"), Child, editor(&source, 0), Child, HGroup, Child,
     findtext = entry(120), Child, button("Find", FIND), Child, button("Next", FINDNEXT), End, End,
     Child, VGroup, Child, editor(&output, 1), Child,
@@ -1402,8 +1414,6 @@ static int build_ui(void)
     }
     set(source, MUIA_TextEditor_ExportHook, MUIV_TextEditor_ExportHook_NoStyle);
     set(source, MUIA_TextEditor_PasteColors, FALSE);
-    set(transcript, MUIA_Weight, 75);
-    set(prompt, MUIA_Weight, 25);
     return 1;
 }
 int main(int argc, char **argv)
@@ -1919,6 +1929,7 @@ cleanup:
         DeleteIORequest((struct IORequest *)timer_io);
     if (timer_port)
         DeleteMsgPort(timer_port);
+    activity_clear(&activity);
     if (app)
         MUI_DisposeObject(app);
     cJSON_Delete(prompts_items);

@@ -136,3 +136,58 @@ char *syntax_colours(const char *text, int csyntax)
     *w = 0;
     return out;
 }
+
+void activity_clear(struct ActivityView *v)
+{
+    free(v->agent); free(v->log);
+    memset(v, 0, sizeof(*v));
+}
+static int activity_prefix(const char *old, const char *text)
+{
+    return old && strlen(text) >= strlen(old) && !strncmp(old, text, strlen(old));
+}
+static char *activity_copy(const char *s)
+{
+    char *p = malloc(strlen(s) + 1);
+    if (p) strcpy(p, s);
+    return p;
+}
+char *activity_update(struct ActivityView *v, const char *agent, const char *log, int *replace)
+{
+    const char *parts[2], *p, *colour;
+    char *a, *l, *out, *w;
+    size_t size = 64;
+    int i, kind, reset;
+    if (!agent || !log || strlen(agent) > 262144 || strlen(log) > 262144) return NULL;
+    reset = !activity_prefix(v->agent, agent) || !activity_prefix(v->log, log) || v->bytes > 4194304UL;
+    parts[0] = agent + (reset ? 0 : strlen(v->agent));
+    parts[1] = log + (reset ? 0 : strlen(v->log));
+    for (i = 0; i < 2; i++) {
+        size += strlen(parts[i]) + 40;
+        for (p = parts[i]; *p; p++) if (*p == '\n') size += 10;
+    }
+    out = malloc(size); a = activity_copy(agent); l = activity_copy(log);
+    if (!out || !a || !l) { free(out); free(a); free(l); return NULL; }
+    w = out; kind = reset ? 0 : v->kind;
+    for (i = 0; i < 2; i++) {
+        p = parts[i]; if (!*p) continue;
+        colour = i ? "\033P[FFCC80]" : "\033P[8BD5FF]";
+        memcpy(w, colour, 10); w += 10;
+        if (kind != i + 1) {
+            const char *label = i ? "[Log]\n" : "[Agent]\n";
+            if (kind) { *w++ = '\n'; memcpy(w, colour, 10); w += 10; }
+            while (*label) *w++ = *label++;
+            memcpy(w, colour, 10); w += 10;
+        }
+        while (*p) {
+            *w++ = *p == 27 ? '?' : *p;
+            if (*p++ == '\n') { memcpy(w, colour, 10); w += 10; }
+        }
+        kind = i + 1;
+    }
+    *w = 0;
+    free(v->agent); free(v->log); v->agent = a; v->log = l;
+    v->kind = kind; v->bytes = (reset ? 0 : v->bytes) + (w - out);
+    *replace = reset;
+    return out;
+}
