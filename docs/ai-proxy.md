@@ -7,12 +7,14 @@ DevBench bridge are separate prerequisites.
 
 ![Termic AI Proxy with synthetic account status](screenshots/ai-proxy.png)
 
-Proxy build ba2bdf4 adds Cursor operation polling and supports the native
-execution and hardware-query tools:
-[macOS download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43630569708/artifacts/14127658128)
-and [Windows download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43630569708/artifacts/14127836779).
-Both passed automated packaging, MCP and desktop lifecycle checks. Update
-the Amiga worker from the same revision for the session-save and Stop fixes.
+Proxy build f7e89b2 fixes pending task pickup and retries read-only mailbox
+checks after transient bridge errors. It retains Cursor operation polling
+and the native execution and hardware-query tools:
+[macOS download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43641003631/artifacts/14131768008)
+and [Windows download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43641003631/artifacts/14131659088).
+Both passed portable tests, packaging, MCP, task-pickup and desktop lifecycle
+checks. This mailbox fix changes only the host proxy. The native worker from
+ba2bdf4 remains current, including its session-save and Stop fixes.
 GitHub sign-in is required; artifacts expire after 30 days.
 
 ## Start the app

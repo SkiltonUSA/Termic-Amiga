@@ -566,3 +566,20 @@ ordered acknowledgements, and requires the packaged worker to report a
 missing provider executable back to the simulated Amiga. This needs no
 account or model access and runs in both desktop CI jobs. All 35 portable
 proxy tests passed locally. Native binaries are unchanged by this fix.
+
+The reported production task then passed through the installed Mac app's
+normal idle mailbox pickup. The previous conversation and transcript were
+backed up; a fresh conversation loaded the current native tool schema.
+Hardware detection, source save and exactly one ARexx execution completed
+with captured output and exit status 0. The earlier transcript remained
+intact. This exercises the previously missing packaged-app-to-hardware path.
+Private task contents and hardware transcripts are not public fixtures.
+
+The final installed Mac bundle matches the tested build. The app is running,
+the production task is in Review with exit status 0, its lock is gone, the
+relay is idle, and the native GUI remains active. The worker checksum is
+unchanged. [Mailbox recovery build 43641003631](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43641003631)
+passed all 35 proxy tests, packaging, bundled MCP smoke, packaged mailbox
+acceptance and desktop lifecycle checks on macOS and Windows. The current
+downloads are linked in [AI Proxy setup](ai-proxy.md). A physical Windows 11
+to Amiga connection remains untested.
