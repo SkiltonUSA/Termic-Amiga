@@ -144,6 +144,12 @@ and file-lock races during replacement. Older peers continue using `.out`.
 Final cleanup removes both slots. ID, sequence and checksum checks apply in
 both modes; invalid slot/sequence combinations never execute a tool.
 
+Reply and Stop checks share one directory listing per poll. Sending combines
+its initial Stop, pending-input and temporary-file checks, then reads a fresh
+listing after upload before publication. Stop arriving during upload prevents
+publication. These snapshots are discarded after the operation and refreshed
+after deletions; no directory cache is retained between messages.
+
 Pending tasks are checked every 0.5 seconds (plus bridge round-trip time),
 and streamed deltas are coalesced for 0.2 seconds before transfer. These
 reduce transport delays; cloud model reasoning and native builds still take

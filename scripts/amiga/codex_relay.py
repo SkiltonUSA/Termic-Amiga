@@ -157,13 +157,18 @@ class Bridge:
         return await self.call('amiga_run_script', {'script': 'FailAt 10\n' + script, 'timeout': 10})
 
     async def read(self, name):
+        return (await self.read_many(name))[name]
+
+    async def read_many(self, *names):
+        for name in names: self.path(name)
         async with self.lock:
             # DevBench broadcasts some uncorrelated file errors to concurrent
             # clients. Only read-only operations may be retried. Never infer
             # absence from a shell capture path or an unreadable-file response.
             for attempt in range(3):
                 try:
-                    return await self.read_once(name)
+                    entries = await self.entries_once()
+                    return {name: await self.read_file(name, entries) for name in names}
                 except ConnectionError:
                     if attempt == 2: raise
                     await asyncio.sleep(.25)
@@ -192,9 +197,8 @@ class Bridge:
             entries[entry[2].casefold()] = int(entry[3]) if entry[1] == 'FILE' and entry[3].isdigit() else None
         return entries
 
-    async def read_once(self, name):
+    async def read_file(self, name, entries):
         remote = self.path(name)
-        entries = await self.entries_once()
         if name.casefold() not in entries:
             return None
         size = entries[name.casefold()]
@@ -212,21 +216,32 @@ class Bridge:
             raw.extend(chunk)
         return raw.decode('utf-8')
 
-    async def remove_locked(self, name):
+    async def remove_locked(self, name, entries):
         remote = self.path(name)
-        if name.casefold() not in await self.entries():
-            return
+        if name.casefold() not in entries:
+            return entries
         await self.shell(f'Delete {remote}')
-        if name.casefold() in await self.entries():
+        entries = await self.entries()
+        if name.casefold() in entries:
             raise ConnectionError('Relay file removal was not confirmed')
+        return entries
 
-    async def write(self, name, value):
+    async def write(self, name, value, *, stopped=None, previous=None):
         raw = json.dumps(value, ensure_ascii=True, separators=(',', ':')).encode()
         if len(raw) > MAX_JSON:
             raise ValueError('Relay message too large')
         async with self.lock:
             remote = self.path(name)
-            await self.remove_locked(name + '.tmp')
+            if stopped: self.path(stopped)
+            if previous: self.path(previous)
+            entries = await self.entries()
+            if stopped and stopped.casefold() in entries:
+                raise ConnectionError('Amiga task stopped')
+            if name.casefold() in entries:
+                raise ConnectionError('Previous relay request has not been consumed')
+            if previous:
+                entries = await self.remove_locked(previous, entries)
+            await self.remove_locked(name + '.tmp', entries)
             for offset in range(0, len(raw), 1024):
                 await self.call('amiga_write_file', {'path': remote + '.tmp', 'offset': offset,
                                                     'hex_data': raw[offset:offset+1024].hex()})
@@ -241,16 +256,21 @@ class Bridge:
                 except ConnectionError:
                     if attempt == 2: raise
                     await asyncio.sleep(.25)
-            if name.casefold() in await self.entries():
+            entries = await self.entries()
+            if stopped and stopped.casefold() in entries:
+                raise ConnectionError('Amiga task stopped')
+            if name.casefold() in entries:
                 raise ConnectionError('Previous relay request has not been consumed')
             renamed = await self.call('amiga_rename', {'old_path':remote+'.tmp', 'new_path':remote})
             if renamed != f'Renamed: {remote}.tmp -> {remote}':
                 raise ConnectionError('Relay publication was not acknowledged')
 
     async def remove(self, *names):
+        for name in names: self.path(name)
         async with self.lock:
+            entries = await self.entries()
             for name in names:
-                await self.remove_locked(name)
+                entries = await self.remove_locked(name, entries)
 
 
 class Mailbox:
@@ -272,12 +292,9 @@ class Mailbox:
 
     async def exchange(self, kind, fields):
         ident = self.job['id']
-        if await self.bridge.read(ident + '.stopped') is not None:
-            raise ConnectionError('Amiga task stopped')
         self.seq += 1
-        # The previous response has been consumed. Remove it before publishing
-        # the next request so polling never holds that old file while the
-        # native worker replaces its reply on classic Amiga filesystems.
+        # A submission shares one listing for Stop, pending input and stale
+        # files. Publication still requires a fresh listing after upload.
         frame = {'id': ident, 'seq': self.seq, 'kind': kind, **fields}
         if self.job.get('reply_slots', False):
             # The worker deletes the previous slot only after this next input
@@ -285,19 +302,21 @@ class Mailbox:
             frame['reply_slot'] = self.seq & 1
             response_name = ident + '.r' + str(self.seq & 1)
         else:
-            await self.bridge.remove(ident + '.out')
             response_name = ident + '.out'
-        await self.bridge.write(ident + '.in', frame)
+        stopped_name = ident + '.stopped'
+        await self.bridge.write(ident + '.in', frame, stopped=stopped_name,
+                                previous=None if self.job.get('reply_slots', False) else response_name)
         deadline = time.monotonic() + (180 if kind == 'tool' else 45)
         while time.monotonic() < deadline:
-            raw = await self.bridge.read(response_name)
+            replies = await self.bridge.read_many(response_name, stopped_name)
+            raw = replies[response_name]
             if raw:
                 reply = json.loads(raw)
                 if reply.get('id') == ident and reply.get('seq') == self.seq:
                     if not reply.get('ok'):
                         raise RuntimeError('Amiga rejected operation or tool-call limit reached')
                     return reply.get('text', '')
-            if await self.bridge.read(ident + '.stopped') is not None:
+            if replies[stopped_name] is not None:
                 raise ConnectionError('Amiga task stopped')
             await asyncio.sleep(.25)
         raise TimeoutError('Amiga relay did not acknowledge the message')

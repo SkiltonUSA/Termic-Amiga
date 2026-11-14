@@ -643,3 +643,21 @@ legacy and slot-based packaged mailbox tests, and desktop lifecycle checks
 on macOS and Windows. Updated downloads are in [AI Proxy setup](ai-proxy.md).
 Final checks confirmed the installed Mac app matches the build, the worker
 matches its deployed checksum, the GUI remains active, and the relay is idle.
+
+
+## Batched mailbox checks
+
+A further host-only optimization shares directory listings within each
+message operation. Response and Stop polling use one fresh snapshot. Initial
+upload checks are combined, but publication still requires a fresh listing
+and checks Stop again after checksum verification. Cleanup refreshes the
+snapshot after every deletion. No snapshot survives into another message.
+
+The same nine-frame hardware benchmark used 35 directory calls instead of
+56 and measured a 1.40-second median, versus the preceding installed run's
+1.73 seconds. A synthetic ARexx save and execution also passed. These short
+transport samples vary with bridge load and do not measure AI thinking time.
+All 39 portable proxy tests passed, including new Stop-during-upload,
+snapshot-refresh and pending-request preservation checks. The rebuilt Mac
+bundle passed both mailbox modes, MCP smoke and desktop lifecycle acceptance.
+The Amiga GUI and worker require no update for this change.

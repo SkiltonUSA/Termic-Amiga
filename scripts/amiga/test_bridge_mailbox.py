@@ -15,7 +15,7 @@ def dump(raw, offset):
 class Session:
     def __init__(self):
         self.files = {}; self.calls = []; self.list_replies = []
-        self.check_replies = []; self.read_reply = None; self.delete = True; self.bad_crc = False; self.bad_rename = False
+        self.on_checksum = None; self.check_replies = []; self.read_reply = None; self.delete = True; self.bad_crc = False; self.bad_rename = False
     async def call_tool(self, name, args):
         self.calls.append((name, dict(args)))
         if name == 'amiga_list_dir':
@@ -34,6 +34,7 @@ class Session:
             self.files[path] = self.files.get(path,b'')[:offset] + raw
             text = 'Write command sent'
         elif name == 'amiga_checksum':
+            if self.on_checksum: self.on_checksum()
             raw = self.files[args['path']]; crc = 0 if self.bad_crc else zlib.crc32(raw)
             text = self.check_replies.pop(0) if self.check_replies else f'CRC32: {crc:08X}\nSize: {len(raw)} bytes'
         elif name == 'amiga_rename':
@@ -138,3 +139,39 @@ class BridgeMailboxTests(unittest.IsolatedAsyncioTestCase):
         raw = b'Error: fixture\nERROR: fixture\n[ERROR] fixture'
         self.session.files[self.path('job.out')] = raw
         self.assertEqual(await self.bridge.read('job.out'), raw.decode())
+
+    async def test_reply_and_stop_share_one_fresh_snapshot_per_poll(self):
+        self.session.files[self.path('job.r1')] = b'fixture reply'
+        values = await self.bridge.read_many('job.r1', 'job.stopped')
+        self.assertEqual(values, {'job.r1':'fixture reply','job.stopped':None})
+        self.assertEqual(sum(n=='amiga_list_dir' for n,a in self.session.calls),1)
+        del self.session.files[self.path('job.r1')]
+        self.session.files[self.path('job.stopped')] = b'stopped'
+        values = await self.bridge.read_many('job.r1', 'job.stopped')
+        self.assertEqual(values, {'job.r1':None,'job.stopped':'stopped'})
+        self.assertEqual(sum(n=='amiga_list_dir' for n,a in self.session.calls),2)
+
+    async def test_stop_before_upload_or_before_publication_never_publishes(self):
+        stop = self.path('job.stopped')
+        self.session.files[stop] = b'stopped'
+        with self.assertRaises(ConnectionError):
+            await self.bridge.write('job.in', {'kind':'tool'}, stopped='job.stopped')
+        self.assertFalse(any(n=='amiga_write_file' for n,a in self.session.calls))
+        del self.session.files[stop]
+        self.session.on_checksum = lambda: self.session.files.update({stop:b'stopped'})
+        with self.assertRaises(ConnectionError):
+            await self.bridge.write('job.in', {'kind':'tool'}, stopped='job.stopped')
+        self.assertEqual(sum(n=='amiga_write_file' for n,a in self.session.calls),1)
+        self.assertFalse(any(n=='amiga_rename' for n,a in self.session.calls))
+
+    async def test_legacy_cleanup_refreshes_snapshot_without_overwriting_request(self):
+        self.session.files[self.path('job.out')] = b'old reply'
+        self.session.files[self.path('job.in.tmp')] = b'stale upload'
+        await self.bridge.write('job.in', {'kind':'ping'}, stopped='job.stopped', previous='job.out')
+        self.assertNotIn(self.path('job.out'),self.session.files)
+        self.assertNotIn(self.path('job.in.tmp'),self.session.files)
+        self.assertEqual(json.loads(self.session.files[self.path('job.in')]),{'kind':'ping'})
+        self.session.calls.clear()
+        with self.assertRaises(ConnectionError):
+            await self.bridge.write('job.in', {'kind':'tool'}, stopped='job.stopped', previous='job.out')
+        self.assertEqual([n for n,a in self.session.calls],['amiga_list_dir'])

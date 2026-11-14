@@ -70,7 +70,11 @@ class FakeBridge:
         if name.endswith(('.out', '.r0', '.r1')) and self.frames:
             frame = self.frames[-1]
             return json.dumps({'id': frame['id'], 'seq': frame['seq'], 'ok': True, 'text': 'fixture.c'})
-    async def write(self, name, value):
+    async def read_many(self, *names):
+        return {name: await self.read(name) for name in names}
+    async def write(self, name, value, *, stopped=None, previous=None):
+        if stopped and self.stop: raise ConnectionError('Amiga task stopped')
+        if previous: await self.remove(previous)
         self.operations.append(('write',name)); self.frames.append(value)
     async def remove(self, *names): self.operations.append(('remove',names))
 
