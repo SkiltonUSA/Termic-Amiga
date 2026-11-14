@@ -7,10 +7,12 @@ DevBench bridge are separate prerequisites.
 
 ![Termic AI Proxy with synthetic account status](screenshots/ai-proxy.png)
 
-Build 94f4189 includes the native execution and hardware-query tools:
-[macOS download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43619273350/artifacts/14123447536)
-and [Windows download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43619273350/artifacts/14123387713).
-Both passed automated packaging, MCP and desktop lifecycle checks.
+Proxy build ba2bdf4 adds Cursor operation polling and supports the native
+execution and hardware-query tools:
+[macOS download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43630569708/artifacts/14127658128)
+and [Windows download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43630569708/artifacts/14127836779).
+Both passed automated packaging, MCP and desktop lifecycle checks. Update
+the Amiga worker from the same revision for the session-save and Stop fixes.
 GitHub sign-in is required; artifacts expire after 30 days.
 
 ## Start the app

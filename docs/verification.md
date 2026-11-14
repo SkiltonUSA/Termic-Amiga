@@ -527,3 +527,18 @@ lasting longer than a minute by polling, with no repeated native builds or
 executions. Temporary profiles were removed and original settings restored.
 These checks supersede the earlier Claude/Cursor execution verification gap.
 Direct API execution and a physical Windows 11 connection remain untested.
+
+The verified native GUI, worker and MCP binaries, matching changed source
+files, ReadMe and AmigaGuide were installed after checksum validation and a
+rollback backup. The production window reopened with its control port active.
+The installed worker is 76056 bytes, CRC32 `6C8D75FC`. Original Amiga profiles
+were checked against their pre-test state; no fixture worker ports remained.
+The Mac proxy was backed up, replaced with the tested bundle, and confirmed
+ready with an idle relay.
+
+[Provider reliability build 43630569708](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43630569708)
+passed portable tests, packaging, bundled MCP smoke tests and desktop
+lifecycle/recovery checks on both macOS and Windows. Updated downloads are
+linked in [AI Proxy setup](ai-proxy.md). The Windows archive passed integrity,
+executable-header and bundled Python/Qt layout checks. Windows hardware
+connectivity remains outside this automated verification.
