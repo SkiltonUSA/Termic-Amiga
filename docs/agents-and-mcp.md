@@ -36,8 +36,11 @@ They reject writes, builds and execution even if requested. Editable profiles
 support C/H and ARexx files, native builds and the run_arexx/run_program tools.
 See [Agent execution](agent-execution.md) for limits and result fields.
 API sessions are separated by profile and task. New conversation resets the
-selected profile's session. Usage displays actual input/output tokens supplied
-by the API for each response, not a subscription quota or context-capacity estimate.
+selected profile's session. Long profile IDs use short, stable session
+filenames so temporary saves fit classic 30-character filesystems. Existing
+short-ID sessions keep their filenames; a long-ID profile starts a fresh
+conversation after this upgrade. Usage displays actual input/output tokens
+supplied by the API for each response, not a subscription quota or context-capacity estimate.
 
 The **Codex on Mac** profile uses the [Mac relay](codex-relay.md) and ChatGPT
 sign-in. Its key, CLI arguments, token limit and usage controls are disabled;

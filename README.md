@@ -47,7 +47,9 @@ for the prompt library, project guidance and screenshot-style key bindings.
 ![Compose, Session and Transcript shortcuts](docs/screenshots/keyboard-shortcuts.png)
 
 See [Agent execution on the Amiga](docs/agent-execution.md) for the shared
-tools, execution results and hardware detection.
+tools, execution results and hardware detection. Cursor collects slow operations
+through bounded polling; start a **New conversation** after updating the proxy
+and worker to load the revised tools.
 
 Start with [Termic AI Proxy for macOS and Windows 11](docs/ai-proxy.md) for
 Codex, Claude and Cursor setup, downloads and model selection.

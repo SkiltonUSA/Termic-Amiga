@@ -114,6 +114,10 @@ access. Read-only mode blocks writes, builds and execution. See
 Stop behavior and run limits. General DevBench tools remain unavailable.
 
 Claude and Cursor consume these tools through a private stdio MCP adapter.
+Cursor additionally uses `await_operation` to collect each native result in
+polls of up to 20 seconds. Polling retains the original operation, does not
+consume the native call limit, and does not repeat a build or program run.
+Start a new conversation after upgrading so Cursor receives the revised tools.
 The adapter talks to an ephemeral loopback-only listener with a per-task
 secret. It has no independent bridge credentials or arbitrary command tool.
 Claude's built-in tools, skills, hooks and other MCP configurations are disabled

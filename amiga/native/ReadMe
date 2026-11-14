@@ -335,4 +335,11 @@ without interactive input or arguments. Stop is cooperative; programs that
 ignore breaks can keep running. The host tool wait is 180 seconds. Do not
 replay a timed-out execution automatically. Use CLI/Run for long-running apps.
 After updating worker and proxy, choose New conversation for the new tools.
+Long profile IDs use short session filenames to fit classic filesystems.
+Short-ID conversations are retained; long-ID profiles start a fresh session
+after this filename update.
+Cursor collects results with await_operation in polls of up to 20 seconds.
+The original operation continues between polls; polls do not repeat execution
+or consume native tool calls. A running operation is not a successful result.
+Stop during native build/file I/O now preserves normal task-lock and port cleanup.
 Full details: docs/agent-execution.md in the source repository.

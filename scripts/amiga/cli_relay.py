@@ -13,6 +13,13 @@ from host_process import executable_command, process_options
 from codex_relay import Mailbox, THREAD, TOOLS, WRITE, dynamic_tools, LiveText
 
 NAMES = {'claude': 'Claude', 'cursor': 'Cursor'}
+POLL_SECONDS = 20
+WAIT_TOOL = {
+    'name': 'await_operation',
+    'description': 'Collect an Amiga operation result. Waits up to 20 seconds. If still running, call again with the same operation_id. Never repeat the original tool to check progress.',
+    'inputSchema': {'type': 'object', 'properties': {'operation_id': {'type': 'string'}},
+                    'required': ['operation_id'], 'additionalProperties': False},
+}
 
 
 def clean_env(provider, state):
@@ -121,17 +128,71 @@ class ToolServer:
         self.calls = 0
         self.lock = asyncio.Lock()
         self.clients = set()
+        self.operations = {}
+        self.pending = None
 
     async def dispatch(self, request):
         if not isinstance(request, dict) or not hmac.compare_digest(str(request.get('token', '')), self.token):
             raise ValueError('Invalid relay client')
         if request.get('op') == 'list':
-            return [{k: v for k, v in t.items() if k != 'type'} for t in dynamic_tools(self.job['readonly'])]
+            catalog = [{k: v for k, v in t.items() if k != 'type'} for t in dynamic_tools(self.job['readonly'])]
+            if self.job.get('provider') == 'cursor':
+                for tool in catalog:
+                    tool['description'] += ' Starts an operation; collect its actual result using await_operation before taking the next step.'
+                catalog.append(WAIT_TOOL)
+            return catalog
         if request.get('op') != 'call':
             raise ValueError('Unknown relay operation')
         name, arguments = request.get('name'), request.get('arguments')
+        polling = self.job.get('provider') == 'cursor'
+        if polling and name == 'await_operation':
+            if not isinstance(arguments, dict) or set(arguments) != {'operation_id'}:
+                raise ValueError('Supply operation_id')
+            return await self.await_operation(arguments['operation_id'])
         if name not in TOOLS or (self.job['readonly'] and name in WRITE) or not isinstance(arguments, dict):
             raise ValueError('Tool unavailable')
+        if polling:
+            # The CLI may time out a synchronous MCP call before the Amiga
+            # finishes. Keep ownership here, outside the MCP request lifetime.
+            # No second native action starts until the first result is collected.
+            if self.pending:
+                return self.ticket(self.pending)
+            if self.calls >= self.job['limit']:
+                raise ValueError('Task tool-call limit reached')
+            ident = secrets.token_hex(8)
+            self.pending = ident
+            self.operations[ident] = (name, asyncio.create_task(self.operation(name, arguments)))
+            return self.ticket(ident)
+        return await self.execute(name, arguments)
+
+    def ticket(self, ident):
+        return json.dumps({'status': 'running', 'operation_id': ident,
+                           'tool': self.operations[ident][0],
+                           'next': 'Call await_operation with this operation_id. Do not repeat the original tool.'})
+
+    async def operation(self, name, arguments):
+        try:
+            return {'status': 'completed', 'result': await self.execute(name, arguments)}
+        except Exception as error:
+            return {'status': 'failed', 'error': str(error) if isinstance(error, ValueError)
+                    else 'Amiga tool connection failed. The outcome may be unknown; do not replay the operation.'}
+
+    async def await_operation(self, ident):
+        if not isinstance(ident, str) or ident not in self.operations:
+            raise ValueError('Unknown operation_id for this task')
+        name, task = self.operations[ident]
+        try:
+            # A cancelled MCP poll must not cancel the native operation.
+            result = await asyncio.wait_for(asyncio.shield(task), POLL_SECONDS)
+        except asyncio.TimeoutError:
+            return self.ticket(ident)
+        if self.pending == ident:
+            self.pending = None
+        # Retain results for this bounded task so a lost poll reply can be
+        # collected again without replaying a build, edit or program.
+        return json.dumps({'operation_id': ident, 'tool': name, **result})
+
+    async def execute(self, name, arguments):
         async with self.lock:
             if self.calls >= self.job['limit']:
                 raise ValueError('Task tool-call limit reached')
@@ -161,8 +222,9 @@ class ToolServer:
             self.clients.discard(task)
 
     async def close(self):
-        for task in list(self.clients): task.cancel()
-        await asyncio.gather(*self.clients, return_exceptions=True)
+        tasks = list(self.clients) + [task for _, task in self.operations.values()]
+        for task in tasks: task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
 
 
 async def terminate(proc):
@@ -215,7 +277,7 @@ async def run_cli_job(bridge, job, executable, state):
                 path = cfg / 'cli-config.json'
                 settings = json.loads(path.read_text()) if path.exists() else {}
                 settings.update({'version': 1, 'editor': {'vimMode': False}, 'permissions': {
-                    'allow': ['Mcp(amiga:' + t['name'] + ')' for t in dynamic_tools(job['readonly'])],
+                    'allow': ['Mcp(amiga:' + t['name'] + ')' for t in dynamic_tools(job['readonly'])] + ['Mcp(amiga:await_operation)'],
                     'deny': ['Shell(*)', 'Read(**)', 'Write(**)', 'WebFetch(*)']}})
                 path.write_text(json.dumps(settings)); path.chmod(0o600)
                 # CURSOR_CONFIG_DIR selects CLI settings/auth, but MCP discovery
@@ -233,6 +295,11 @@ async def run_cli_job(bridge, job, executable, state):
             prompt = (job['instructions'] + '\nUse only the amiga MCP tools for the remote Amiga task. '
                       'The host workspace is empty. Do not use local files, commands, browser, subagents or other tools. '
                       'Write ASCII C89 or ARexx. Use run_arexx or build then run_program when execution is requested.\n' + guidance + '\nUser task:\n' + job['prompt'])
+            if provider == 'cursor':
+                prompt += ('\nAmiga tools return an operation_id immediately. Call await_operation with that ID '
+                           'until completed or failed, then inspect the actual result. A running response is not '
+                           'success or failure. Do not repeat the original tool, switch tools, or finish the task '
+                           'while its operation is pending. Polls do not consume the native tool-call limit.')
             proc.stdin.write(prompt.encode()); await proc.stdin.drain(); proc.stdin.close()
             async def consume():
                 text = CLIText(provider, live)
@@ -259,7 +326,10 @@ async def run_cli_job(bridge, job, executable, state):
             if live.task in done: await live.task
             if heartbeat in done: await heartbeat
             if reader_task not in done: raise TimeoutError('Host task exceeded 25 minutes')
-            if await reader_task: status = 'completed'
+            succeeded = await reader_task
+            if tools.pending:
+                await mailbox.text('[Agent finished before collecting its Amiga operation result. Task failed.]\n')
+            elif succeeded: status = 'completed'
             else: await mailbox.text('[' + label + ' failed. Check host sign-in, selected model and usage limits.]\n')
     except (Exception, asyncio.CancelledError) as error:
         try:

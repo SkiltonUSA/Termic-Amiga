@@ -218,6 +218,9 @@ to finish. Stop is cooperative; programs ignoring breaks can keep running.
 The host tool-response wait is 180 seconds. Never replay an uncertain run.
 Read-only profiles block writing, compilation and execution.
 Choose New conversation after updating worker/proxy to load the new tools.
+Long profile IDs use short session filenames for classic filesystems.
+Existing short-ID conversations are retained. Long-ID profiles start a fresh
+conversation after this filename update.
 It has no general shell-command tool. File paths reject devices and
 traversal. Each run defaults to eight requests; profiles allow a limit of 1-32.
 
@@ -639,6 +642,10 @@ The direct API profile does not stream tokens.
 One relay task runs at a time. Stop (Shift F10) cancels; New conversation starts
 a separate thread. The host keeps conversation history and credentials.
 After changing file access, start a new conversation to refresh available tools.
+Cursor uses await_operation to collect results in polls of up to 20 seconds.
+The operation continues between polls. Polls do not repeat execution or count
+against the native tool limit. A running operation is not a successful result.
+Stop during native builds/file I/O preserves task-lock and port cleanup.
 
 If the host is unavailable, the worker times out. Start the proxy and send again.
 A failed conversation resume needs New conversation. Tasks are not retried

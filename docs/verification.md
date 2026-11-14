@@ -463,9 +463,9 @@ through the real relay and existing host login. The test verifies the worker
 log, saved script, transcript and completion status. No credentials were
 copied to the Amiga.
 
-The new execution tools were exercised live with Codex. Claude and Cursor
-share the dispatcher and pass the portable adapter tests; their earlier
-hardware checks above do not establish live acceptance of these new tools.
+At this stage the new execution tools had been exercised live with Codex.
+Claude and Cursor shared the dispatcher and passed portable adapter tests;
+the subsequent execution checks are recorded below.
 Direct API execution and a physical Windows 11 connection remain untested.
 See [Agent execution](agent-execution.md) for the synchronous run limits,
 cooperative Stop and New conversation requirement after upgrading.
@@ -488,3 +488,42 @@ passed portable tests, packaging, bundled MCP smoke tests and desktop
 lifecycle/recovery checks on both macOS and Windows. Download links are in
 [AI Proxy setup](ai-proxy.md). This does not establish a physical Windows 11
 to Amiga connection test.
+
+
+## Session saving, Cursor operation polling and Stop cleanup
+
+Long profile IDs could make a session filename and its temporary save share
+one truncated 30-character name on the target filesystem. Such IDs now use a
+short stable filename, with room for temporary and backup suffixes. Ordinary
+short IDs retain their existing filenames. Boundary, provider-separation,
+known-hash and replacement-save tests passed.
+
+A live Cursor build check received MCP request timeouts and issued repeated
+tool calls. Cursor now starts one native operation and collects its result
+with `await_operation`, using polls of at most 20 seconds. Pending requests
+return the existing operation ID. Completed results remain available for the
+current task; poll cancellation does not cancel or repeat the native action.
+Read-only restrictions and the native tool budget still apply. A provider
+cannot finish successfully while its operation result remains uncollected.
+
+Stopping the failed fixture exposed a second defect: the default VBCC
+Ctrl-C handler could exit during file I/O without releasing worker resources.
+A native control probe reproduced the abrupt exit; the replacement handler
+latched cancellation and returned normally. The written Stop-during-build
+acceptance then verified cancellation, exit status 20, and removal of both
+public ports, the relay request and the task lock on the final worker.
+
+All eight native test groups and 27 portable proxy tests passed, including
+real stdio MCP polling, duplicate requests, cached results, cancelled polls,
+read-only enforcement, task limits and cleanup. The rebuilt Mac bundle passed
+GUI/MCP smoke tests and desktop reconnect, Start, Stop and close acceptance.
+
+Authenticated Claude and Cursor then both passed the hardware-to-ARexx and
+C repair/build/run checks using the final candidate worker. Each C check
+required exactly one failed build, one repaired build and one execution.
+Native logs, saved sources, captured output, Hunk headers and exit status were
+verified independently of the model's report. Cursor completed operations
+lasting longer than a minute by polling, with no repeated native builds or
+executions. Temporary profiles were removed and original settings restored.
+These checks supersede the earlier Claude/Cursor execution verification gap.
+Direct API execution and a physical Windows 11 connection remain untested.

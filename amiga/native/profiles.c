@@ -50,6 +50,20 @@ void profile_session(const struct AgentProfile *p, char *out)
     if (!strcmp(p->id, "openai")) strcpy(out, "session.txt");
     else if (p->kind == 6 || p->kind == 7) sprintf(out, "session-%d-%s.txt", p->kind, p->id);
     else sprintf(out, "session-%s.txt", p->id);
+    if (strlen(out) > 26) {
+        /* Leave room for .new/.bak on 30-character filesystems. FNV-1a
+         * uses explicit 32-bit halves so host and 68k generate the same key. */
+        unsigned long hi = 0xcbf29ce4UL, lo = 0x84222325UL, a, b;
+        const unsigned char *id = (const unsigned char *)p->id;
+        while (*id) {
+            lo ^= *id++;
+            a = (lo & 0xffffUL) * 435UL;
+            b = (lo >> 16) * 435UL + (a >> 16);
+            hi = (hi * 435UL + (lo << 8) + (b >> 16)) & 0xffffffffUL;
+            lo = ((b << 16) | (a & 0xffffUL)) & 0xffffffffUL;
+        }
+        sprintf(out, "s%d-%08lx%08lx.txt", p->kind, hi, lo);
+    }
 }
 int profile_valid(const struct AgentProfile *p)
 {

@@ -49,6 +49,18 @@ that ignores breaks can continue running. The proxy's tool-response wait is
 180 seconds, so long-running applications should be launched from the CLI
 or the application's normal Run control. A timeout is not an exit code or
 proof that an executable stopped; never automatically replay that run.
+The worker handles the VBCC runtime's Ctrl-C check itself so a stop during
+file I/O still releases the task lock and public message ports. A native
+build may finish its synchronous command before cancellation is reported.
+
+Cursor receives an operation ID immediately and collects the actual result
+with `await_operation`. Each poll waits at most 20 seconds; the original
+operation continues between polls. Until its result is collected, another
+tool request returns that same operation ID without launching another action.
+Completed results remain available for the current task, and polls do not
+consume native tool calls. This prevents slow Amiga operations from requiring
+one long Cursor MCP request. The underlying native timeout and cooperative
+Stop limits still apply. Claude and Codex keep their synchronous tool replies.
 
 `system_info` reports what AmigaOS exposes at query time. CPU MHz, motherboard
 marketing model and ARM availability are left unknown. Raw expansion IDs are
@@ -90,16 +102,37 @@ checks ARexx success/failure, C build-and-run, nonzero program exits, failed
 build preservation, stale-run blocking, hardware queries and cooperative Stop.
 Restart AI Proxy afterwards.
 
-`scripts/amiga/accept_execution_agent.py` follows that check with an
-authenticated Codex request in the same isolated fixture: inspect hardware,
-write an ARexx script using the detected values, and execute it. It uses the
-existing host login and saves evidence privately under `.context/`.
+`scripts/amiga/accept_stop_build.py --worker /path/to/TermicAgent --profile ID`
+uses the earlier fixture's Stop helper to interrupt a deliberately delayed
+build. It checks the cancelled result, final exit status, and removal of the
+relay request, task lock and both public ports. It performs no cloud request.
 
-`scripts/amiga/accept_build_agent.py` checks the installed worker with an
-existing Codex login. With AI Proxy idle and stopped, run it after the native
-acceptance above using an editable Codex profile. It creates a fresh task
-containing an intentional compiler
-error, asks the agent to build before editing, repair the error, rebuild and
-run once. It verifies the native log order, captured output, final source and
-Hunk executable, independently of the model's summary. Evidence stays under
-`.context/execution-acceptance/build-agent/`. Restart AI Proxy afterwards.
+`scripts/amiga/accept_execution_agent.py` follows that check with an
+authenticated host-agent request: inspect hardware, write an ARexx script
+using the detected values, and execute it. It uses the installed worker and
+an existing host login. It defaults to the prior fixture's Codex profile.
+
+`scripts/amiga/accept_build_agent.py` creates a fresh task containing an
+intentional compiler error, asks the agent to build before editing, repair
+the error, rebuild and run once. It verifies native log order, captured
+output, final source and the Hunk executable independently of the model's
+summary. Both checks request cooperative cleanup if a fixture fails while
+its worker is active. No uncertain execution is automatically replayed.
+
+Both scripts accept `--provider codex|claude|cursor` and `--profile ID`.
+By default they copy the installed worker. To check a candidate before
+installation, pass `--worker /path/to/TermicAgent`; it must be an Amiga Hunk,
+and its transfer is checked by CRC32 and byte count.
+For Claude or Cursor, supply an existing editable Amiga profile of that
+provider, for example:
+
+```sh
+python scripts/amiga/accept_execution_agent.py --provider claude --profile custom-2
+python scripts/amiga/accept_build_agent.py --provider cursor --profile custom-3
+```
+
+These profile IDs are examples; use the IDs from your own installation.
+The scripts select the profile only in the new fixture task and do not
+create or edit profile settings. Keep AI Proxy idle and stopped during the
+checks and restart it afterwards. Evidence remains private under
+`.context/execution-acceptance/`, in separate directories for each provider.

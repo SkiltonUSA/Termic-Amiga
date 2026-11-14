@@ -1,10 +1,13 @@
-"""Opt-in authenticated Codex build/repair/run check on the installed Amiga worker.
+"""Opt-in authenticated host-agent build/repair/run check on the installed Amiga worker.
 Requires accept_execution.py evidence and an idle, stopped AI Proxy. Uses a
 fresh fixture task and the existing host login; never edits a user project.
 """
+import argparse
 import asyncio
+import re
 import json
 import time
+import zlib
 from pathlib import Path
 
 from codex_relay import Bridge, RelayLock, default_state, dispatch_job, parser, validate_job
@@ -26,17 +29,23 @@ def verify_log(log):
         assert found >= 0, 'Missing/out-of-order native evidence: ' + value
         position = found + len(value)
     assert log.count('Mac agent tool: run_program\n') == 1, 'Expected exactly one execution'
+    assert log.count('Mac agent tool: build\n') == 2, 'Expected one failed build and one repaired build'
 
 
-async def main():
+async def main(options):
+    provider = options.provider
+    if options.profile and not re.fullmatch(r'[A-Za-z0-9_-]{1,31}', options.profile):
+        raise ValueError('Invalid profile ID')
+    if provider != 'codex' and not options.profile:
+        raise ValueError('Supply an editable native profile with --profile')
     evidence_dir = ROOT / '.context/execution-acceptance'
     parent = json.loads((evidence_dir / 'passed.json').read_text())['fixture']
     assert parent.startswith('SD032G:Dev/Termic/Acceptance/execution-')
     assert parent.rsplit('-', 1)[-1].isdigit()
-    out = evidence_dir / 'build-agent'
+    out = evidence_dir / ('build-agent' if provider == 'codex' else 'build-agent-' + provider)
     out.mkdir(exist_ok=True)
     (out / 'passed.json').unlink(missing_ok=True)
-    fixture = parent + '/build-agent-' + str(int(time.time()))
+    fixture = parent + '/build-' + provider + '-' + str(int(time.time()))
     lock = RelayLock(default_state())
     try:
         async with Bridge('http://127.0.0.1:55010/mcp') as bridge:
@@ -45,9 +54,18 @@ async def main():
                                '/TermicAgent\nCopy ' + parent + '/agent-profile ' + fixture +
                                '/agent-profile\nCopy ' + parent + '/native-build.config ' + fixture +
                                '/native-build.config\nProtect ' + fixture + '/TermicAgent +e')
+            if options.worker:
+                raw=options.worker.read_bytes()
+                assert raw[:4] == b'\0\0\3\xf3', 'Candidate must be an Amiga Hunk'
+                await bridge.call('amiga_push_file', {'local_path': str(options.worker.resolve()),
+                                                      'amiga_path': fixture+'/TermicAgent'})
+                await bridge.shell('Protect '+fixture+'/TermicAgent +e')
             installed = await bridge.call('amiga_checksum', {'path': 'Termic:TermicAgent'})
             staged = await bridge.call('amiga_checksum', {'path': fixture + '/TermicAgent'})
-            assert installed.splitlines()[1:] == staged.splitlines()[1:]
+            if options.worker:
+                assert f'{zlib.crc32(raw):08X}' in staged and f'{len(raw)} bytes' in staged
+            else:
+                assert installed.splitlines()[1:] == staged.splitlines()[1:]
 
             async def write(name, text):
                 local = out / name
@@ -55,6 +73,8 @@ async def main():
                 await bridge.call('amiga_push_file', {'local_path': str(local),
                                                       'amiga_path': fixture + '/' + name})
 
+            if options.profile:
+                await write('agent-profile', options.profile)
             await write('main.c', '#include <stdio.h>\n#error intentional_build_failure\n'
                         'int main(void) { puts("' + MARKER + '"); return 0; }\n')
             await write('build-command.txt', 'SD032G:Dev/Termic/SDK/vbcc_bin_amigaos68k/bin/vc +'
@@ -78,7 +98,7 @@ async def main():
                 else:
                     raise AssertionError('Worker did not publish a request')
                 job = validate_job(json.loads(raw))
-                assert job['provider'] == 'codex' and not job['readonly'] and not job['thread']
+                assert job['provider'] == provider and not job['readonly'] and not job['thread']
                 assert job['limit'] >= 5
                 assert await dispatch_job(bridge, job, parser().parse_args([])), 'Agent task failed'
                 for _ in range(30):
@@ -105,20 +125,33 @@ async def main():
                 await pull('transcript.txt')
                 await bridge.remove(job['id'] + '.out')
                 (out / 'passed.json').write_text(json.dumps({
-                    'fixture': fixture, 'installed_worker_checksum': installed.splitlines()[1:],
-                    'authenticated_codex': True, 'compiler_failure_repaired': True,
+                    'fixture': fixture, 'worker_checksum': staged.splitlines()[1:],
+                    'worker_source': 'candidate' if options.worker else 'installed',
+                    'authenticated_provider': provider, 'compiler_failure_repaired': True,
                     'native_build_and_execution': True, 'exactly_one_execution': True,
+                    'exactly_two_builds': True,
                 }, indent=2))
-                print('Authenticated Codex read -> failed build -> repair -> build -> run passed.')
+                print(provider.title() + ' read -> failed build -> repair -> build -> run passed.')
             finally:
                 if started:
                     # This helper addresses only the unique fixture's worker port.
                     # Never replay a run whose acknowledgement may have been lost.
                     await bridge.shell('If EXISTS ' + fixture + '/.busy\n ' + parent +
                                        '/StopJob ' + fixture + '\nEndIf')
+                    for _ in range(30):
+                        state = await bridge.shell('If EXISTS ' + fixture + '/.busy\n Echo BUSY\nEndIf')
+                        if 'BUSY' not in state:
+                            break
+                        await asyncio.sleep(.5)
+                    else:
+                        raise AssertionError('Fixture worker did not stop')
     finally:
         lock.close()
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    options = argparse.ArgumentParser(description=__doc__)
+    options.add_argument('--provider', choices=['codex', 'claude', 'cursor'], default='codex')
+    options.add_argument('--profile', help='Existing editable Amiga profile ID for this provider')
+    options.add_argument('--worker',type=Path,help='Optional candidate Hunk worker to stage instead of the installed worker')
+    asyncio.run(main(options.parse_args()))

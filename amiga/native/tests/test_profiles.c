@@ -85,6 +85,31 @@ int main(void)
     strcpy(p->items[n].model,"auto");
     profile_session(&p->items[n],command);assert(strstr(command,"session-7-")==command);
     json=profiles_json(p);assert(json && profiles_parse(q,json) && q->items[n].kind==7 && !strcmp(q->items[n].model,"auto"));free(json);
+    {
+        char first[96], second[96];
+        strcpy(p->items[n].id,"custom-1");
+        profile_session(&p->items[n],first);
+        assert(!strcmp(first,"session-7-custom-1.txt"));
+        strcpy(p->items[n].id,"abcdefghijkl");
+        profile_session(&p->items[n],first);
+        assert(!strcmp(first,"session-7-abcdefghijkl.txt") && strlen(first)==26);
+        strcat(p->items[n].id,"m");
+        profile_session(&p->items[n],first);assert(strncmp(first,"s7-",3)==0);
+        strcpy(p->items[n].id,"test-exec-claude");
+        p->items[n].kind=6; profile_session(&p->items[n],first);
+        assert(!strcmp(first,"s6-cb6fb10ba6ff867e.txt"));
+        assert(strlen(first)+4<=30); /* temporary and backup siblings stay distinct */
+        p->items[n].kind=7; profile_session(&p->items[n],second);
+        assert(strcmp(first,second));
+        strcpy(p->items[n].id,"abcdefghijklmnopqrstuvwxyz12345");
+        profile_session(&p->items[n],first);assert(strlen(first)+4<=30);
+        p->items[n].id[30]='6';profile_session(&p->items[n],second);
+        assert(strcmp(first,second));
+        assert(save_text(first,"fixture-session",64));
+        assert(save_text(first,"replacement-session",64));
+        key=read_text(first,64);assert(key && !strcmp(key,"replacement-session"));free(key);
+    }
+
     assert(profile_is_relay(5) && profile_is_relay(6) && profile_is_relay(7) && !profile_is_relay(8));
     free(p);
     free(q);

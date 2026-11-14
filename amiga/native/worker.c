@@ -23,6 +23,15 @@ int cancel_requested(void)
         (SIGBREAKF_CTRL_C | SIGBREAKF_CTRL_E)) cancelled = 1;
     return cancelled;
 }
+#ifdef __VBCC__
+/* The default stdio Ctrl-C hook exits immediately, leaving public ports and
+ * .busy behind. Latch cancellation and let the worker release its resources.
+ * Commands loaded with RunCommand retain their own runtime break handling. */
+void _chkabort(void)
+{
+    (void)cancel_requested();
+}
+#endif
 /* Shell V47 merges diagnostics when stdout is explicitly redirected.
  * SYS_Output alone does not provide that shell-level redirection. */
 static LONG run_command(const char *command)
@@ -501,6 +510,7 @@ int main(int argc, char **argv)
         free(names);
         free(msg);
     }
+    if (cancel_requested()) result = 20;
     printf("\nFinished with exit code %d.\n", result);
     /* Publish completion only after the captured output is visible to the UI. */
     fflush(stdout);
