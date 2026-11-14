@@ -8,8 +8,8 @@ DevBench bridge are separate prerequisites.
 ![Termic AI Proxy with synthetic account status](screenshots/ai-proxy.png)
 
 Verified build downloads (GitHub sign-in required; retained for 30 days):
-[Windows](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43529096729/artifacts/14085494885)
-and [macOS](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43529096729/artifacts/14087260093).
+[Windows](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43543665677/artifacts/14092633129)
+and [macOS](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43543665677/artifacts/14093560367).
 
 ## Start the app
 

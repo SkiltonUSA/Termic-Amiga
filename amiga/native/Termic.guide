@@ -39,7 +39,8 @@ Restart after changing resolution. Editor and other UI fonts are unchanged. File
 6. After a successful build, press F7 to run Program.
 
 New task makes an independent copy of the selected workspace's source.
-The left pane selects projects and tasks. The right pane selects files.
+The left pane selects projects and tasks. The right pane has Files above CLI.
+Files and CLI share its height; drag their horizontal divider to adjust it.
 Drag the pane dividers to adjust widths. F1-F5 select centre tabs.
 
 You can build and edit locally without a cloud account. Direct API agents require an API key.
@@ -145,11 +146,16 @@ own Quit action before the worker can finish. See @{"Troubleshooting" LINK Troub
 @ENDNODE
 
 @NODE Shell "CLI, ARexx and MicroPython"
-Build / CLI provides a mode selector and command field. Choose CLI for
+The CLI panel directly below Files provides a mode selector and command field.
+Choose CLI for
 AmigaDOS commands, or ARexx / MicroPython for a script path and arguments.
 Choose Execute
 or press Return in that field. Shift-F3 focuses it directly. Commands run
 in the selected workspace and their output is captured in the log.
+The editor or agent tab stays visible while the command runs. The sidebar
+shows the selected workspace's job output; Build / CLI shows the same log
+at full size. The play and stop icons execute and cancel; hover for help.
+Click in the output, then use Right-Amiga-A and Right-Amiga-C to copy it.
 
 For example:
   List

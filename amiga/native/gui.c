@@ -37,7 +37,7 @@ const char stack_size[] = "$STACK:262144";
 #define MAX_ITEMS 128
 #define PATH_SIZE 384
 static Object *app, *win, *projects, *tasks, *files, *pages, *source, *prompt, *output, *review,
-    *transcript;
+    *transcript, *cli_output;
 static Object *prompts_body;
 static Object *status, *heading, *filename, *newname, *projectname, *taskname, *model, *keyfield,
     *command, *command_mode, *commit, *findtext, *buildcommand, *projectdrawer;
@@ -214,7 +214,8 @@ static Object *editor(Object **o, int readonly)
     g = HGroup, Child, *o = NewObject(keyeditor_class->mcc_Class, NULL, InputListFrame, MUIA_Font,
            codefont ? (ULONG)codefont : MUIV_Font_Fixed,
            (o == &source || o == &prompts_body) ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
-           MUIA_TextEditor_ReadOnly, readonly, MUIA_TextEditor_ImportHook,
+           MUIA_TextEditor_ReadOnly, readonly, MUIA_TextEditor_ActiveObjectOnClick, TRUE,
+           MUIA_TextEditor_ImportHook,
            MUIV_TextEditor_ImportHook_Plain, MUIA_TextEditor_ExportHook,
            MUIV_TextEditor_ExportHook_NoStyle, MUIA_TextEditor_PasteColors, FALSE,
            MUIA_TextEditor_WrapMode, MUIV_TextEditor_WrapMode_NoWrap, MUIA_CycleChain, 1, End,
@@ -222,9 +223,21 @@ static Object *editor(Object **o, int readonly)
     set(*o, MUIA_TextEditor_Slider, slider);
     return g;
 }
+static void editor_readonly(Object *o, int readonly)
+{
+    /* TextEditor clears click-to-focus when ReadOnly is set, but does not
+     * restore it when unlocked. Logs also need focus for selection/copy. */
+    SetAttrs(o, MUIA_TextEditor_ReadOnly, readonly,
+             MUIA_TextEditor_ActiveObjectOnClick, TRUE, TAG_DONE);
+}
 static void message(const char *s)
 {
     set(status, MUIA_Text_Contents, s);
+}
+static void job_output(const char *text)
+{
+    set(output, MUIA_TextEditor_Contents, text);
+    set(cli_output, MUIA_TextEditor_Contents, text);
 }
 static int exists(const char *p)
 {
@@ -278,7 +291,7 @@ static void content(Object *o, const char *p, const char *fallback)
     {
         fallback = "File could not be loaded (binary/escape codes, unreadable or above the editor "
                    "size limit).";
-        set(o, MUIA_TextEditor_ReadOnly, TRUE);
+        editor_readonly(o, TRUE);
     }
     if (o == source)
     {
@@ -289,6 +302,8 @@ static void content(Object *o, const char *p, const char *fallback)
         free(styled);
         set(o, MUIA_TextEditor_Pen, 0xffe6edf3UL);
     }
+    else if (o == output)
+        job_output(s ? s : fallback);
     else
         set(o, MUIA_TextEditor_Contents, s ? s : fallback);
     free(s);
@@ -477,7 +492,7 @@ static void open_file(const char *name)
     strcpy(opened, name);
     join(path, current, name);
     content(source, path, "");
-    set(source, MUIA_TextEditor_ReadOnly, busy(current) || !source_loaded);
+    editor_readonly(source, busy(current) || !source_loaded);
     set(filename, MUIA_Text_Contents, name);
 }
 static void profiles_picker_refresh(void);
@@ -516,8 +531,8 @@ static void load_workspace(const char *p)
     task_row(current);
     sprintf(title, "\33b%s", current);
     set(heading, MUIA_Text_Contents, title);
-    set(source, MUIA_TextEditor_ReadOnly, busy(current) || !source_loaded);
-    set(prompt, MUIA_TextEditor_ReadOnly, busy(current) || !prompt_loaded);
+    editor_readonly(source, busy(current) || !source_loaded);
+    editor_readonly(prompt, busy(current) || !prompt_loaded);
     message(busy(current) ? "Running in this workspace. Other workspaces remain available."
                           : "Ready. Changes are saved when switching files or workspaces.");
 }
@@ -807,10 +822,11 @@ static void launch(const char *action, int page)
     join(path, current, "state.txt");
     save_text(path, "Running", 32);
     task_row(current);
-    set(source, MUIA_TextEditor_ReadOnly, TRUE);
-    set(prompt, MUIA_TextEditor_ReadOnly, TRUE);
-    set(pages, MUIA_Group_ActivePage, page);
-    set(output, MUIA_TextEditor_Contents, "Starting native worker...\n");
+    editor_readonly(source, TRUE);
+    editor_readonly(prompt, TRUE);
+    if (page >= 0)
+        set(pages, MUIA_Group_ActivePage, page);
+    job_output("Starting native worker...\n");
     message("Running. You can switch tasks while this worker continues.");
     arm_timer();
 }
@@ -830,7 +846,7 @@ static void poll_jobs(void)
                     long n = strlen(s);
                     if (n != jobs[i].bytes)
                     {
-                        set(output, MUIA_TextEditor_Contents, s);
+                        job_output(s);
                         if (value(pages, MUIA_Group_ActivePage) == 3)
                             set(review, MUIA_TextEditor_Contents, s);
                         jobs[i].bytes = n;
@@ -855,8 +871,12 @@ static void poll_jobs(void)
                 task_row(jobs[i].path);
                 if (!strcmp(current, jobs[i].path))
                 {
-                    set(source, MUIA_TextEditor_ReadOnly, !source_loaded);
-                    set(prompt, MUIA_TextEditor_ReadOnly, !prompt_loaded);
+                    /* The worker may finish between our log read and result
+                     * read. Refresh once more after observing completion. */
+                    join(path, current, "job.log");
+                    content(output, path, "No output was captured for this job.");
+                    editor_readonly(source, !source_loaded);
+                    editor_readonly(prompt, !prompt_loaded);
                     message(atoi(s) == 0
                                 ? "Job completed successfully. Review changes before running."
                                 : "Job failed or was cancelled. See Build / CLI for details.");
@@ -1063,7 +1083,7 @@ static Object *edit_target(void)
 {
     Object *active = (Object *)value(win, MUIA_Window_ActiveObject);
     if (active == source || active == prompt || active == output || active == review ||
-        active == transcript)
+        active == transcript || active == cli_output)
         return active;
     return NULL;
 }
@@ -1131,7 +1151,7 @@ static Object *build_menus(void)
     menu_item(menu, "Paste", "V", PASTE);
     menu_item(menu, NM_BARLABEL, NULL, 0);
     menu_item(menu, "Erase", NULL, ERASE);
-    menu_item(menu, "Select All", NULL, SELECTALL);
+    menu_item(menu, "Select All", "A", SELECTALL);
     menu_item(menu, NM_BARLABEL, NULL, 0);
     menu_item(menu, "Undo", "Z", UNDO);
     menu_item(menu, "Redo", NULL, REDO);
@@ -1226,9 +1246,7 @@ static int build_ui(void)
     VGroup, Child, filename = label("main.c"), Child, editor(&source, 0), Child, HGroup, Child,
     findtext = entry(120), Child, button("Find", FIND), Child, button("Next", FINDNEXT), End, End,
     Child, VGroup, Child, editor(&output, 1), Child,
-    label("CLI command, or script path and arguments (runs in this workspace)"), Child, HGroup,
-    Child, command_mode=cycle(command_modes), Child, command = entry(1024), End, Child, HGroup,
-    Child, button("Execute", SHELL), Child, button("Cancel job", CANCEL), Child, HVSpace, End, End, Child, VGroup,
+    label("Full job output. Run CLI commands from the panel below Files."), End, Child, VGroup,
     Child, HGroup, Child, button("Status", GITSTATUS), Child, button("Diff", DIFF), Child,
     button("Init repository", GITINIT), End, Child, editor(&review, 1), Child,
     label("Commit message (configure Git identity in the shell first)"), Child, commit = entry(256),
@@ -1251,10 +1269,18 @@ static int build_ui(void)
           "ZZ9000 supplies the RTG display; ARM compute is not enabled."),
     Child, HVSpace, Child, HGroup, Child, button("Save", SAVECONFIG), Child,
     button("Use", USECONFIG), Child, button("Cancel", CANCELCONFIG), Child, HVSpace, End, End, End, End;
-    right = PaneGroup, GroupFrame, Child, label("\33bFiles"), InnerSpacing(6, 6), MUIA_Group_Spacing,
-    6, MUIA_Weight, 23, Child, list(&files), Child, newname = entry(180), Child,
+    right = VGroup, MUIA_Weight, 23, MUIA_Group_Spacing, 4,
+    Child, PaneGroup, GroupFrame, MUIA_Weight, 50, Child, label("\33bFiles"), InnerSpacing(6, 6), MUIA_Group_Spacing,
+    6, Child, list(&files), Child, newname = entry(180), Child,
     HGroup, Child, button("Create file", NEWFILE), Child, button("Refresh files", REFRESH), Child, HVSpace, End, Child,
-    label("C/H, Python, ARexx,\ntext and Markdown.\nSaves keep .bak copies."), End;
+    label("C/H, Python, ARexx,\ntext and Markdown.\nSaves keep .bak copies."), End,
+    Child, BalanceObject, End,
+    Child, PaneGroup, GroupFrame, MUIA_Weight, 50, InnerSpacing(6, 6), MUIA_Group_Spacing, 6,
+    Child, HGroup, Child, label("\33bCLI"), Child, command_mode=cycle(command_modes), End,
+    Child, editor(&cli_output, 1), Child, command = entry(1024),
+    Child, HGroup, Child, button("Execute", SHELL), Child, button("Cancel job", CANCEL),
+    Child, HVSpace, End, End, End;
+    set(command, MUIA_ShortHelp, "Command or script arguments in the selected workspace. Return executes; Shift F10 stops.");
     body = VGroup, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, MUIA_Group_Spacing, 7, InnerSpacing(8, 6), Child, HGroup, Child,
     label("\33bTERMIC / AMIGA " TERMIC_VERSION), Child, HVSpace, Child, button("Build", BUILD),
     Child, button("Run", RUN), Child, button("Settings", SETTINGS), Child, button("About", ABOUT),
@@ -1316,9 +1342,9 @@ static int build_ui(void)
     notify(command, MUIA_String_Acknowledge, MUIV_EveryTime, SHELL);
     restore_preferences();
     {
-        Object *editors[] = {source, prompt, transcript, output, review};
+        Object *editors[] = {source, prompt, transcript, output, review, cli_output};
         int i;
-        for (i = 0; i < 5; i++)
+        for (i = 0; i < 6; i++)
         {
             notify(editors[i], MUIA_TextEditor_AreaMarked, MUIV_EveryTime, UPDATE_MENUS);
             notify(editors[i], MUIA_TextEditor_UndoAvailable, MUIV_EveryTime, UPDATE_MENUS);
@@ -1521,7 +1547,6 @@ int main(int argc, char **argv)
                 set(win, MUIA_Window_ActiveObject, commit);
                 break;
             case FOCUSCOMMAND:
-                set(pages, MUIA_Group_ActivePage, 2);
                 set(win, MUIA_Window_ActiveObject, command);
                 break;
             case PAGE_AGENT:
@@ -1732,7 +1757,7 @@ int main(int argc, char **argv)
                 join(path, current, "command.txt");
                 if (!busy(current) && save_text(path, name, 1024))
                     launch(value(command_mode,MUIA_Cycle_Active)==1 ? "--rexx" :
-                           value(command_mode,MUIA_Cycle_Active)==2 ? "--python" : "--shell", 2);
+                           value(command_mode,MUIA_Cycle_Active)==2 ? "--python" : "--shell", -1);
                 break;
             case GITSTATUS:
                 launch("--status", 3);
@@ -1768,7 +1793,14 @@ int main(int argc, char **argv)
                                   : id == ERASE     ? "DELETE"
                                                     : "PASTE";
                 if (target)
+                {
                     DoMethod(target, MUIM_TextEditor_ARexxCmd, cmd);
+                    /* Undo may return to the imported buffer and clear the
+                     * gadget's dirty flag even after a newer version was saved. */
+                    if ((id == UNDO || id == REDO) &&
+                        !value(target, MUIA_TextEditor_ReadOnly))
+                        set(target, MUIA_TextEditor_HasChanged, TRUE);
+                }
                 break;
             }
             case RENAMEPROJECT:

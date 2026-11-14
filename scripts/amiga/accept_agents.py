@@ -12,6 +12,9 @@ from mcp.client.streamable_http import streamablehttp_client
 ROOT=Path(__file__).resolve().parents[2]
 PROD='SD032G:Dev/Termic'
 async def main(args):
+    for name in ('gui', 'worker', 'mcp', 'probe', 'micropython'):
+        if not getattr(args, name).is_file():
+            raise FileNotFoundError('Missing acceptance input: ' + str(getattr(args, name)))
     out=ROOT/'.context/agents-acceptance';out.mkdir(parents=True,exist_ok=True)
     (out/'passed.json').unlink(missing_ok=True)
     fixture=PROD+'/Acceptance/agents-'+str(int(time.time()))
@@ -73,7 +76,9 @@ async def main(args):
                         await state(title,front=True)
                         await click(p['x']+10,p['y']+8,title)
                 p=await state(front=True)
-                if p['address']:await click(p['x']+20,p['y']+20)
+                # Toolbar Quit avoids both X's tooltip at the probe point and
+                # string gadgets consuming Right Amiga Q as their own Undo.
+                if p['address']:await click(p['x']+p['width']-26,p['y']+57)
                 for _ in range(15):
                     p=await state()
                     if not p['address'] and not p['control']:return
@@ -82,7 +87,7 @@ async def main(args):
             await push(args.probe,PROD+'/ChromeProbe');await shell('Protect '+PROD+'/ChromeProbe +e')
             await state(front=True);original=await state();assert original['address'] and original['active'],original
             (out/'original.json').write_text(json.dumps(original))
-            await click(original['x']+20,original['y']+20)
+            await click(original['x']+original['width']-26,original['y']+57)
             assert not (await state())['address'],'Production did not close normally'
             env=False;prepared=False;launched=False
             try:
@@ -112,6 +117,10 @@ async def main(args):
                 await call('amiga_window_move',{'window':format(p['address'],'08x'),'x':260,'y':75})
                 await call('amiga_window_resize',{'window':format(p['address'],'08x'),'width':1400,'height':650})
                 await state(front=True);p=await state()
+                if args.cli_panel_only:
+                    import accept_cli_panel
+                    await accept_cli_panel.exercise(ROOT,out,fixture,shell,push,call,state,click,capture)
+                    return
                 await accept_workflow.exercise(ROOT,out,fixture,shell,push,call,state,click,capture)
                 await menu('12') # Right Amiga E: agent profiles
                 title='Termic: Agents, CLI and Scripts';a=await state(title)
@@ -260,6 +269,7 @@ if __name__=='__main__':
     for name in ['gui','worker','mcp','probe','micropython']:p.add_argument('--'+name,type=Path,required=True)
     p.add_argument('--host-agent', action='append', choices=['claude','cursor'], default=[], help='Run an authenticated host agent read/write/build and resume test')
     p.add_argument('--providers', action='store_true', help='Exercise Claude/Cursor native profiles with synthetic MCP clients')
+    p.add_argument('--cli-panel-only', action='store_true', help='Exercise the Files/CLI split, commands, output, focus and resizing only')
     p.add_argument('--codex-relay',action='store_true',help='Run an authenticated synthetic Codex read/write/build and resume test')
     p.add_argument('--skip-screenshots',action='store_true')
     asyncio.run(main(p.parse_args()))

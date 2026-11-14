@@ -60,6 +60,9 @@ WORKSPACE
 Left: projects, project naming/import, tasks and task status.
 Centre: Agent, Editor, Build / CLI, Changes and Settings tabs.
 Right: editable C, header, text and Markdown files, plus new-file controls.
+The CLI panel sits directly below Files, sharing the sidebar approximately
+equally. Drag their horizontal divider to change the split. CLI commands
+leave the selected centre tab visible. Build / CLI retains the full log view.
 Drag the dividers to resize panes. Controls use Helvetica 13 and code uses
 Courier 13 when installed, with MUI fonts as fallback. Framed sections and
 aligned preference fields keep related controls together. MUI supplies colours
@@ -104,7 +107,7 @@ child programs may require their own Quit action before the worker returns.
 
 GIT
 Changes offers Init repository, Status, Diff, and Stage source and commit.
-Set repository identity in the Shell tab before the first commit:
+Set repository identity in the CLI panel before the first commit:
   Termic:Tools/amiga-git/git config user.name "Your Name"
   Termic:Tools/amiga-git/git config user.email you@example.com
 The commit action stages existing C/header files. Use the shell for deleted
@@ -228,7 +231,7 @@ and the editor-selected workspace, and only target MCP-created tasks.
 See the linked Agent profiles and MCP chapters in Termic.guide.
 
 CLI, AREXX AND MICROPYTHON
-Build / CLI has a mode selector: CLI, ARexx or MicroPython. In CLI mode,
+The panel below Files has a mode selector: CLI, ARexx or MicroPython. In CLI mode,
 enter an AmigaDOS command. In script modes, enter the script path and arguments,
 then choose Execute. Output is captured; interactive input uses a separate CLI.
 For examples, choose ARexx with Termic:Examples/hello.rexx or MicroPython with

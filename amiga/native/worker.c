@@ -377,6 +377,8 @@ int main(int argc, char **argv)
         free(msg);
     }
     printf("\nFinished with exit code %d.\n", result);
+    /* Publish completion only after the captured output is visible to the UI. */
+    fflush(stdout);
     RemPort(&port);
     DeleteFile((STRPTR) ".busy");
     f = fopen(".result.new", "w");

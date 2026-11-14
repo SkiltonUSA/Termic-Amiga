@@ -352,3 +352,40 @@ results. All three host providers have now passed authenticated Amiga tests.
 All 18 portable proxy tests, the rebuilt macOS GUI/MCP smoke test and packaged
 connection-recovery/Start/Stop/restart/close checks passed. The Mac application
 was backed up and updated with the MCP discovery fix.
+
+[Cursor MCP build 43543665677](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43543665677)
+passed portable tests, packaging, bundled MCP and desktop lifecycle/recovery
+checks on both macOS and Windows. A physical Windows 11 connection to this
+Amiga remains untested.
+
+## Persistent CLI beneath Files
+
+The right sidebar now retains Files above a CLI panel with an adjustable
+roughly half-height split. CLI, ARexx and MicroPython command entry stays
+visible alongside the editor or agent view. The Build / CLI tab keeps the
+larger mirrored job log. This is captured command execution, not a PTY for
+interactive full-screen shell applications.
+
+The focused written hardware acceptance passed on the A4000TX with the final
+GUI and worker: Return-to-run, successful output, native exit code 20, output
+replacement and clipboard copy, source staying visible, one character typed
+exactly once, save/undo/save restoring the original source, and resizing from
+1400x650 to 1920x789. The test restored the production preferences, clipboard,
+assign and window. Both captured layouts were read back and inspected.
+
+The run exposed and verified fixes for click-to-focus after TextEditor was
+unlocked, saving an undo back to its original imported text, and completion
+being published before buffered command output reached the log. The worker
+now flushes output before publishing its result, and the GUI reads the log
+once more after observing completion. All 33 portable tests and the final
+68k cross-build passed.
+
+The verified GUI and worker, matching sources, ReadMe and AmigaGuide were
+installed after staging, checksumming and backing up the previous files.
+Production reopened at 1920x789. Installed GUI: 123340 bytes, CRC32
+`C4EC0264`; worker: 69284 bytes, CRC32 `820A3498`. The backup is
+`SD032G:Dev/Termic/Backup/cli-panel-1794624848`.
+
+![Files above CLI in the windowed acceptance fixture](screenshots/workspace-cli.png)
+
+![Files above CLI at full desktop width](screenshots/workspace-cli-wide.png)

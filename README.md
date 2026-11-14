@@ -6,7 +6,7 @@ This repository contains the Amiga implementation, separated from the desktop
 [Termic project](https://github.com/simion/termic). It runs on the Amiga using
 MUI and native 68k tools. It does not require the desktop React/Tauri application.
 
-![Termic Amiga workspace with native action icons](docs/screenshots/workspace-icons.png)
+![Termic Amiga with CLI beneath Files](docs/screenshots/workspace-cli.png)
 
 ## Features
 
@@ -15,6 +15,7 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 - Resolution-scaled blue title bar with close, depth and zoom icons, drag support and a black Files list.
 - Source backups, undo/redo, clipboard and search.
 - Native VBCC build/run and explicit AmigaDOS commands with captured output.
+- Persistent CLI panel below Files, with a resizable half-height split, command entry and job output.
 - Native Git initialization, status, diffs and source commits.
 - OpenAI agent conversations with bounded C/header file tools and local builds.
 - Codex, Claude and Cursor host profiles, with model selection on the Amiga.
@@ -107,6 +108,14 @@ The earlier `accept_mui.py`, `accept_colours.py`, `accept_about.py` and
 `accept_style.py` preserve the native-title acceptance workflows. Their window
 name guards target the earlier native title bar and require adaptation before
 use with the current borderless window; do not bypass those guards.
+
+`accept_agents.py --cli-panel-only`, with its required binary arguments, checks
+CLI command entry, success/failure output, editor focus, copy, save/undo and
+window resizing in an isolated Amiga installation. It restores the production
+settings and clipboard afterward and requires no cloud credentials. Compile
+`amiga/native/tests/inspect_ui.c` with the Amiga compiler and `-lamiga` to
+`.context/inspect-ui` for its clipboard checks. Stop the AI Proxy before
+running hardware acceptance, then restart it after production is restored.
 
 [Verification and limitations](docs/verification.md) distinguishes tested
 behavior from functionality still awaiting hardware or authenticated checks.

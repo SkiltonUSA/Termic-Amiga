@@ -156,7 +156,14 @@ and [Streamable HTTP](https://modelcontextprotocol.io/specification/2026-07-28/b
 
 ## CLI, ARexx and MicroPython
 
-Build / CLI offers three command modes. CLI runs the entered AmigaDOS command.
+The persistent panel below Files offers three command modes. CLI runs the
+entered AmigaDOS command without switching the centre tab. Files and CLI
+start with roughly half the sidebar each, with a draggable divider. The
+sidebar shows job output for the selected workspace; Build / CLI retains
+the larger log view. Shift F3 focuses command entry, Return executes, and
+the play/stop icons have tooltips.
+Click the output and use Right-Amiga+A then Right-Amiga+C to select and copy
+the log through the native Edit menu.
 ARexx prefixes the entered script path/arguments with `SYS:Rexxc/RX`.
 MicroPython prefixes them with `Termic:Tools/MicroPython/micropython`.
 All run in the selected workspace and capture output. For interactive input,
