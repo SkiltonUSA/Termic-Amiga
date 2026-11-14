@@ -4,7 +4,7 @@ import sys
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'amiga'))
 suite = unittest.defaultTestLoader.loadTestsFromNames([
-    'test_cli_relay', 'test_relay_reconnect', 'test_codex_relay.AsyncRelayTests', 'test_codex_relay.StreamingTests',
+    'test_cli_relay', 'test_relay_reconnect', 'test_bridge_mailbox', 'test_codex_relay.AsyncRelayTests', 'test_codex_relay.StreamingTests',
     'test_codex_relay.RelayTests.test_job_boundaries',
     'test_codex_relay.RelayTests.test_tool_permissions_and_text',
     'test_codex_relay.RelayTests.test_auth_stays_local'])

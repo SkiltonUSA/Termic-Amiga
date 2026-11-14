@@ -13,10 +13,10 @@ if len(sys.argv) > 1 and sys.argv[1] == '--server':
     from mcp.server.fastmcp import FastMCP
     mcp = FastMCP('fixture-bridge', host='127.0.0.1', port=int(sys.argv[2]))
     @mcp.tool()
-    def amiga_run_script(script: str, timeout: int = 10) -> str:
+    def amiga_list_dir(path: str) -> str:
         if (Path(sys.argv[3]) / 'test-bridge-down').exists():
             raise ConnectionError('Synthetic Amiga disconnect')
-        return '[OK] (fixture mailbox is empty)'
+        return 'Empty directory: '+path
     mcp.run(transport='streamable-http')
 else:
     binary = str(Path(sys.argv[1]).resolve())

@@ -125,6 +125,17 @@ for this profile. **API steps / relay calls** bounds its tool calls (1–32); it
 not a subscription quota or a model-token budget. YOLO and CLI arguments do not
 apply. ChatGPT account entitlements and usage limits still apply.
 
+## Mailbox transport
+
+The host checks the relay drawer through the bridge's directory and file
+operations. A malformed reply or unreadable file is a connection failure,
+never evidence that no task exists. Read-only listings, file reads and
+checksum checks have bounded retries for transient bridge errors. Writes
+are checksum-verified before one native rename publishes each message;
+unconsumed requests are never overwritten. Deletion is checked against a
+fresh directory listing. Commands and tool executions are not replayed
+when a reply is lost.
+
 ## Checks
 
 `codex_relay.py --check` verifies ChatGPT authentication without model inference.

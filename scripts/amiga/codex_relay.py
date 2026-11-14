@@ -145,7 +145,9 @@ class Bridge:
     async def call(self, name, args):
         r = await asyncio.wait_for(self.session.call_tool(name, args), 45)
         text = '\n'.join(getattr(c, 'text', '') for c in r.content)
-        if r.isError or any(x in text for x in ('[ERROR]', 'ERROR:', '[STILL RUNNING]', 'Cannot read remote file')):
+        errors = ('[ERROR]', 'ERROR:', 'Error:', '[STILL RUNNING]', 'Cannot read remote file')
+        # Hex-dump ASCII columns may contain error text from the task itself.
+        if r.isError or any(line.startswith(errors) for line in text.splitlines()):
             raise ConnectionError('Amiga bridge operation failed: ' + name)
         return text
 
@@ -154,22 +156,67 @@ class Bridge:
 
     async def read(self, name):
         async with self.lock:
-            remote = self.path(name)
-            exists = await self.shell(f'If EXISTS {remote}\n Echo TERMIC_FILE_PRESENT\nEndIf')
-            if 'TERMIC_FILE_PRESENT' not in exists:
-                return None
-            raw = bytearray()
-            while len(raw) <= MAX_JSON:
-                block = await self.call('amiga_read_file', {'path': remote, 'offset': len(raw), 'size': 1024})
-                if block.startswith('File is empty or could not be read:'):
-                    break
-                chunk = decode_hex_dump(block, len(raw))
-                raw.extend(chunk)
-                if len(chunk) < 1024:
-                    break
-            if len(raw) > MAX_JSON:
-                raise ValueError('Relay message too large')
-            return raw.decode('utf-8')
+            # DevBench broadcasts some uncorrelated file errors to concurrent
+            # clients. Only read-only operations may be retried. Never infer
+            # absence from a shell capture path or an unreadable-file response.
+            for attempt in range(3):
+                try:
+                    return await self.read_once(name)
+                except ConnectionError:
+                    if attempt == 2: raise
+                    await asyncio.sleep(.25)
+
+    async def entries(self):
+        for attempt in range(3):
+            try:
+                return await self.entries_once()
+            except ConnectionError:
+                if attempt == 2: raise
+                await asyncio.sleep(.25)
+
+    async def entries_once(self):
+        text = await self.call('amiga_list_dir', {'path': self.root})
+        if text == 'Empty directory: ' + self.root:
+            return {}
+        lines = text.splitlines()
+        header = re.fullmatch(re.escape('Directory: ' + self.root) + r' \((\d+) entries\)', lines[0]) if lines else None
+        if not header or int(header[1]) != len(lines)-1:
+            raise ConnectionError('Invalid relay directory reply')
+        entries = {}
+        for line in lines[1:]:
+            entry = re.fullmatch(r'  (FILE|DIR ) (.+?) +(\d+|-)  .*', line)
+            if not entry or entry[2].casefold() in entries:
+                raise ConnectionError('Invalid relay directory entry')
+            entries[entry[2].casefold()] = int(entry[3]) if entry[1] == 'FILE' and entry[3].isdigit() else None
+        return entries
+
+    async def read_once(self, name):
+        remote = self.path(name)
+        entries = await self.entries_once()
+        if name.casefold() not in entries:
+            return None
+        size = entries[name.casefold()]
+        if size is None:
+            raise ConnectionError('Relay message is not a file')
+        if size > MAX_JSON:
+            raise ValueError('Relay message too large')
+        raw = bytearray()
+        while len(raw) < size:
+            count = min(1024, size-len(raw))
+            block = await self.call('amiga_read_file', {'path': remote, 'offset': len(raw), 'size': count})
+            chunk = decode_hex_dump(block, len(raw))
+            if len(chunk) != count:
+                raise ConnectionError('Incomplete relay file reply')
+            raw.extend(chunk)
+        return raw.decode('utf-8')
+
+    async def remove_locked(self, name):
+        remote = self.path(name)
+        if name.casefold() not in await self.entries():
+            return
+        await self.shell(f'Delete {remote}')
+        if name.casefold() in await self.entries():
+            raise ConnectionError('Relay file removal was not confirmed')
 
     async def write(self, name, value):
         raw = json.dumps(value, ensure_ascii=True, separators=(',', ':')).encode()
@@ -177,20 +224,31 @@ class Bridge:
             raise ValueError('Relay message too large')
         async with self.lock:
             remote = self.path(name)
-            await self.shell(f'If EXISTS {remote}.tmp\n Delete {remote}.tmp\nEndIf')
+            await self.remove_locked(name + '.tmp')
             for offset in range(0, len(raw), 1024):
                 await self.call('amiga_write_file', {'path': remote + '.tmp', 'offset': offset,
                                                     'hex_data': raw[offset:offset+1024].hex()})
-            check = await self.call('amiga_checksum', {'path': remote + '.tmp'})
-            if f'{zlib.crc32(raw):08X}' not in check or f'{len(raw)} bytes' not in check:
-                raise ConnectionError('Relay upload checksum mismatch')
-            await self.shell(f'If EXISTS {remote}\n Delete {remote}\nEndIf\nRename {remote}.tmp {remote}')
+            # WRITEFILE is sent once. A concurrent reader's unrelated ERR can
+            # interrupt CHECKSUM, so repeat only this read-only verification.
+            for attempt in range(3):
+                try:
+                    check = await self.call('amiga_checksum', {'path': remote + '.tmp'})
+                    if f'{zlib.crc32(raw):08X}' not in check or f'{len(raw)} bytes' not in check:
+                        raise ConnectionError('Relay upload checksum mismatch')
+                    break
+                except ConnectionError:
+                    if attempt == 2: raise
+                    await asyncio.sleep(.25)
+            if name.casefold() in await self.entries():
+                raise ConnectionError('Previous relay request has not been consumed')
+            renamed = await self.call('amiga_rename', {'old_path':remote+'.tmp', 'new_path':remote})
+            if renamed != f'Renamed: {remote}.tmp -> {remote}':
+                raise ConnectionError('Relay publication was not acknowledged')
 
     async def remove(self, *names):
         async with self.lock:
             for name in names:
-                remote = self.path(name)
-                await self.shell(f'If EXISTS {remote}\n Delete {remote}\nEndIf')
+                await self.remove_locked(name)
 
 
 class Mailbox:

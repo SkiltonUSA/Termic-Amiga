@@ -542,3 +542,27 @@ lifecycle/recovery checks on both macOS and Windows. Updated downloads are
 linked in [AI Proxy setup](ai-proxy.md). The Windows archive passed integrity,
 executable-header and bundled Python/Qt layout checks. Windows hardware
 connectivity remains outside this automated verification.
+
+
+## Packaged task pickup and bridge mailbox recovery
+
+A subsequent production task timed out waiting for the host before any
+provider connection or native tool action. Earlier authenticated hardware
+checks dispatched jobs from the source helper; the packaged desktop checks
+covered connection lifecycle but did not exercise pending task pickup.
+
+The shell-based existence check could receive a capture filename or an
+unrelated bridge error. It has been replaced with validated directory and
+file operations. A two-client read control failed with the old transport;
+all 20 reads passed with the replacement. A separate native-file probe
+verified checksum, publication, readback and deletion. Reading a running
+worker's exclusively opened log also reproduced an unrelated READFILE error
+interrupting CHECKSUM. Only read-only verification is retried, never the
+write, rename or native execution.
+
+The packaged acceptance now presents an actual synthetic request through
+MCP, injects malformed directory and unrelated checksum replies, verifies
+ordered acknowledgements, and requires the packaged worker to report a
+missing provider executable back to the simulated Amiga. This needs no
+account or model access and runs in both desktop CI jobs. All 35 portable
+proxy tests passed locally. Native binaries are unchanged by this fix.
