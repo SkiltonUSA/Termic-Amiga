@@ -8,6 +8,12 @@ int main(int argc,char **argv)
     char *text; cJSON *defaults,*items,*delta,*stored,*again,*p,*q;
     assert(argc==2);text=read_text(argv[1],PROMPTS_LIMIT);assert(text);
     defaults=cJSON_Parse(text);free(text);assert(cJSON_GetArraySize(defaults)==17);
+    cJSON_ArrayForEach(p,defaults) {
+        const char *body=prompt_string(p,"body");
+        assert(strstr(body,"run_arexx") && strstr(body,"run_program"));
+        assert(strstr(body,"system_info") && strstr(body,"Read-only agents cannot"));
+        assert(!strstr(body,"edit C/H files and build;"));
+    }
     items=prompts_resolve(defaults,NULL);assert(cJSON_GetArraySize(items)==17);
     delta=prompts_delta(defaults,items);assert(delta);
     assert(cJSON_GetArraySize(cJSON_GetObjectItemCaseSensitive(delta,"customs"))==0);

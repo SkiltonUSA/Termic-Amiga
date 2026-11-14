@@ -12,11 +12,7 @@ for (const name of ['builtinPrompts.ts', 'review.ts']) {
 }
 const store = fs.readFileSync(path.join(root, 'src/store/prompts.ts'), 'utf8');
 const block = store.match(/export const DEFAULT_PROMPTS[^=]*= \[([\s\S]*?)\n\];/)[1];
-const note = 'Amiga execution context: use only the tools exposed by the selected agent. ' +
-  'The native API agent can read project instructions and C/H files, edit C/H files and build; ' +
-  'it has no shell, Git, web, PR or subagent tools. Do not pretend to perform unavailable steps. ' +
-  'Ask for missing diffs or command output and report what remains unverified. ' +
-  'Desktop shell examples below require a capable external agent and must be translated for AmigaDOS.\n\n';
+const note = "Amiga execution context: use only tools exposed by the selected agent. Editable agents can read project guidance, read/write C/H and ARexx files, build, run saved scripts with run_arexx, and execute Program with run_program after a successful build in the same turn. Use system_info for live hardware queries. Read-only agents cannot write, build or execute. Check actual output and exit codes before claiming success. Runs wait for exit; Stop is cooperative. There is no shell, Git, web, PR or subagent tool. Ask for unavailable diffs or command output. Desktop shell examples below require a capable external agent and translation for AmigaDOS.\n\n";
 const ascii = s => s.replace(/[\u2018\u2019]/g,"'").replace(/[\u201c\u201d]/g,'"')
   .replace(/[\u2013\u2014]/g,'-').replace(/\u2026/g,'...').replace(/\u2192/g,'->');
 const prompts = [...block.matchAll(/id:\s*"([^"]+)",\s*title:\s*"([^"]+)",\s*body:\s*(\w+)/g)]

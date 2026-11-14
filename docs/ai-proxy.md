@@ -7,6 +7,12 @@ DevBench bridge are separate prerequisites.
 
 ![Termic AI Proxy with synthetic account status](screenshots/ai-proxy.png)
 
+Build 94f4189 includes the native execution and hardware-query tools:
+[macOS download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43619273350/artifacts/14123447536)
+and [Windows download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43619273350/artifacts/14123387713).
+Both passed automated packaging, MCP and desktop lifecycle checks.
+GitHub sign-in is required; artifacts expire after 30 days.
+
 ## Start the app
 
 On macOS, open **Termic AI Proxy.app** from Applications. On Windows 11,

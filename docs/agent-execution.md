@@ -94,3 +94,12 @@ Restart AI Proxy afterwards.
 authenticated Codex request in the same isolated fixture: inspect hardware,
 write an ARexx script using the detected values, and execute it. It uses the
 existing host login and saves evidence privately under `.context/`.
+
+`scripts/amiga/accept_build_agent.py` checks the installed worker with an
+existing Codex login. With AI Proxy idle and stopped, run it after the native
+acceptance above using an editable Codex profile. It creates a fresh task
+containing an intentional compiler
+error, asks the agent to build before editing, repair the error, rebuild and
+run once. It verifies the native log order, captured output, final source and
+Hunk executable, independently of the model's summary. Evidence stays under
+`.context/execution-acceptance/build-agent/`. Restart AI Proxy afterwards.

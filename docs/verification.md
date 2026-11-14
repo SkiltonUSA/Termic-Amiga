@@ -469,3 +469,22 @@ hardware checks above do not establish live acceptance of these new tools.
 Direct API execution and a physical Windows 11 connection remain untested.
 See [Agent execution](agent-execution.md) for the synchronous run limits,
 cooperative Stop and New conversation requirement after upgrading.
+
+The subsequent `accept_build_agent.py` check used the installed worker and
+an isolated C task. Authenticated Codex read the deliberately broken source,
+received the real compiler failure, corrected the source, rebuilt and ran
+Program exactly once. Native log ordering, captured output, exit code zero,
+final source and the Hunk executable all passed verification. The Mac proxy
+was restored after the check; existing user tasks were not edited.
+
+All 17 shipped prompt introductions now describe ARexx execution, build/run
+and hardware queries, with read-only restrictions. The eight native test
+groups passed, including prompt limits and preservation of custom overrides.
+The importer reproduced the updated defaults byte-for-byte from the desktop
+source. User-customised prompts remain unchanged.
+
+[Execution proxy build 43619273350](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43619273350)
+passed portable tests, packaging, bundled MCP smoke tests and desktop
+lifecycle/recovery checks on both macOS and Windows. Download links are in
+[AI Proxy setup](ai-proxy.md). This does not establish a physical Windows 11
+to Amiga connection test.

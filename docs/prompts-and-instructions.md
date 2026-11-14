@@ -32,7 +32,11 @@ node scripts/amiga/import_prompts.mjs /path/to/desktop-termic
 
 These are reusable agent instructions, not executable AmigaDOS scripts.
 The import retains the upstream bodies, converts typography to ASCII and adds
-an Amiga tool-limit preamble. The native API agent has no arbitrary shell,
+an Amiga tool-limit preamble. Editable profiles can use ARexx files,
+run_arexx, build/run_program and system_info; read-only profiles cannot write,
+build or execute. Unedited defaults receive this updated preamble when the
+Prompts window is reopened. Customised bodies stay unchanged.
+The native API agent has no arbitrary shell,
 Git/push, browser, PR or subagent tools. Templates requesting those operations
 must report the limitation or use a capable external agent. POSIX examples
 in upstream templates require translation before use with AmigaDOS.
