@@ -108,9 +108,18 @@ Transcript updates use backup-and-replace writes and close the file between
 messages so the GUI can read progress. The transcript limit is 256 KiB; archive
 a full transcript before continuing. It is never silently truncated.
 
-Completed assistant messages are forwarded as plain ASCII text, rather than
-individual streamed tokens. Unsupported characters are replaced for the classic
-TextEditor widget. The API output-token and usage-reporting controls are disabled
+Assistant text deltas are combined for roughly one second on the host and
+forwarded as plain ASCII text. Transfer/acknowledgement time can make visible
+updates slower. Pending text is delivered before tool markers and turn
+completion, and completed messages are reconciled against their deltas to
+avoid duplication. Unsupported characters are replaced for the classic
+TextEditor widget. The GUI refreshes only while jobs run, appends changed
+transcripts, preserves scrollback and holds selected text until it is released.
+This live text path applies to host profiles; the direct API profile is unchanged.
+
+The adapter uses the documented
+[Codex app-server events](https://developers.openai.com/codex/app-server)
+and checks thread/turn identity before accepting message deltas. The API output-token and usage-reporting controls are disabled
 for this profile. **API steps / relay calls** bounds its tool calls (1–32); it is
 not a subscription quota or a model-token budget. YOLO and CLI arguments do not
 apply. ChatGPT account entitlements and usage limits still apply.

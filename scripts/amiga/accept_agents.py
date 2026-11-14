@@ -117,6 +117,10 @@ async def main(args):
                 await call('amiga_window_move',{'window':format(p['address'],'08x'),'x':260,'y':75})
                 await call('amiga_window_resize',{'window':format(p['address'],'08x'),'width':1400,'height':650})
                 await state(front=True);p=await state()
+                if args.live_feedback_only:
+                    import accept_live_feedback
+                    await accept_live_feedback.exercise(ROOT,out,fixture,shell,push,call,state,click,capture,menu)
+                    return
                 if args.cli_panel_only:
                     import accept_cli_panel
                     await accept_cli_panel.exercise(ROOT,out,fixture,shell,push,call,state,click,capture)
@@ -269,6 +273,7 @@ if __name__=='__main__':
     for name in ['gui','worker','mcp','probe','micropython']:p.add_argument('--'+name,type=Path,required=True)
     p.add_argument('--host-agent', action='append', choices=['claude','cursor'], default=[], help='Run an authenticated host agent read/write/build and resume test')
     p.add_argument('--providers', action='store_true', help='Exercise Claude/Cursor native profiles with synthetic MCP clients')
+    p.add_argument('--live-feedback-only',action='store_true',help='Exercise live transcript, selection and tool feedback without cloud inference')
     p.add_argument('--cli-panel-only', action='store_true', help='Exercise the Files/CLI split, commands, output, focus and resizing only')
     p.add_argument('--codex-relay',action='store_true',help='Run an authenticated synthetic Codex read/write/build and resume test')
     p.add_argument('--skip-screenshots',action='store_true')

@@ -43,8 +43,11 @@ int relay_message(struct RelayState *s,const char *json,char **reply)
         if(!name || strlen(name)>40 || !args || ++s->calls>s->limit)ok=0;
         else {
             printf("Mac agent tool: %s\n",name);
+            fflush(stdout);
             result=agent_tool_result(name,args,s->readonly);
             ok=result!=NULL;
+            printf("Mac agent tool returned: %s\n",name);
+            fflush(stdout);
         }
     } else if(!strcmp(kind,"done")) {
         text=field(m,"status");
@@ -89,8 +92,13 @@ static int append_transcript(const char *text)
 }
 static int publish(const char *path,const char *text)
 {
-    char temp[160];FILE *f;int ok;size_t n=strlen(text);
-    snprintf(temp,sizeof(temp),"%s.tmp",path);
+    char temp[160];FILE *f;int ok;size_t n=strlen(text),prefix;
+    const char *dot=strrchr(path,'.');
+    /* Keep the longest mailbox basename below the classic 30-byte limit:
+     * job.stopped.tmp would exceed it. Only this worker publishes replies. */
+    prefix=dot?(size_t)(dot-path):strlen(path);
+    if(prefix+5>sizeof(temp))return 0;
+    memcpy(temp,path,prefix);strcpy(temp+prefix,".tmp");
     f=fopen(temp,"wb");if(!f) {printf("Cannot open relay output: %s (DOS %ld).\n",temp,(long)IoErr());return 0;}
     ok=fwrite(text,1,n,f)==n;if(fclose(f))ok=0;
     if(ok) {DeleteFile((STRPTR)path);ok=Rename((STRPTR)temp,(STRPTR)path)!=0;}
@@ -147,7 +155,8 @@ int run_relay(void)
     cJSON_AddItemToObject(request,"guidance",guides);guides=NULL;
     json=cJSON_PrintUnformatted(request);
     if(!json || strlen(json)>65536 || !publish(RELAY "request.json",json)) {puts("Cannot publish relay request.");goto end;}
-    puts("Waiting for the Mac agent. Start scripts/amiga/codex_relay.py on the Mac.");
+    puts("Waiting for the host agent. Open Termic AI Proxy on the Mac or PC.");
+    fflush(stdout);
     while(!done && total++<18000) {
         char *message,*reply=NULL;
         if(cancel_requested()) {puts("Mac relay cancelled.");break;}

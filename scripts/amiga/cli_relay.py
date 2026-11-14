@@ -10,7 +10,7 @@ import sys
 import tempfile
 
 from host_process import executable_command, process_options
-from codex_relay import Mailbox, THREAD, TOOLS, WRITE, dynamic_tools
+from codex_relay import Mailbox, THREAD, TOOLS, WRITE, dynamic_tools, LiveText
 
 NAMES = {'claude': 'Claude', 'cursor': 'Cursor'}
 
@@ -45,12 +45,12 @@ async def check_login(provider, executable, state):
 def command_for(provider, executable, job, work, config):
     if provider == 'claude':
         allowed = ','.join('mcp__amiga__' + t['name'] for t in dynamic_tools(job['readonly']))
-        command = executable_command(executable) + ['-p', '--output-format', 'stream-json', '--verbose',
+        command = executable_command(executable) + ['-p', '--output-format', 'stream-json', '--verbose', '--include-partial-messages',
                    '--tools', '', '--allowedTools', allowed, '--permission-mode', 'dontAsk',
                    '--strict-mcp-config', '--mcp-config', str(config), '--setting-sources', '',
                    '--settings', '{"disableAllHooks":true}', '--disable-slash-commands']
     else:
-        command = executable_command(executable) + ['-p', '--output-format', 'stream-json', '--trust',
+        command = executable_command(executable) + ['-p', '--output-format', 'stream-json', '--stream-partial-output', '--trust',
                    '--approve-mcps', '--workspace', str(work)]
     if job['model']:
         command += ['--model', job['model']]
@@ -65,9 +65,58 @@ def mcp_command(endpoint):
     return {'command': sys.executable, 'args': [str(Path(__file__).with_name('relay_mcp.py')), str(endpoint)]}
 
 
+class CLIText:
+    """Only visible assistant text, never reasoning or partial tool arguments."""
+    def __init__(self, provider, live):
+        self.provider, self.live = provider, live
+        self.seen = False
+        self.message = None
+        self.streamed = set()
+        self.text_blocks = set()
+
+    def add(self, text):
+        if text:
+            self.live.add(text)
+            self.seen = True
+
+    def event(self, event):
+        kind = event.get('type')
+        if self.provider == 'claude' and kind == 'stream_event':
+            raw = event.get('event', {})
+            subtype = raw.get('type')
+            if subtype == 'message_start':
+                self.message = raw.get('message', {}).get('id')
+            elif subtype == 'content_block_start' and raw.get('content_block', {}).get('type') == 'text':
+                self.streamed.add(self.message)
+                self.text_blocks.add((self.message, raw.get('index')))
+                self.add(raw['content_block'].get('text', ''))
+            elif subtype == 'content_block_delta' and raw.get('delta', {}).get('type') == 'text_delta':
+                self.streamed.add(self.message)
+                self.text_blocks.add((self.message, raw.get('index')))
+                self.add(raw['delta'].get('text', ''))
+            elif subtype == 'content_block_stop':
+                block = (self.message, raw.get('index'))
+                if block in self.text_blocks:
+                    self.add('\n')
+                    self.text_blocks.remove(block)
+        elif kind == 'assistant':
+            message = event.get('message', {})
+            if self.provider == 'cursor':
+                # Cursor's pre-tool and final flush events repeat its deltas.
+                if 'timestamp_ms' not in event or 'model_call_id' in event:
+                    return
+            elif message.get('id') in self.streamed:
+                return
+            for block in message.get('content', []):
+                if block.get('type') == 'text':
+                    self.add(block.get('text', '') + ('\n' if self.provider == 'claude' else ''))
+        elif kind == 'result' and not self.seen and isinstance(event.get('result'), str):
+            self.add(event['result'] + '\n')
+
+
 class ToolServer:
-    def __init__(self, mailbox, job):
-        self.mailbox, self.job = mailbox, job
+    def __init__(self, mailbox, job, live=None):
+        self.mailbox, self.job, self.live = mailbox, job, live
         self.token = secrets.token_urlsafe(32)
         self.calls = 0
         self.lock = asyncio.Lock()
@@ -87,8 +136,12 @@ class ToolServer:
             if self.calls >= self.job['limit']:
                 raise ValueError('Task tool-call limit reached')
             self.calls += 1
+            if self.live:
+                await self.live.finish()
             await self.mailbox.text('\n[Amiga: ' + name + ']\n')
-            return await self.mailbox.send('tool', name=name, arguments=arguments)
+            result = await self.mailbox.send('tool', name=name, arguments=arguments)
+            await self.mailbox.text('[Amiga tool returned: ' + name + ']\n')
+            return result
 
     async def handle(self, reader, writer):
         task = asyncio.current_task(); self.clients.add(task)
@@ -135,7 +188,8 @@ async def run_cli_job(bridge, job, executable, state):
     provider = job['provider']; label = NAMES[provider]
     mailbox = Mailbox(bridge, job)
     proc = heartbeat = reader_task = server = cursor_config = None
-    tools = ToolServer(mailbox, job)
+    live = LiveText(mailbox)
+    tools = ToolServer(mailbox, job, live)
     status = 'failed'
     state.mkdir(parents=True, exist_ok=True, mode=0o700)
     work = state / (provider + '-workspace'); work.mkdir(exist_ok=True, mode=0o700)
@@ -181,7 +235,8 @@ async def run_cli_job(bridge, job, executable, state):
                       'Write ASCII C89. Do not run built programs.\n' + guidance + '\nUser task:\n' + job['prompt'])
             proc.stdin.write(prompt.encode()); await proc.stdin.drain(); proc.stdin.close()
             async def consume():
-                seen_text = False; result = None; saved_session = None
+                text = CLIText(provider, live)
+                result = None; saved_session = None
                 while raw := await proc.stdout.readline():
                     event = json.loads(raw)
                     session = event.get('session_id')
@@ -193,24 +248,22 @@ async def run_cli_job(bridge, job, executable, state):
                         if session != saved_session:
                             await mailbox.send('session', thread=session)
                             saved_session = session
-                    if event.get('type') == 'assistant':
-                        for block in event.get('message', {}).get('content', []):
-                            if block.get('type') == 'text':
-                                await mailbox.text(block['text'] + '\n'); seen_text = True
+                    text.event(event)
                     if event.get('type') == 'result':
                         result = event
-                        if not seen_text and isinstance(event.get('result'), str):
-                            await mailbox.text(event['result'] + '\n')
+                await live.finish()
                 code = await proc.wait()
                 return code == 0 and result is not None and not result.get('is_error', False) and result.get('subtype') == 'success'
             reader_task = asyncio.create_task(consume())
-            done, _ = await asyncio.wait([reader_task, heartbeat], timeout=1500, return_when=asyncio.FIRST_COMPLETED)
+            done, _ = await asyncio.wait([reader_task, heartbeat, live.task], timeout=1500, return_when=asyncio.FIRST_COMPLETED)
+            if live.task in done: await live.task
             if heartbeat in done: await heartbeat
             if reader_task not in done: raise TimeoutError('Host task exceeded 25 minutes')
             if await reader_task: status = 'completed'
             else: await mailbox.text('[' + label + ' failed. Check host sign-in, selected model and usage limits.]\n')
     except (Exception, asyncio.CancelledError) as error:
         try:
+            await live.finish()
             message = str(error) if isinstance(error, FileNotFoundError) else 'Check host sign-in, selected model and the proxy log.'
             await mailbox.text('[' + label + ' relay stopped. ' + message + ']\n')
         except Exception: pass
@@ -221,6 +274,7 @@ async def run_cli_job(bridge, job, executable, state):
         for task in (heartbeat, reader_task):
             if task: task.cancel()
         await asyncio.gather(*[t for t in (heartbeat, reader_task) if t], return_exceptions=True)
+        await live.close()
         if server: server.close(); await server.wait_closed()
         await tools.close()
         if cursor_config:

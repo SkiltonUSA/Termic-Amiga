@@ -18,7 +18,7 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 - Persistent CLI panel below Files, with a resizable half-height split, command entry and job output.
 - Native Git initialization, status, diffs and source commits.
 - OpenAI agent conversations with bounded C/header file tools and local builds.
-- Codex, Claude and Cursor host profiles, with model selection on the Amiga.
+- Codex, Claude and Cursor host profiles, with model selection and live response/tool feedback on the Amiga.
 - Standalone Termic AI Proxy desktop app for macOS and Windows 11.
 - Agents / CLI / Scripts profiles with separate credentials, launch arguments, sessions and access limits.
 - CLI, ARexx and MicroPython script execution, with a pinned native MicroPython runtime.
@@ -31,6 +31,8 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 - Editor commands in the menu strip, crisp Helvetica/Courier fonts and framed MUI panels.
 - Save/Use/Cancel preferences and shared Amiga IFF text clipboard.
 - Linked AmigaGuide manual available with Help or Help > Contents... .
+
+![Live response and tool feedback during a synthetic running task](docs/screenshots/live-feedback.png)
 
 ![About Termic Amiga](docs/screenshots/about.png)
 
@@ -112,10 +114,14 @@ use with the current borderless window; do not bypass those guards.
 `accept_agents.py --cli-panel-only`, with its required binary arguments, checks
 CLI command entry, success/failure output, editor focus, copy, save/undo and
 window resizing in an isolated Amiga installation. It restores the production
-settings and clipboard afterward and requires no cloud credentials. Compile
+settings and clipboard afterward and requires no cloud credentials.
+`--live-feedback-only` checks incremental transcript display before completion,
+clipboard selection during updates and tool start/return markers. Compile
 `amiga/native/tests/inspect_ui.c` with the Amiga compiler and `-lamiga` to
 `.context/inspect-ui` for its clipboard checks. Stop the AI Proxy before
 running hardware acceptance, then restart it after production is restored.
+`amiga/native/tests/test_texteditor_stream.c` is an additional native MUI
+regression for preserving text across streamed chunk boundaries.
 
 [Verification and limitations](docs/verification.md) distinguishes tested
 behavior from functionality still awaiting hardware or authenticated checks.
@@ -123,8 +129,8 @@ behavior from functionality still awaiting hardware or authenticated checks.
 ## Scope
 
 Tasks are independent source snapshots, not Git worktrees. The shell captures
-commands; it is not an interactive PTY. Desktop agent CLIs, streamed tokens,
-queue/broadcast/race modes and integrated remote PR controls are not implemented.
+commands; it is not an interactive PTY. Desktop agent CLIs run on the host through the proxy.
+Queue/broadcast/race modes and integrated remote PR controls are not implemented.
 ZZ9000 supplies the existing RTG display; ARM compute offload is not implemented.
 
 ## Credits and licence

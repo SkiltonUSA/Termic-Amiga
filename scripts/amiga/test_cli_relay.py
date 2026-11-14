@@ -80,7 +80,7 @@ class CLIAsyncTests(unittest.IsolatedAsyncioTestCase):
                 self.stdin = Input(); self.stdout = asyncio.StreamReader(); self.returncode = None
                 events = [{'type': 'system', 'session_id': 'abcd-1234'},
                           {'type': 'system', 'session_id': 'abcd-1234'},
-                          {'type': 'assistant', 'message': {'content': [{'type': 'text', 'text': 'Fixture reply'}]}},
+                          {'type': 'assistant', 'timestamp_ms': 1, 'message': {'content': [{'type': 'text', 'text': 'Fixture reply'}]}},
                           {'type': 'result', 'session_id': 'abcd-1234', 'subtype': 'error' if failed else 'success', 'is_error': failed}]
                 for event in events: self.stdout.feed_data((json.dumps(event)+'\n').encode())
                 self.stdout.feed_eof()
@@ -114,3 +114,54 @@ class CLIAsyncTests(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory() as temp, patch.object(cli_relay, 'check_login', no_login):
             self.assertFalse(await cli_relay.run_cli_job(bridge, data, 'cursor-agent', Path(temp)))
         self.assertEqual(bridge.frames[-1]['status'], 'failed')
+
+
+class CLIStreamingTests(unittest.IsolatedAsyncioTestCase):
+    async def test_provider_deltas_ignore_reasoning_and_duplicate_flushes(self):
+        for provider in ('claude', 'cursor'):
+            bridge = FakeBridge()
+            live = codex_relay.LiveText(codex_relay.Mailbox(bridge, job()), interval=.001)
+            parser = cli_relay.CLIText(provider, live)
+            try:
+                def assistant(text, **fields):
+                    return {'type':'assistant', 'message':{'id':'m1', 'content':[{'type':'text','text':text}]}, **fields}
+                if provider == 'claude':
+                    def stream(**event): parser.event({'type':'stream_event','event':event})
+                    stream(type='message_start', message={'id':'m1'})
+                    stream(type='content_block_start', index=0, content_block={'type':'text','text':''})
+                    stream(type='content_block_delta', index=0, delta={'type':'text_delta','text':'Hello'})
+                    stream(type='content_block_delta', index=1, delta={'type':'thinking_delta','thinking':'private'})
+                    stream(type='content_block_delta', index=2, delta={'type':'input_json_delta','partial_json':'private'})
+                else:
+                    parser.event(assistant('Hello', timestamp_ms=1))
+                for _ in range(100):
+                    if bridge.frames: break
+                    await asyncio.sleep(.005)
+                self.assertEqual(bridge.frames[0]['text'], 'Hello')
+                if provider == 'claude':
+                    stream(type='content_block_delta', index=0, delta={'type':'text_delta','text':' world'})
+                    parser.event(assistant('Hello world'))
+                    stream(type='content_block_stop', index=0)
+                else:
+                    parser.event(assistant(' world', timestamp_ms=2))
+                    parser.event(assistant('Hello world', timestamp_ms=3, model_call_id='call1'))
+                    parser.event(assistant('Hello world'))
+                parser.event({'type':'result','result':'Hello world'})
+                await live.finish()
+                self.assertEqual(''.join(f['text'] for f in bridge.frames), 'Hello world' + ('\n' if provider=='claude' else ''))
+            finally: await live.close()
+
+    async def test_result_fallback_and_tool_barrier(self):
+        data = job(); bridge = FakeBridge()
+        live = codex_relay.LiveText(codex_relay.Mailbox(bridge, data))
+        server = cli_relay.ToolServer(live.mailbox, data, live)
+        try:
+            parser = cli_relay.CLIText('cursor', live)
+            parser.event({'type':'result','result':'Fallback'})
+            await server.dispatch({'op':'call','token':server.token,'name':'build','arguments':{}})
+            frames = bridge.frames
+            self.assertEqual(frames[0]['text'], 'Fallback\n')
+            self.assertEqual([f['kind'] for f in frames], ['text','text','tool','text'])
+            self.assertIn('returned: build',frames[-1]['text'])
+        finally:
+            await live.close(); await server.close()

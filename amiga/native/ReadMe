@@ -148,7 +148,8 @@ Tab to a button first or choose a command using the mouse menu.
 
 BOUNDARIES
 This native implementation does not run the React/Tauri frontend or desktop
-agent CLIs. There is no xterm terminal, streamed token display, automatic
+agent CLIs. Host profiles provide buffered live response text through the proxy.
+There is no xterm terminal, automatic
 queue, broadcast/race mode, integrated remote PR UI or Git worktree support.
 The shell exposes the installed native Git client's additional commands.
 Task instructions: 8 KiB. Individual source: 32 KiB. Agent compiler output:
@@ -302,3 +303,13 @@ Stop, sign-in and connection status without an open terminal. DevBench and
 the provider CLI must be installed separately. Credentials remain on the host.
 The on Mac profile names also work with a Windows proxy. One task at a time.
 See docs/ai-proxy.md in the repository for downloads and setup.
+
+LIVE AGENT FEEDBACK
+Codex, Claude and Cursor host profiles show text while the response is being
+generated. Small chunks are combined on the host before transfer; update
+speed depends on the Amiga bridge. Tool start and return markers appear in
+the transcript, and the CLI log shows native tool activity immediately.
+Replies wrap to the transcript width. The transcript follows new text
+when already at the bottom. Scrollback stays
+in place and selected text is held for copying until selection is released.
+The direct API profile does not stream tokens.

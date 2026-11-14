@@ -151,3 +151,26 @@ isolated installation, and restores settings, clipboard and window geometry.
 The `--providers` mode uses synthetic MCP clients; only the opt-in
 `--host-agent` mode tests cloud authentication. See [verification](verification.md)
 for the actual tested scope.
+
+## Live response and tool feedback
+
+Codex, Claude and Cursor host profiles stream visible assistant text into the
+Amiga transcript. Updates are batched for about one second, then delivered
+through the existing mailbox; bridge latency determines the visible cadence.
+Pending text is flushed before tool start markers and completion. The
+transcript includes a marker when each Amiga tool returns, including failed
+compiler results; a returned tool does not by itself mean a successful build.
+The CLI panel shows native tool activity while the worker is running.
+
+Replies wrap to the transcript width. The transcript follows new text when
+positioned at the bottom. Reading older
+text retains the scroll position. Selecting text temporarily holds updates
+for copying; releasing selection catches up. The existing 256 KiB transcript
+limit still applies. A disconnect never replays an uncertain text delivery.
+
+Claude uses its documented
+[partial message events](https://code.claude.com/docs/en/agent-sdk/streaming-output).
+Cursor uses its documented
+[partial-output filtering](https://cursor.com/docs/cli/reference/output-format)
+to skip duplicate pre-tool and final flushes. The direct OpenAI API profile
+does not gain token streaming from this update.

@@ -389,3 +389,37 @@ Production reopened at 1920x789. Installed GUI: 123340 bytes, CRC32
 ![Files above CLI in the windowed acceptance fixture](screenshots/workspace-cli.png)
 
 ![Files above CLI at full desktop width](screenshots/workspace-cli-wide.png)
+
+## Live host-agent feedback
+
+Codex, Claude and Cursor now forward buffered text deltas during generation.
+Real authenticated smoke checks against a synthetic tool endpoint observed
+396 Codex deltas, 180 Claude deltas and 460 Cursor deltas. Text reached the
+mailbox before completion in all three cases, the start/end markers each
+appeared exactly once, and each provider called list_sources. These smoke
+checks validate real provider events; their tool endpoint uses synthetic
+source data rather than the Amiga filesystem.
+
+The portable suite passes 38 tests, including chunk batching, final-message
+reconciliation, wrong-thread filtering, duplicate Cursor flushes, Claude text
+versus tool/reasoning deltas, transport failure, buffer limits and tool ordering.
+The standalone TextEditor native regression preserves a sentence split across
+two inserts exactly.
+
+Repeated live updates exposed a native reply-file publication failure. The
+proxy now removes an acknowledged reply before publishing the next request,
+so it does not poll an old reply during replacement. Native publication also
+uses a shorter temporary basename: the stop-marker temporary filename had
+exceeded the classic 30-byte filename limit. The mailbox order regression
+checks that reply removal happens before each new request.
+
+The written A4000TX acceptance passed with text visible while the worker
+remained busy, exact joining across partial-text boundaries, stable clipboard
+selection (including when the job completes), catch-up after selection
+release, tool start/return markers and
+final completion without duplication. Stop after partial output published its
+marker successfully and rejected further text. Production settings, assign,
+clipboard and window geometry were restored. The refreshed Mac bundle passed
+GUI/MCP smoke and Start/Stop/reconnect/restart/close checks.
+
+![Synthetic response and tool activity while the task is still running](screenshots/live-feedback.png)

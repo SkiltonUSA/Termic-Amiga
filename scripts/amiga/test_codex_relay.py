@@ -63,15 +63,16 @@ class RelayTests(unittest.TestCase):
 
 class FakeBridge:
     def __init__(self):
-        self.frames = []; self.stop = False
+        self.frames = []; self.stop = False; self.operations = []
     async def read(self, name):
         if name.endswith('.stopped'):
             return 'stopped' if self.stop else None
         if name.endswith('.out') and self.frames:
             frame = self.frames[-1]
             return json.dumps({'id': frame['id'], 'seq': frame['seq'], 'ok': True, 'text': 'fixture.c'})
-    async def write(self, name, value): self.frames.append(value)
-    async def remove(self, *names): pass
+    async def write(self, name, value):
+        self.operations.append(('write',name)); self.frames.append(value)
+    async def remove(self, *names): self.operations.append(('remove',names))
 
 
 class AsyncRelayTests(unittest.IsolatedAsyncioTestCase):
@@ -79,6 +80,8 @@ class AsyncRelayTests(unittest.IsolatedAsyncioTestCase):
         bridge = FakeBridge(); box = relay.Mailbox(bridge, job())
         await asyncio.gather(box.send('ping'), box.send('text', text='Fixture'))
         self.assertEqual([f['seq'] for f in bridge.frames], [1, 2])
+        self.assertEqual([op[0] for op in bridge.operations], ['remove','write','remove','write'])
+        self.assertEqual(bridge.operations[0][1], (job()['id']+'.out',))
         bridge.stop = True
         with self.assertRaises(ConnectionError): await box.send('tool', name='build', arguments={})
         self.assertEqual(len(bridge.frames), 2)
@@ -97,7 +100,10 @@ class AsyncRelayTests(unittest.IsolatedAsyncioTestCase):
                     return {'turn': {'id': 'turn-1'}}
             async def send(self, obj):
                 self.reply = obj
-                await self.events.put({'method': 'item/completed', 'params': {'item': {'type': 'agentMessage', 'text': 'Fixture complete'}}})
+                for thread, text in [('other-thread', 'Wrong task'), ('abcdef-1234', 'Fixture '), ('abcdef-1234', 'complete')]:
+                    await self.events.put({'method':'item/agentMessage/delta','params':{
+                        'threadId':thread,'turnId':'turn-1','itemId':'message-1','delta':text}})
+                await self.events.put({'method': 'item/completed', 'params': {'threadId': 'abcdef-1234', 'turnId': 'turn-1', 'item': {'id': 'message-1', 'type': 'agentMessage', 'text': 'Fixture complete'}}})
                 await self.events.put({'method': 'turn/completed', 'params': {'turn': {'id': 'turn-1', 'status': 'completed'}}})
             async def close(self): self.closed = True
         for resume in [False, True]:
@@ -111,3 +117,50 @@ class AsyncRelayTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual([f['name'] for f in bridge.frames if f['kind'] == 'tool'], ['list_sources'])
             self.assertEqual(bridge.frames[-1]['status'], 'completed')
             self.assertTrue(instance.reply['result']['success'])
+            text = ''.join(f.get('text','') for f in bridge.frames if f['kind']=='text')
+            self.assertEqual(text.count('Fixture complete'), 1)
+            self.assertNotIn('Wrong task', text)
+
+
+class StreamingTests(unittest.IsolatedAsyncioTestCase):
+    async def test_batches_visible_text_before_completion_and_flushes_tail(self):
+        bridge = FakeBridge()
+        live = relay.LiveText(relay.Mailbox(bridge, job()), interval=.01)
+        messages = relay.MessageText(live)
+        try:
+            messages.delta('item-1', 'Hello')
+            messages.delta('item-1', ' world')
+            for _ in range(100):
+                if bridge.frames: break
+                await asyncio.sleep(.005)
+            self.assertEqual([f['text'] for f in bridge.frames], ['Hello world'])
+            messages.complete('item-1', 'Hello world!')
+            messages.complete('item-1', 'Hello world!')
+            messages.delta('item-1', 'ignored late delta')
+            messages.complete('item-2', 'Fallback')
+            await live.finish()
+            self.assertEqual(''.join(f['text'] for f in bridge.frames), 'Hello world!\nFallback\n')
+            self.assertEqual(len(bridge.frames), 2)
+        finally:
+            await live.close()
+
+    async def test_transport_failure_is_not_retried_or_hidden(self):
+        bridge = FakeBridge(); bridge.stop = True
+        live = relay.LiveText(relay.Mailbox(bridge, job()), interval=.001)
+        try:
+            live.add('partial')
+            await asyncio.sleep(.02)
+            with self.assertRaises(ConnectionError): await live.finish()
+            self.assertEqual(bridge.frames, [])
+        finally: await live.close()
+
+    async def test_bound_and_final_reconciliation(self):
+        bridge = FakeBridge(); live = relay.LiveText(relay.Mailbox(bridge, job()))
+        try:
+            messages = relay.MessageText(live)
+            messages.delta('a', 'prefix')
+            with self.assertRaises(ValueError): messages.complete('a', 'changed')
+            with self.assertRaises(ValueError): live.add('x' * 262144)
+            await live.finish()
+            self.assertEqual(bridge.frames[0]['text'], 'prefix')
+        finally: await live.close()

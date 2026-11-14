@@ -114,6 +114,8 @@ struct Job
     int active, polls;
     long bytes;
 } jobs[16];
+static long transcript_bytes = -1;
+static int transcript_pending;
 static struct MsgPort *timer_port;
 static struct timerequest *timer_io;
 static int timer_open, timer_pending, control_registered;
@@ -218,7 +220,8 @@ static Object *editor(Object **o, int readonly)
            MUIA_TextEditor_ImportHook,
            MUIV_TextEditor_ImportHook_Plain, MUIA_TextEditor_ExportHook,
            MUIV_TextEditor_ExportHook_NoStyle, MUIA_TextEditor_PasteColors, FALSE,
-           MUIA_TextEditor_WrapMode, MUIV_TextEditor_WrapMode_NoWrap, MUIA_CycleChain, 1, End,
+           MUIA_TextEditor_WrapMode, o == &transcript ? MUIV_TextEditor_WrapMode_SoftWrap : MUIV_TextEditor_WrapMode_NoWrap,
+           MUIA_TextEditor_WrapBorder, 0, MUIA_CycleChain, 1, End,
            Child, slider = ScrollbarObject, End, End;
     set(*o, MUIA_TextEditor_Slider, slider);
     return g;
@@ -306,6 +309,11 @@ static void content(Object *o, const char *p, const char *fallback)
         job_output(s ? s : fallback);
     else
         set(o, MUIA_TextEditor_Contents, s ? s : fallback);
+    if (o == transcript)
+    {
+        transcript_bytes = s ? (long)strlen(s) : -1;
+        transcript_pending = 0;
+    }
     free(s);
     set(o, MUIA_TextEditor_HasChanged, FALSE);
 }
@@ -827,8 +835,49 @@ static void launch(const char *action, int page)
     if (page >= 0)
         set(pages, MUIA_Group_ActivePage, page);
     job_output("Starting native worker...\n");
-    message("Running. You can switch tasks while this worker continues.");
+    message(page == 0 ? "Agent running. Responses and tool activity appear live in the transcript."
+                      : "Running. You can switch tasks while this worker continues.");
     arm_timer();
+}
+/* Only inspect the current task while its worker runs. Keep scrollback and
+ * clipboard selection stable; catch up when selection is released. */
+static void refresh_transcript(void)
+{
+    char path[PATH_SIZE], *text;
+    struct FileInfoBlock fib;
+    BPTR lock;
+    long size, first, visible, entries;
+    int follow;
+    if (value(transcript, MUIA_TextEditor_AreaMarked))
+    {
+        transcript_pending = 1;
+        return;
+    }
+    transcript_pending = 0;
+    join(path, current, "transcript.txt");
+    lock = Lock((STRPTR)path, ACCESS_READ);
+    if (!lock) return;
+    size = Examine(lock, &fib) ? fib.fib_Size : -1;
+    UnLock(lock);
+    if (size < 0 || size > RESPONSE_LIMIT || size == transcript_bytes)
+        return;
+    text = read_text(path, RESPONSE_LIMIT);
+    if (!text) return; /* Backup/replace may be between renames. Keep the view. */
+    size = strlen(text);
+    first = value(transcript, MUIA_TextEditor_Prop_First);
+    visible = value(transcript, MUIA_TextEditor_Prop_Visible);
+    entries = value(transcript, MUIA_TextEditor_Prop_Entries);
+    follow = first + visible >= entries;
+    if (transcript_bytes >= 0 && size > transcript_bytes)
+        DoMethod(transcript, MUIM_TextEditor_InsertText, text + transcript_bytes,
+                 MUIV_TextEditor_InsertText_Bottom);
+    else
+        set(transcript, MUIA_TextEditor_Contents, text);
+    transcript_bytes = size;
+    set(transcript, MUIA_TextEditor_HasChanged, FALSE);
+    set(transcript, MUIA_TextEditor_Prop_First,
+        follow ? value(transcript, MUIA_TextEditor_Prop_Entries) : first);
+    free(text);
 }
 static void poll_jobs(void)
 {
@@ -840,6 +889,7 @@ static void poll_jobs(void)
             join(path, jobs[i].path, "job.log");
             if (!strcmp(current, jobs[i].path))
             {
+                refresh_transcript();
                 s = read_text(path, RESPONSE_LIMIT);
                 if (s)
                 {
@@ -880,8 +930,7 @@ static void poll_jobs(void)
                     message(atoi(s) == 0
                                 ? "Job completed successfully. Review changes before running."
                                 : "Job failed or was cancelled. See Build / CLI for details.");
-                    join(path, current, "transcript.txt");
-                    content(transcript, path, "No agent transcript for this task.");
+                    refresh_transcript();
                     refresh_files();
                     if (*opened && !value(source, MUIA_TextEditor_HasChanged))
                     {
@@ -1520,6 +1569,8 @@ int main(int argc, char **argv)
                 break;
             }
             case UPDATE_MENUS:
+                if (transcript_pending && !value(transcript, MUIA_TextEditor_AreaMarked))
+                    refresh_transcript();
                 update_menus();
                 break;
             case HELP:
@@ -1698,7 +1749,7 @@ int main(int argc, char **argv)
                 if (prompt_command()) break;
                 if (save_editor(prompt, "task.txt", 8192) && profile_prepare_launch() &&
                     save_editor(prompt, "last-prompt.txt", 8192))
-                    launch("--agent", 2);
+                    launch("--agent", 0);
                 break;
             case CANCEL:
                 cancel();

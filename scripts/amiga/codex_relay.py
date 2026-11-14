@@ -212,6 +212,10 @@ class Mailbox:
         if await self.bridge.read(ident + '.stopped') is not None:
             raise ConnectionError('Amiga task stopped')
         self.seq += 1
+        # The previous response has been consumed. Remove it before publishing
+        # the next request so polling never holds that old file while the
+        # native worker replaces its reply on classic Amiga filesystems.
+        await self.bridge.remove(ident + '.out')
         await self.bridge.write(ident + '.in', {'id': ident, 'seq': self.seq, 'kind': kind, **fields})
         deadline = time.monotonic() + (180 if kind == 'tool' else 45)
         while time.monotonic() < deadline:
@@ -231,6 +235,78 @@ class Mailbox:
         plain = display_text(text)
         for offset in range(0, len(plain), 4096):
             await self.send('text', text=plain[offset:offset + 4096])
+
+
+class LiveText:
+    """Coalesce provider deltas without blocking their event readers on Amiga IO.
+
+    One bounded buffer, one writer, and explicit barriers before tools/done.
+    Never retry an uncertain mailbox delivery (that could duplicate text).
+    """
+    def __init__(self, mailbox, interval=1.0):
+        self.mailbox, self.interval = mailbox, interval
+        self.pending = ''
+        self.total = 0
+        self.lock = asyncio.Lock()
+        self.changed = asyncio.Event()
+        self.task = asyncio.create_task(self.run())
+
+    def add(self, text):
+        if self.task.done():
+            self.task.result()
+        if not isinstance(text, str):
+            raise ValueError('Invalid streamed text')
+        if self.total + len(text) > 262144:
+            raise ValueError('Streamed response exceeds transcript limit')
+        self.total += len(text)
+        self.pending += text
+        if text:
+            self.changed.set()
+
+    async def flush(self):
+        async with self.lock:
+            text, self.pending = self.pending, ''
+            self.changed.clear()
+            if text:
+                await self.mailbox.text(text)
+
+    async def run(self):
+        while True:
+            await self.changed.wait()
+            await asyncio.sleep(self.interval)
+            await self.flush()
+
+    async def finish(self):
+        if self.task.done():
+            self.task.result()
+        await self.flush()
+        if self.task.done():
+            self.task.result()
+
+    async def close(self):
+        self.task.cancel()
+        await asyncio.gather(self.task, return_exceptions=True)
+
+
+class MessageText:
+    """Reconcile final Codex messages with already displayed deltas by item ID."""
+    def __init__(self, live):
+        self.live, self.items, self.completed = live, {}, set()
+
+    def delta(self, ident, text):
+        if not ident or ident in self.completed:
+            return
+        self.live.add(text)
+        self.items[ident] = self.items.get(ident, '') + text
+
+    def complete(self, ident, text):
+        if ident in self.completed:
+            return
+        previous = self.items.pop(ident, '')
+        if not text.startswith(previous):
+            raise ValueError('Completed message differs from streamed text')
+        self.live.add(text[len(previous):] + '\n')
+        self.completed.add(ident)
 
 
 class Codex:
@@ -334,6 +410,8 @@ async def run_job(bridge, job, executable, home, work):
     heartbeat = None
     status = 'failed'
     calls = 0
+    live = LiveText(mailbox)
+    messages = MessageText(live)
     try:
         await mailbox.send('ping')
         await mailbox.text('[Connecting to Codex on Mac...]\n')
@@ -365,13 +443,18 @@ async def run_job(bridge, job, executable, home, work):
         deadline = time.monotonic() + 1500
         while time.monotonic() < deadline:
             get_event = asyncio.create_task(codex.events.get())
-            finished, _ = await asyncio.wait([get_event, heartbeat], timeout=min(15, max(.1, deadline-time.monotonic())), return_when=asyncio.FIRST_COMPLETED)
+            finished, _ = await asyncio.wait([get_event, heartbeat, live.task], timeout=min(15, max(.1, deadline-time.monotonic())), return_when=asyncio.FIRST_COMPLETED)
             if not finished:
                 get_event.cancel()
                 await asyncio.gather(get_event, return_exceptions=True)
                 continue
+            if live.task in finished:
+                get_event.cancel()
+                await asyncio.gather(get_event, return_exceptions=True)
+                await live.task
             if heartbeat in finished:
                 get_event.cancel()
+                await asyncio.gather(get_event, return_exceptions=True)
                 await heartbeat
             event = await get_event
             method, params = event.get('method'), event.get('params', {})
@@ -385,8 +468,10 @@ async def run_job(bridge, job, executable, home, work):
                         result, ok = 'Tool unavailable or task tool-call limit reached.', False
                     else:
                         print('Amiga tool: ' + name, flush=True)
+                        await live.finish()
                         await mailbox.text('\n[Amiga: ' + name + ']\n')
                         result = await mailbox.send('tool', name=name, arguments=params.get('arguments', {}))
+                        await mailbox.text('[Amiga tool returned: ' + name + ']\n')
                         ok = True
                     await codex.send({'id': event['id'], 'result': {
                         'contentItems': [{'type': 'inputText', 'text': result}], 'success': ok}})
@@ -396,9 +481,13 @@ async def run_job(bridge, job, executable, home, work):
                     # Never silently approve extra host permissions or command execution.
                     await codex.send({'id': event['id'], 'error': {'code': -32601,
                                       'message': 'This client supports only bounded Amiga tool calls.'}})
-            elif method == 'item/completed' and params.get('item', {}).get('type') == 'agentMessage':
-                await mailbox.text(params['item'].get('text', '') + '\n')
+            elif method == 'item/agentMessage/delta' and params.get('threadId') == thread and params.get('turnId') == turn:
+                messages.delta(params.get('itemId'), params.get('delta', ''))
+            elif method == 'item/completed' and params.get('threadId') == thread and params.get('turnId') == turn and params.get('item', {}).get('type') == 'agentMessage':
+                item = params['item']
+                messages.complete(item.get('id'), item.get('text', ''))
             elif method == 'turn/completed' and params.get('turn', {}).get('id') == turn:
+                await live.finish()
                 status = params['turn']['status']
                 if status != 'completed':
                     await mailbox.text('[Codex turn failed or interrupted. Check Mac login, model access and usage limits.]\n')
@@ -412,6 +501,7 @@ async def run_job(bridge, job, executable, home, work):
             except Exception:
                 pass
         try:
+            await live.finish()
             await mailbox.text('[Relay stopped: ' + type(error).__name__ + '. Check the Mac relay, sign-in and bridge.]\n')
         except Exception:
             pass
@@ -419,6 +509,7 @@ async def run_job(bridge, job, executable, home, work):
         if isinstance(error, asyncio.CancelledError):
             raise
     finally:
+        await live.close()
         if heartbeat:
             heartbeat.cancel()
             await asyncio.gather(heartbeat, return_exceptions=True)

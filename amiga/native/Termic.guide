@@ -439,7 +439,8 @@ RTG graphics; ARM compute offload is not implemented. Termic does not
 change firmware, display mode or ownership of ARM applications.
 
 This is a native MUI implementation, not the React/Tauri desktop app.
-No desktop agent CLIs, interactive PTY, streamed tokens, worktrees,
+No native desktop agent CLIs, interactive PTY or Git worktrees.
+Host profiles provide buffered live response text. No
 queue/broadcast/race modes or integrated remote PR controls are provided.
 Classic AmigaOS has no process isolation: review code before running it.
 @ENDNODE
@@ -608,7 +609,14 @@ native tool calls. Token/usage and CLI fields do not apply to proxy profiles.
 Provider subscription access and usage limits still apply.
 
 The relay provides C/H reads, backup saves and native builds. Project guidance
-is included. Responses appear in the transcript after each assistant message.
+is included. Responses appear progressively in the transcript while generated.
+The proxy combines small text chunks; bridge speed affects update frequency.
+Tool start and return markers show the current activity. Build / CLI and the
+CLI panel show native tool activity without waiting for the whole agent turn.
+Replies wrap to the transcript width without changing the saved text.
+At the bottom, the transcript follows new text. Scroll up to read earlier text;
+select text to hold it for copying. Release selection to catch up.
+The direct API profile does not stream tokens.
 One relay task runs at a time. Stop (Shift F10) cancels; New conversation starts
 a separate thread. The host keeps conversation history and credentials.
 After changing file access, start a new conversation to refresh available tools.
