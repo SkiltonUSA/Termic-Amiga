@@ -168,8 +168,8 @@ MicroPython lives in Termic:Tools/MicroPython; its license and provenance
 are included there. It runs on the 68k CPU, with no ZZ9000 ARM offload.
 Python packages written for desktop CPython may need adaptation.
 
-The editor opens .py, .rexx and .rx files as plain text. API and MCP file
-tools expose C/H sources and read-only named project guidance. No Termic-specific ARexx commands
+The editor opens .py, .rexx and .rx files as plain text. Agent tools expose C/H and ARexx sources plus read-only named guidance.
+The separate task-orchestration MCP file tools remain C/H-only. No Termic-specific ARexx commands
 are added to the application host port.
 
 This is a command runner. Interactive
@@ -206,7 +206,18 @@ field retains the effective key and never displays it.
 
 Enter instructions in the Agent tab and choose Start agent. The worker
 sends the instructions and requested source/compiler output to OpenAI.
-It can list, read and write bounded C/header files and invoke a build.
+It can list/read/write C/header and ARexx files, build and execute.
+Use system_info for live CPU, memory, OS/library versions and raw board IDs.
+It leaves the machine model, CPU MHz and ARM availability unknown.
+Use run_arexx for a saved .rexx/.rx script. Use build then run_program for C.
+Edits invalidate the successful build; failed builds cannot run an old Program.
+Execution returns success, actual exit_code, output and cancelled status.
+Returned output is limited to 16 KiB; .command.log holds the full capture.
+Runs wait for exit, without interactive stdin or arguments. Close GUI programs
+to finish. Stop is cooperative; programs ignoring breaks can keep running.
+The host tool-response wait is 180 seconds. Never replay an uncertain run.
+Read-only profiles block writing, compilation and execution.
+Choose New conversation after updating worker/proxy to load the new tools.
 It has no general shell-command tool. File paths reject devices and
 traversal. Each run defaults to eight requests; profiles allow a limit of 1-32.
 
@@ -586,7 +597,7 @@ project/task, preserving existing edits:
 New projects include these files and new tasks copy them. The Files list
 shows them for editing. API requests load current AGENTS.md and SKILL.md
 (up to 8192 bytes each). Missing or unreadable files are skipped. Agent/MCP
-file tools can read the six named files; only C/H files can be written.
+file tools can read the six named files; C/H and ARexx files can be written by agents.
 CLAUDE.md is a compatibility pointer, not an installed agent executable.
 @ENDNODE
 
@@ -604,11 +615,12 @@ On the Amiga, open Settings > Agents / CLI / Scripts and choose Add Codex,
 Add Claude or Add Cursor. Save, select the profile, enter a task and press Tab.
 Enter a supported Model identifier, or leave it blank for the host default.
 The on Mac profile names also work with a Windows proxy.
-Choose read-only or edit-and-build access. API steps / relay calls limits
+Choose read-only or edit/build/run access. API steps / relay calls limits
 native tool calls. Token/usage and CLI fields do not apply to proxy profiles.
 Provider subscription access and usage limits still apply.
 
-The relay provides C/H reads, backup saves and native builds. Project guidance
+The relay provides C/H/ARexx files, backup saves, native builds/execution
+and live hardware queries. Project guidance
 is included. Responses appear progressively in the transcript while generated.
 The proxy combines small text chunks; bridge speed affects update frequency.
 Tool start and return markers show the current activity. Build / CLI and the

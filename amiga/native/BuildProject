@@ -3,16 +3,24 @@ Execute Termic:Setup
 If EXISTS Program.new
   Delete Program.new
 EndIf
+; Keep compiler failures alive long enough to report build.log.
+FailAt 21
 If EXISTS build-command.txt
   Execute build-command.txt >build.log
+  If WARN
+    Type build.log
+    Quit 20
+  EndIf
 Else
   vc +aos68k -cpu=68020 -O1 main.c -o Program.new -lamiga >build.log
+  If WARN
+    Type build.log
+    Quit 20
+  EndIf
 EndIf
-If WARN
-  Type build.log
-  Quit 20
-EndIf
+FailAt 10
 If NOT EXISTS Program.new
+  Type build.log
   Echo "Build did not produce Program.new."
   Quit 20
 EndIf

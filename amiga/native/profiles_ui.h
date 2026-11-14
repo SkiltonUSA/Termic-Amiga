@@ -14,7 +14,7 @@ static int picker_row[PROFILE_MAX], picker_count;
 static const char *picker_names[PROFILE_MAX + 1];
 static const char *yesno[] = {"Off", "On", NULL};
 static const char *kinds[] = {"OpenAI API", "Amiga agent CLI", "Amiga CLI", "ARexx", "MicroPython", "Codex on Mac", "Claude on Mac", "Cursor on Mac", NULL};
-static const char *roles[] = {"Edit and build C/H files", "Read C/H files only", NULL};
+static const char *roles[] = {"Edit, build and run", "Read files and hardware only", NULL};
 static const char *filters[] = {"All", "API / CLI agents", "CLI / Scripts", NULL};
 static const char *profile_tabnames[] = {"General", "Launch / Sessions", "Environment",
                                          "Status", NULL};
@@ -379,7 +379,7 @@ static Object *build_profiles_window(void)
     Child,label("API steps / relay calls"),Child,profile_steps=entry(4),Child,label("Output token limit"),Child,profile_tokens=entry(6),End,
     Child,label("YOLO arguments apply only when selected in the launcher.\nAPI conversation history is isolated by task and profile.\nNative resume arguments apply after a successful launch of that profile."),Child,HVSpace,End,
     Child,VGroup,InnerSpacing(8,8),Child,label("\33bNative command environment"),Child,label("One NAME=value per line. Values apply only to the launched worker and its children."),
-    Child,editor(&profile_env,0),Child,label("Native commands have ordinary AmigaDOS access.\nmacOS Keychain roles, Docker and desktop sandbox rules are not available.\nAPI agents only access C/H files in the current task; read-only also disables builds."),End,
+    Child,editor(&profile_env,0),Child,label("Native commands have ordinary AmigaDOS access.\nmacOS Keychain roles, Docker and desktop sandbox rules are not available.\nAgent file tools access task C/H and ARexx. Read-only disables builds and execution."),End,
     Child,VGroup,InnerSpacing(8,8),Child,ColGroup(2),Child,label("Report API token usage"),Child,profile_usage=cycle(yesno),End,
     Child,label("\33bAgent state"),Child,label("The native worker reports Running, completion and failure in the task list.\nBuild / CLI contains its output. Cancel requests an orderly stop.\nAPI usage reports actual input/output tokens for each response when supplied.\nSubscription plan quotas and total context-window capacity are not reported.\nExternal CLI hook installation and live YOLO switching need an interactive host.\nNative CLI consoles open their own console; their lifetime is not tracked here."),Child,HVSpace,End,End,
     Child,profile_info=label(""),End,End,

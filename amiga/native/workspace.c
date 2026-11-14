@@ -40,6 +40,14 @@ int source_name(const char *s)
                    !strcmp(dot, ".md") || !strcmp(dot, ".py") ||
                    !strcmp(dot, ".rexx") || !strcmp(dot, ".rx"));
 }
+int agent_source_name(const char *path)
+{
+    const char *ext;
+    if (!source_name(path)) return 0;
+    ext = strrchr(path, '.');
+    return ext && (!strcmp(ext, ".c") || !strcmp(ext, ".h") ||
+                   !strcmp(ext, ".rexx") || !strcmp(ext, ".rx"));
+}
 int save_text(const char *path, const char *text, unsigned long limit)
 {
     char tmp[512], bak[512];

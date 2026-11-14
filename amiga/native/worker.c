@@ -3,6 +3,7 @@
 #include <dos/var.h>
 #include "version.h"
 #include "workspace.h"
+#include "vendor/cJSON.h"
 #include <ctype.h>
 #include <dos/dosextens.h>
 #include <dos/dostags.h>
@@ -16,7 +17,11 @@ const char version_tag[] = TERMIC_VERSION_TAG("TermicAgent");
 const char stack_size[] = "$STACK:262144";
 int cancel_requested(void)
 {
-    return (SetSignal(0, SIGBREAKF_CTRL_C) & SIGBREAKF_CTRL_C) != 0;
+    static int cancelled;
+    /* E retains the UI/MCP stop request if a RunCommand child consumes C. */
+    if (SetSignal(0, SIGBREAKF_CTRL_C | SIGBREAKF_CTRL_E) &
+        (SIGBREAKF_CTRL_C | SIGBREAKF_CTRL_E)) cancelled = 1;
+    return cancelled;
 }
 /* Shell V47 merges diagnostics when stdout is explicitly redirected.
  * SYS_Output alone does not provide that shell-level redirection. */
@@ -59,10 +64,11 @@ static int same_prefix(const char *a, const char *b, unsigned n)
 }
 static int project_inside(const char *path)
 {
-    char root[512], resolved[512], parent[184];
+    char root[512], resolved[512], parent[384];
     BPTR l;
     char *slash;
     int ok;
+    if (!path || strlen(path) >= sizeof(parent)) return 0;
     l = Lock((STRPTR) "", ACCESS_READ);
     if (!l)
         return 0;
@@ -89,15 +95,134 @@ static int project_inside(const char *path)
         return 0;
     if (strlen(root) == strlen(resolved) && same_prefix(root, resolved, strlen(root)))
         return 1;
+    if (strlen(root) + 2 > sizeof(root)) return 0;
     strcat(root, "/");
     return strlen(resolved) >= strlen(root) && same_prefix(root, resolved, strlen(root));
 }
 int project_source_allowed(const char *path)
 {
-    const char *ext;
-    if (!source_name(path)) return 0;
-    ext=strrchr(path,'.');
-    return ext && (!strcmp(ext,".c") || !strcmp(ext,".h")) && project_inside(path);
+    char sibling[192];
+    if (!agent_source_name(path) || !project_inside(path)) return 0;
+    snprintf(sibling, sizeof(sibling), "%s.new", path);
+    if (!project_inside(sibling)) return 0;
+    snprintf(sibling, sizeof(sibling), "%s.bak", path);
+    return project_inside(sibling);
+}
+/* Execute a fixed binary in this worker process. RunCommand delivers a
+ * cooperative Ctrl-C to the actual command and returns its real exit code.
+ * No shell parses an agent-supplied script name. */
+static LONG run_binary(const char *binary, const char *arguments)
+{
+    BPTR segment, input, output, old_input, old_output, old_error, cwd, home, file_lock, old_home;
+    char old_name[256];
+    struct Process *process = (struct Process *)FindTask(NULL);
+    LONG rc;
+    char *text;
+    segment = LoadSeg((STRPTR)binary);
+    if (!segment) {
+        printf("Cannot load %s (DOS error %ld).\n", binary, (long)IoErr());
+        return -1;
+    }
+    input = Open((STRPTR)"NIL:", MODE_OLDFILE);
+    output = Open((STRPTR)".command.log", MODE_NEWFILE);
+    if (!input || !output) {
+        if (input) Close(input);
+        if (output) Close(output);
+        UnLoadSeg(segment); return -1;
+    }
+    cwd = Lock((STRPTR)"", ACCESS_READ);
+    file_lock = Lock((STRPTR)binary, ACCESS_READ);
+    home = file_lock ? ParentDir(file_lock) : 0;
+    if (file_lock) UnLock(file_lock);
+    if (!cwd || !home) {
+        if (cwd) UnLock(cwd);
+        if (home) UnLock(home);
+        Close(input); Close(output); UnLoadSeg(segment); return -1;
+    }
+    old_name[0] = 0; GetProgramName(old_name, sizeof(old_name));
+    SetProgramName((STRPTR)binary); old_home = SetProgramDir(home);
+    fflush(stdout);
+    old_input = SelectInput(input); old_output = SelectOutput(output);
+    old_error = process->pr_CES; process->pr_CES = output;
+    rc = RunCommand(segment, 262144, (STRPTR)arguments, strlen(arguments));
+    Flush(output);
+    UnLock(CurrentDir(cwd));
+    UnLock(SetProgramDir(old_home)); SetProgramName(old_name);
+    process->pr_CES = old_error;
+    SelectOutput(old_output); SelectInput(old_input);
+    Close(output); Close(input); UnLoadSeg(segment);
+    text = read_text(".command.log", RESPONSE_LIMIT);
+    if (text) { fputs(text, stdout); free(text); }
+    fflush(stdout);
+    return rc;
+}
+char *project_execute(const char *action, const char *path)
+{
+    char args[200], output[16385], *result, *script;
+    const char *error = NULL;
+    LONG rc = -1;
+    FILE *file;
+    size_t n = 0, i;
+    int truncated = 0, cancelled;
+    cJSON *object;
+    /* Never return stale output after a failed preflight/load. */
+    DeleteFile((STRPTR)".command.log");
+    if (cancel_requested()) error = "Execution cancelled before launch.";
+    else if (!strcmp(action, "build")) rc = run_command("Execute Termic:BuildProject");
+    else if (!strcmp(action, "arexx")) {
+        int rexx;
+        const char *ext = path ? strrchr(path, '.') : NULL;
+        if (!ext || (strcmp(ext, ".rexx") && strcmp(ext, ".rx")) || !project_source_allowed(path))
+            error = "Invalid ARexx path.";
+        else {
+            script = read_text(path, SOURCE_LIMIT);
+            if (!script) error = "Script missing, binary or larger than 32 KiB.";
+            free(script);
+            Forbid(); rexx = FindPort((STRPTR)"REXX") != NULL; Permit();
+            if (!error && !rexx) error = "RexxMast is not running. Start RexxMast and retry.";
+            if (!error) {
+                /* RX treats a quoted first argument as inline ARexx. The
+                 * validated task path has no spaces or shell metacharacters. */
+                snprintf(args, sizeof(args), "%s\n", path);
+                rc = run_binary("SYS:Rexxc/RX", args);
+            }
+        }
+    } else if (!strcmp(action, "program")) {
+        unsigned char header[4];
+        file = project_inside("Program") ? fopen("Program", "rb") : NULL;
+        if (!file) error = "Program is missing or outside the workspace. Build first.";
+        else {
+            if (fread(header, 1, 4, file) != 4 || memcmp(header, "\0\0\3\363", 4))
+                error = "Program is not an Amiga Hunk executable.";
+            fclose(file);
+        }
+        if (!error) rc = run_binary("Program", "\n");
+    } else error = "Unknown execution action.";
+    file = fopen(".command.log", "rb");
+    if (file) {
+        n = fread(output, 1, sizeof(output)-1, file);
+        truncated = fgetc(file) != EOF;
+        fclose(file);
+    }
+    for (i = 0; i < n; i++)
+        if ((unsigned char)output[i] < 32 && output[i] != '\n' && output[i] != '\r' && output[i] != '\t') output[i] = '?';
+    output[n] = 0;
+    printf("%s exit code: %ld%s\n", action, (long)rc, error ? " (not executed)" : "");
+    if (error) puts(error);
+    fflush(stdout);
+    object = cJSON_CreateObject();
+    if (!object) return NULL;
+    cJSON_AddStringToObject(object, "action", action);
+    cancelled = cancel_requested();
+    cJSON_AddBoolToObject(object, "success", !error && rc == 0 && !cancelled);
+    cJSON_AddBoolToObject(object, "cancelled", cancelled);
+    cJSON_AddNumberToObject(object, "exit_code", rc);
+    cJSON_AddStringToObject(object, "output", output);
+    cJSON_AddBoolToObject(object, "output_truncated", truncated);
+    if (error) cJSON_AddStringToObject(object, "error", error);
+    else if (rc == -1) cJSON_AddStringToObject(object, "error", "Command could not be loaded or launched.");
+    result = cJSON_PrintUnformatted(object); cJSON_Delete(object);
+    return result;
 }
 int project_guidance_allowed(const char *path)
 {

@@ -110,7 +110,7 @@ Changes offers Init repository, Status, Diff, and Stage source and commit.
 Set repository identity in the CLI panel before the first commit:
   Termic:Tools/amiga-git/git config user.name "Your Name"
   Termic:Tools/amiga-git/git config user.email you@example.com
-The commit action stages existing C/header files. Use the shell for deleted
+The commit action stages existing C/header and ARexx files. Use the shell for deleted
 files, branches, remotes, fetch/push, merge, stash and other Git operations.
 Commit messages accept letters, digits, spaces and . , : / ( ) _ - .
 New repositories ignore build products and Termic job metadata. Existing
@@ -120,7 +120,7 @@ AGENT
 Enter task instructions, select a model and save an API key in Settings.
 The secret field never loads the existing key. Leaving it blank preserves
 that key. Start agent sends the task and requested source/compiler output
-to OpenAI. The model may list/read/write C/header files and build. It has
+to OpenAI. The model may list/read/write C/header and ARexx files, build and execute. It has
 no shell-command tool, and file tools reject device paths and traversal.
 Completed conversation IDs persist per task; New conversation resets the
 ID while retaining the transcript. API responses are stored for continuity.
@@ -240,8 +240,9 @@ Termic:Examples/hello.py. Add ARexx / Add MicroPython creates a launch profile
 with the corresponding example already selected. Change Default arguments to
 run your own script. Add CLI opens a separate C:NewShell console.
 The editor supports .py, .rexx and .rx alongside C/H and text files. C/H syntax
-colouring remains C-specific; script files use plain text. Cloud agent and MCP
-file writes remain limited to C/H; named project guidance is readable. No Termic-specific ARexx host commands added.
+colouring remains C-specific; script files use plain text. Agent file writes
+support C/H and ARexx; named project guidance is readable.
+The separate task-orchestration MCP file interface remains C/H-only. No Termic-specific ARexx host commands added.
 ARexx requires SYS:Rexxc/RX and RexxMast. MicroPython is installed under
 Termic:Tools/MicroPython with its license, upstream README and provenance.
 MicroPython runs on the 68k CPU; it is not full desktop CPython and does not
@@ -287,7 +288,7 @@ Settings > Agents / CLI / Scripts > Add Codex creates a Mac relay profile.
 Start Termic Amiga Codex.command on the Mac, select Codex on Mac in the Amiga
 launcher, and send with Tab. Credentials stay on the Mac. The relay uses the
 existing DevBench MCP bridge and Codex app-server; no new network port opens.
-One task at a time. Native C/H read/write/build tools, file-access limits,
+One task at a time. Native C/H/ARexx read/write/build/run tools, file-access limits,
 backup saves, transcript updates, Stop and conversation resumption apply.
 Blank model uses Codex's default. API steps / relay calls limits tool calls;
 API token limits, usage reporting and CLI arguments do not apply.
@@ -320,3 +321,18 @@ instruction box sits beside the profile selector and action buttons.
 The log comes from local job.log. Mac proxy diagnostics remain in the
 AI Proxy app when the bridge cannot deliver them to the Amiga.
 The direct API profile does not stream tokens.
+
+AGENT EXECUTION FRAMEWORK
+All agent providers share system_info, run_arexx and run_program.
+Use system_info for detected CPU, memory, OS/library versions, RexxMast and
+raw AutoConfig IDs. Machine model, CPU MHz and ARM availability are unknown.
+Save a task .rexx/.rx file, then use run_arexx. For C, build successfully
+in the same turn before run_program. Edits invalidate the successful build.
+Results include success, actual exit_code, output, output_truncated and
+cancelled. Returned output is limited to 16 KiB; .command.log holds the capture.
+Read-only profiles reject writes, builds and execution. Runs wait for exit,
+without interactive input or arguments. Stop is cooperative; programs that
+ignore breaks can keep running. The host tool wait is 180 seconds. Do not
+replay a timed-out execution automatically. Use CLI/Run for long-running apps.
+After updating worker and proxy, choose New conversation for the new tools.
+Full details: docs/agent-execution.md in the source repository.

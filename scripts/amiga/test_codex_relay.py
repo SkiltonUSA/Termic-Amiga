@@ -42,7 +42,7 @@ class RelayTests(unittest.TestCase):
 
     def test_tool_permissions_and_text(self):
         names = {x['name'] for x in relay.dynamic_tools(True)}
-        self.assertEqual(names, {'read_source', 'read_file', 'list_sources'})
+        self.assertEqual(names, {'read_source', 'read_file', 'list_sources', 'system_info'})
         self.assertEqual({x['name'] for x in relay.dynamic_tools(False)}, relay.TOOLS)
         self.assertEqual(relay.display_text('Hello\x1b\x00\n'), 'Hello\n')
         with self.assertRaises(ValueError):

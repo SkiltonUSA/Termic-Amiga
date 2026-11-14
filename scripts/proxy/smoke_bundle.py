@@ -28,7 +28,7 @@ async def main(binary):
             async with stdio_client(params) as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
-                    assert len((await session.list_tools()).tools) == 3
+                    assert len((await session.list_tools()).tools) == 4
                     result = await session.call_tool('list_sources', {})
                     assert not result.isError and result.content[0].text == 'fixture.c'
         finally:

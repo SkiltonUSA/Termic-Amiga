@@ -17,7 +17,7 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 - Native VBCC build/run and explicit AmigaDOS commands with captured output.
 - Persistent CLI panel below Files, with a resizable half-height split, command entry and job output.
 - Native Git initialization, status, diffs and source commits.
-- OpenAI agent conversations with bounded C/header file tools and local builds.
+- Agent tools for C/header and ARexx files, native builds, ARexx/program execution and live hardware queries.
 - Codex, Claude and Cursor host profiles, with model selection and live response/tool feedback on the Amiga.
 - One black Agent activity pane with cyan responses, amber worker logs and a narrower instruction field beside the controls.
 - Standalone Termic AI Proxy desktop app for macOS and Windows 11.
@@ -45,6 +45,9 @@ for the prompt library, project guidance and screenshot-style key bindings.
 ![Termic prompt library with black editor and action icons](docs/screenshots/prompts.png)
 
 ![Compose, Session and Transcript shortcuts](docs/screenshots/keyboard-shortcuts.png)
+
+See [Agent execution on the Amiga](docs/agent-execution.md) for the shared
+tools, execution results and hardware detection.
 
 Start with [Termic AI Proxy for macOS and Windows 11](docs/ai-proxy.md) for
 Codex, Claude and Cursor setup, downloads and model selection.

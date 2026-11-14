@@ -42,8 +42,9 @@ upstream README and pinned provenance accompany the installation.
 ARexx used the system RX command and the already-running RexxMast.
 MicroPython networking, TLS, third-party modules and interactive REPL behavior
 have not been exercised by this suite. Script execution adds no new custom
-Termic ARexx host commands; API/MCP writes remain limited to C/H; the instruction update also permits
-reading the six named project guidance files.
+Termic ARexx host commands. At that stage API/MCP writes were limited to C/H;
+the instruction update also permitted reading six named project guidance files.
+The agent execution update below supersedes that agent-file limitation.
 
 Verified through the written hardware suites:
 
@@ -437,3 +438,34 @@ passed portable tests, packaging, bundled MCP and desktop lifecycle/recovery
 checks on macOS and Windows. The Windows archive passed integrity and
 executable/dependency-layout checks. A physical Windows 11 connection to the
 Amiga remains untested.
+
+
+## Agent execution and live hardware queries
+
+The shared native dispatcher now provides system_info, run_arexx and
+run_program for direct API and host-agent profiles. All 38 portable tests
+passed, including read-only enforcement, tool schemas, ARexx file access,
+path rejection, and build permission invalidation after edits or failures.
+The worker, GUI and MCP programs cross-built for 68k. The Mac proxy bundle
+passed its GUI and stdio MCP smoke test.
+
+The written hardware acceptance passed ARexx output and syntax-error status,
+native VBCC build-and-run, nonzero program exits, failed-build diagnostics,
+preservation of the previous executable, refusal to run a stale build,
+live hardware queries and cooperative Stop. Testing caught and corrected
+RX treating a quoted filename as inline ARexx and the build script exiting
+or losing its failure status before displaying compiler diagnostics.
+
+Authenticated Codex acceptance then queried the actual hardware, wrote an
+ARexx script containing the detected CPU and memory values, executed it,
+and returned its output and exit code. This ran in an isolated fixture
+through the real relay and existing host login. The test verifies the worker
+log, saved script, transcript and completion status. No credentials were
+copied to the Amiga.
+
+The new execution tools were exercised live with Codex. Claude and Cursor
+share the dispatcher and pass the portable adapter tests; their earlier
+hardware checks above do not establish live acceptance of these new tools.
+Direct API execution and a physical Windows 11 connection remain untested.
+See [Agent execution](agent-execution.md) for the synchronous run limits,
+cooperative Stop and New conversation requirement after upgrading.

@@ -21,8 +21,8 @@ from host_process import executable_command, process_options
 
 ID = re.compile(r'[0-9a-f]{8}-[0-9a-f]{8}-[0-9a-f]{4}\Z')
 THREAD = re.compile(r'[0-9a-fA-F-]{1,64}\Z')
-TOOLS = {'list_sources', 'read_source', 'read_file', 'write_source', 'write_file', 'build'}
-WRITE = {'write_source', 'write_file', 'build'}
+TOOLS = {'list_sources', 'read_source', 'read_file', 'write_source', 'write_file', 'build', 'system_info', 'run_arexx', 'run_program'}
+WRITE = {'write_source', 'write_file', 'build', 'run_arexx', 'run_program'}
 MAX_JSON = 65536
 
 
@@ -55,12 +55,15 @@ def dynamic_tools(readonly):
         return {'type': 'function', 'name': name, 'description': description,
                 'inputSchema': {'type': 'object', 'properties': {x: {'type': 'string'} for x in fields},
                                 'required': fields, 'additionalProperties': False}}
-    all_tools = [spec('list_sources', 'List C/H sources in the selected Amiga task.', []),
+    all_tools = [spec('list_sources', 'List C/H and ARexx sources in the selected Amiga task.', []),
                  spec('read_source', 'Read main.c from the Amiga task.', []),
-                 spec('read_file', 'Read a task C/H source or named project guidance.', ['path']),
+                 spec('read_file', 'Read a task C/H or ARexx source or named project guidance.', ['path']),
                  spec('write_source', 'Replace main.c, preserving a backup. Maximum 32 KiB.', ['source']),
-                 spec('write_file', 'Save a task C/H file with a backup. Maximum 32 KiB.', ['path', 'source']),
-                 spec('build', 'Compile the selected task on the Amiga using its native build command.', [])]
+                 spec('write_file', 'Save a task C/H or ARexx file with a backup. Maximum 32 KiB.', ['path', 'source']),
+                 spec('build', 'Compile the selected task on the Amiga. Returns output and exit code.', []),
+                 spec('system_info', 'Read live Amiga hardware, OS and runtime information.', []),
+                 spec('run_arexx', 'Execute a saved workspace .rexx or .rx script. Waits for exit; returns output and exit code.', ['path']),
+                 spec('run_program', 'Run workspace Program after a successful build in this turn. Waits for exit; returns output and exit code.', [])]
     return [t for t in all_tools if not readonly or t['name'] not in WRITE]
 
 
@@ -424,8 +427,8 @@ async def run_job(bridge, job, executable, home, work):
         heartbeat = asyncio.create_task(keepalive())
         config = {'cwd': str(work), 'approvalPolicy': 'never', 'sandbox': 'read-only',
                   'developerInstructions': job['instructions'] + '\nUse only the supplied Amiga tools. '
-                  'There is no local project, shell, browser or subagent access. Ask the user to run programs. '
-                  'Write ASCII C89 source. Do not attempt to install tools or obtain credentials.'}
+                  'There is no local project, shell, browser or subagent access. Use run_arexx or build then run_program when the task requests execution. '
+                  'Write ASCII C89 or ARexx source. Do not attempt to install tools or obtain credentials.'}
         if job['model']:
             config['model'] = job['model']
         if job['thread']:

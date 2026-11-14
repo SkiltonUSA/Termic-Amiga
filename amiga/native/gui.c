@@ -964,7 +964,7 @@ static void cancel(void)
     Forbid();
     port = FindPort((STRPTR)name);
     if (port)
-        Signal(port->mp_SigTask, SIGBREAKF_CTRL_C);
+        Signal(port->mp_SigTask, SIGBREAKF_CTRL_C | SIGBREAKF_CTRL_E);
     Permit();
     message(port ? "Cancellation requested. Compiler or network operation will finish unwinding."
                  : "No worker is currently registered for this workspace.");

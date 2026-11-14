@@ -35,7 +35,7 @@ On the Amiga:
 
 1. Open **Settings > Agents / CLI / Scripts**, or press Right Amiga E.
 2. Select **Add Codex**. Keep the model blank to use Codex's default, or enter a
-   model available to your account. Choose read-only or edit-and-build access.
+   model available to your account. Choose read-only or edit/build/run access.
 3. Save the profile, then select **Codex on Mac** beneath the task composer.
 4. Enter a task and press Tab or the Start Agent icon.
 
@@ -66,12 +66,13 @@ experimental dynamic-tool interface and the existing MCP transport to the
 Amiga. It does not use the removed `codex mcp-server` command. This integration
 was developed against Codex CLI 0.166.0; recheck it when upgrading Codex.
 
-Six tools are exposed: list_sources, read_source, read_file, write_source,
-write_file and build. These reuse the native API agent's path checks and backup
-saves. Reads include the six named project guidance files; writes are C/H only,
-up to 32 KiB. Read-only mode also disables builds. The worker owns the selected
-task's busy lock while tools run, preventing GUI edits from racing agent writes.
-The model never receives the general-purpose DevBench bridge tools.
+Nine tools are exposed: list_sources, read_source, read_file, write_source,
+write_file, build, system_info, run_arexx and run_program. Reads/writes cover
+C/header and ARexx sources; reads also cover named project guidance. The
+worker enforces task paths, backup saves and read-only access independently
+of the host. Read-only mode blocks builds and execution. The worker owns the
+task busy lock during execution. See [Agent execution](agent-execution.md).
+The model never receives general-purpose DevBench bridge tools.
 
 Local Mac execution environments, shell tools, apps, browser tools and subagents
 are disabled for relay conversations. Additional permission requests are

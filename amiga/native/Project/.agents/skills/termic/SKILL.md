@@ -1,6 +1,6 @@
 ---
 name: termic
-description: Develop native Amiga programs in Termic Amiga using its C/H agent tools, native builds, CLI scripts and adapted MCP task routines. Use for work in an Amiga project, not for the desktop React/Tauri application.
+description: Develop native Amiga programs in Termic Amiga using its C/H and ARexx agent tools, native builds, CLI scripts and adapted MCP task routines. Use for work in an Amiga project, not for the desktop React/Tauri application.
 ---
 
 # Termic Amiga
@@ -13,12 +13,16 @@ For external task orchestration, read [Amiga MCP](references/mcp.md).
 
 The direct API worker loads this file and AGENTS.md at the start of a request.
 Its read_file tool can read these instruction files and the linked references.
-Its write tools remain restricted to C/H sources. Read-only profiles also
-reject building. Use list_sources, read before changing source, then build.
+Its write tools accept C/H and ARexx (.rexx/.rx) sources. Read-only profiles
+reject writing, builds and execution. Use list_sources and read before editing.
+Use build then run_program for C, or run_arexx for a saved script when requested.
+Execution tools return output and exit codes; check them before claiming success.
+Use system_info for detected hardware rather than project defaults.
 Report what was verified and what still needs a user or hardware check.
 
 The native app provides CLI, ARexx and MicroPython execution for user commands.
-This does not give the direct API model an arbitrary command-execution tool.
+Agent run tools execute saved ARexx and the freshly built Program; they do not
+provide an arbitrary shell-command tool or interactive input.
 The host MCP connector runs in host CPython. Native MicroPython is a separate
 runtime on the 68k processor. No automatic peer pairing or subagent routing
 is implemented by this Amiga port.

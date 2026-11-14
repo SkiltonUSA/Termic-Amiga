@@ -31,9 +31,10 @@ main Settings model. An empty key field retains that profile's existing key.
 Only OpenAI's Responses API is implemented for direct API profiles; other providers need their own
 transport and request/response adapters.
 
-Read-only profiles advertise only reading/listing tools and reject writing or
-building even if a response requests them. Edit-and-build profiles retain the
-existing bounded C/H file tools; neither mode gives the model a shell tool.
+Read-only agent profiles expose reads, listing and live hardware inspection.
+They reject writes, builds and execution even if requested. Editable profiles
+support C/H and ARexx files, native builds and the run_arexx/run_program tools.
+See [Agent execution](agent-execution.md) for limits and result fields.
 API sessions are separated by profile and task. New conversation resets the
 selected profile's session. Usage displays actual input/output tokens supplied
 by the API for each response, not a subscription quota or context-capacity estimate.
@@ -178,7 +179,8 @@ Amiga Shell display name becomes Amiga CLI, unless it was customized.
 The editor and project/task source copies accept `.py`, `.rexx` and `.rx`.
 These files use plain text; syntax colouring remains specific to C/H.
 The cloud agent and MCP can also read the six named project guidance files.
-Writes remain restricted to C/H sources.
+Agent writes support C/H and ARexx; the separate task-orchestration MCP file
+interface remains C/H-only.
 This adds script execution, not custom Termic ARexx automation commands.
 ARexx uses the system RX command and requires a running RexxMast.
 
@@ -206,5 +208,5 @@ Add Claude and Add Cursor create kinds 6 and 7. Model, file access, relay-call
 limits and resume settings apply as for Codex. Credentials stay on the host.
 The bundled [AI Proxy app](ai-proxy.md) supports macOS and Windows 11; native
 profile labels retain "on Mac" for compatibility. Provider tools are restricted
-to the shared C/H and native-build interface. Live cloud access still requires
-a valid provider login and account entitlement.
+to the shared native file, build, execution and hardware-query interface.
+Live cloud access still requires a valid provider login and account entitlement.

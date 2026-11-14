@@ -189,6 +189,8 @@ class NativeProtocolTests(unittest.TestCase):
                         "test-key", (work / "Project/transcript.txt").read_text()
                     )
 
+            subprocess.run([str(work / "agent"), "15"], cwd=work, check=True)
+
     def test_workspace_files(self):
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)

@@ -7,10 +7,6 @@ DevBench bridge are separate prerequisites.
 
 ![Termic AI Proxy with synthetic account status](screenshots/ai-proxy.png)
 
-Verified build downloads (GitHub sign-in required; retained for 30 days):
-[Windows](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43608154271/artifacts/14119291450)
-and [macOS](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43608154271/artifacts/14118717292).
-
 ## Start the app
 
 On macOS, open **Termic AI Proxy.app** from Applications. On Windows 11,
@@ -104,11 +100,12 @@ a model applies to the next turn. **New conversation** clears that provider's
 thread reference and retains the transcript. After changing file access,
 start a new conversation to refresh the advertised tool list.
 
-All three providers use six bounded tools: list_sources, read_source,
-read_file, write_source, write_file and build. The native worker independently
-enforces C/H path restrictions, backup writes and read-only mode. Read-only
-also blocks compilation. The general DevBench command tools are not exposed
-to the model. Builds use the task's existing native Amiga build command.
+All three providers share nine native tools: list_sources, read_source,
+read_file, write_source, write_file, build, system_info, run_arexx and
+run_program. The native worker enforces task paths, backups and read-only
+access. Read-only mode blocks writes, builds and execution. See
+[Agent execution](agent-execution.md) for output, exit codes, hardware queries,
+Stop behavior and run limits. General DevBench tools remain unavailable.
 
 Claude and Cursor consume these tools through a private stdio MCP adapter.
 The adapter talks to an ephemeral loopback-only listener with a per-task

@@ -8,6 +8,7 @@
     "\nlast-prompt.txt*\nTasks/\n"
 /* File names accepted by editor and agent. No devices, parent traversal,
  * hidden state, shell metacharacters or arbitrary executable writes. */
+int agent_source_name(const char *path);
 int source_name(const char *name);
 #define GUIDANCE_COUNT 6
 extern const char *guidance_files[GUIDANCE_COUNT];

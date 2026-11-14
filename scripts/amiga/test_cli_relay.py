@@ -46,8 +46,8 @@ class CLIAsyncTests(unittest.IsolatedAsyncioTestCase):
         server = cli_relay.ToolServer(mailbox, data)
         token = server.token
         with self.assertRaises(ValueError): await server.dispatch({'token': 'wrong', 'op': 'list'})
-        self.assertEqual(len(await server.dispatch({'token': token, 'op': 'list'})), 3)
-        for name in ('write_source', 'build', 'shell'):
+        self.assertEqual(len(await server.dispatch({'token': token, 'op': 'list'})), 4)
+        for name in ('write_source', 'build', 'run_arexx', 'run_program', 'shell'):
             with self.assertRaises(ValueError): await server.dispatch({'token': token, 'op': 'call', 'name': name, 'arguments': {}})
         listener = await asyncio.start_server(server.handle, '127.0.0.1', 0)
         try:
@@ -60,7 +60,7 @@ class CLIAsyncTests(unittest.IsolatedAsyncioTestCase):
                 async with stdio_client(params) as (read, write):
                     async with ClientSession(read, write) as session:
                         await session.initialize()
-                        self.assertEqual(len((await session.list_tools()).tools), 3)
+                        self.assertEqual(len((await session.list_tools()).tools), 4)
                         result = await session.call_tool('list_sources', {})
                         self.assertFalse(result.isError)
                         self.assertIn('fixture.c', result.content[0].text)

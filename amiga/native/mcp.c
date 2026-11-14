@@ -546,7 +546,7 @@ static cJSON *run_tool(const struct Tool *tool, cJSON *args)
         Forbid();
         port = FindPort((STRPTR)portname);
         if (port)
-            Signal(port->mp_SigTask, SIGBREAKF_CTRL_C);
+            Signal(port->mp_SigTask, SIGBREAKF_CTRL_C | SIGBREAKF_CTRL_E);
         Permit();
         return content(port ? "Cancellation requested." : "No worker registered.", !port);
 #else

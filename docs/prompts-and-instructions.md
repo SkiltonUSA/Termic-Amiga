@@ -65,8 +65,9 @@ No links into external desktop profile folders are created.
 For each native API request, the worker includes the current `AGENTS.md` and
 `.agents/skills/termic/SKILL.md` as project guidance, up to 8192 bytes each.
 Missing, unreadable or oversized files are omitted. The six named files are
-also available through the API and MCP `read_file`/`file_read` tools; all agent
-file writes remain restricted to C/H. MCP-created tasks copy the six files.
+also available through the API and MCP `read_file`/`file_read` tools. Agent
+writes accept C/H and ARexx; task-orchestration MCP writes remain C/H-only.
+MCP-created tasks copy the six files.
 Path traversal and files resolving outside the workspace remain blocked.
 The current user task takes precedence over project defaults.
 

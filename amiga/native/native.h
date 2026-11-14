@@ -27,5 +27,7 @@ char *list_project_sources(void);
 int project_source_allowed(const char *path);
 int project_guidance_allowed(const char *path);
 int build_project(void);
+char *project_execute(const char *action, const char *path);
+char *system_information(void);
 int cancel_requested(void);
 #endif
