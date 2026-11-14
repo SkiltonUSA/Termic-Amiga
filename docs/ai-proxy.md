@@ -173,10 +173,9 @@ transcript includes a marker when each Amiga tool returns, including failed
 compiler results; a returned tool does not by itself mean a successful build.
 The CLI panel shows native tool activity while the worker is running.
 
-Replies wrap to the transcript width. The transcript follows new text when
-positioned at the bottom. Reading older
-text retains the scroll position. Selecting text temporarily holds updates
-for copying; releasing selection catches up. The existing 256 KiB transcript
+Replies wrap to the activity pane width. Activity opens at the latest line
+and follows new output automatically. Selecting text temporarily holds
+updates for copying; releasing selection catches up to the bottom. The existing 256 KiB transcript
 limit still applies. A disconnect never replays an uncertain text delivery.
 
 Claude uses its documented

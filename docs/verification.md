@@ -583,3 +583,26 @@ passed all 35 proxy tests, packaging, bundled MCP smoke, packaged mailbox
 acceptance and desktop lifecycle checks on macOS and Windows. The current
 downloads are linked in [AI Proxy setup](ai-proxy.md). A physical Windows 11
 to Amiga connection remains untested.
+
+## Activity follows the latest line
+
+The activity viewport used a conditional follow check and mixed TextEditor
+pixel positions with line counts. Replacing content could leave the cursor
+at the start, allowing a subsequent show/layout to return there. Activity
+now moves the cursor to EOF and asks TextEditor to reveal it after loading,
+appending or replacing content, and after the initial window opens. Selected
+text still holds incoming updates until the selection is released. Typing
+focus is not moved away from the input field.
+
+The synthetic native MUI regression in `test_activity_scroll.c` checks long
+content loading, following after manual scroll-up with an unchanged cursor,
+appending, replacement, reopening, input focus preservation and short text.
+It runs through `accept_activity_scroll.py` without opening production task
+files or changing settings. The eight portable native test groups passed.
+The GUI and regression probe cross-compiled with VBCC.
+
+All native scroll checks passed on the Amiga's installed MUI/TextEditor
+classes. The tested GUI, matching sources, ReadMe and AmigaGuide were
+installed after staging, checksum verification and a rollback backup.
+The GUI is 126304 bytes, CRC32 `A694DF95`. Production reopened at its original
+window geometry and AI Proxy was restarted. No worker or proxy code changed.

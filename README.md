@@ -131,6 +131,11 @@ completion, cancellation and clearing the previous run's log. Compile
 running hardware acceptance, then restart it after production is restored.
 `amiga/native/tests/test_texteditor_stream.c` is an additional native MUI
 regression for preserving text across streamed chunk boundaries.
+`amiga/native/tests/test_activity_scroll.c` checks following the final line
+on the installed MUI/TextEditor classes. Compile it with the same SDK
+headers and `-lamiga`, then run `accept_activity_scroll.py --binary <probe>`
+with AI Proxy stopped. It uses synthetic text and leaves production tasks
+and settings untouched.
 
 [Verification and limitations](docs/verification.md) distinguishes tested
 behavior from functionality still awaiting hardware or authenticated checks.

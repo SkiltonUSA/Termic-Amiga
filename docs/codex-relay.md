@@ -115,7 +115,7 @@ updates slower. Pending text is delivered before tool markers and turn
 completion, and completed messages are reconciled against their deltas to
 avoid duplication. Unsupported characters are replaced for the classic
 TextEditor widget. The GUI refreshes only while jobs run, appends changed
-transcripts, preserves scrollback and holds selected text until it is released.
+transcripts, follows the latest line and holds selected text until it is released.
 This live text path applies to host profiles; the direct API profile is unchanged.
 
 The adapter uses the documented

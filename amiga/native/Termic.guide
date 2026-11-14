@@ -629,8 +629,8 @@ The proxy combines small text chunks; bridge speed affects update frequency.
 Tool start and return markers show the current activity. Build / CLI and the
 CLI panel show native tool activity without waiting for the whole agent turn.
 Replies wrap to the transcript width without changing the saved text.
-At the bottom, the transcript follows new text. Scroll up to read earlier text;
-select text to hold it for copying. Release selection to catch up.
+Activity opens at the latest line and follows new output automatically.
+Select text to hold it for copying. Release selection to catch up to the bottom.
 The Agent page combines cyan [Agent] responses and amber [Log] worker
 messages in one black activity pane. Live entries appear in polling order;
 opening a saved task shows its transcript followed by its latest job log.

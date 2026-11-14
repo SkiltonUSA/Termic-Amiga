@@ -114,6 +114,8 @@ struct Job
     int active, polls;
     long bytes;
 } jobs[16];
+#include "activity_scroll.h"
+
 static struct ActivityView activity;
 static int transcript_pending;
 static struct MsgPort *timer_port;
@@ -323,6 +325,7 @@ static void content(Object *o, const char *p, const char *fallback)
     if (o == transcript)
     {
         transcript_pending = 0;
+        activity_scroll_bottom(o);
     }
     free(s);
     set(o, MUIA_TextEditor_HasChanged, FALSE);
@@ -849,13 +852,12 @@ static void launch(const char *action, int page)
                       : "Running. You can switch tasks while this worker continues.");
     arm_timer();
 }
-/* Only inspect the current task while its worker runs. Keep scrollback and
- * clipboard selection stable; catch up when selection is released. */
+/* Follow the latest activity without disturbing a clipboard selection.
+ * Catch up to the bottom when the selection is released. */
 static void refresh_transcript(void)
 {
     char path[PATH_SIZE], *agent, *log, *styled;
-    long first, visible, entries;
-    int follow, replace;
+    int replace;
     if (value(transcript, MUIA_TextEditor_AreaMarked))
     {
         transcript_pending = 1;
@@ -875,16 +877,11 @@ static void refresh_transcript(void)
     free(agent); free(log);
     if (!styled) return;
     if (!*styled && !replace) { free(styled); return; }
-    first = value(transcript, MUIA_TextEditor_Prop_First);
-    visible = value(transcript, MUIA_TextEditor_Prop_Visible);
-    entries = value(transcript, MUIA_TextEditor_Prop_Entries);
-    follow = first + visible >= entries;
     if (replace) set(transcript, MUIA_TextEditor_Contents, styled);
     else DoMethod(transcript, MUIM_TextEditor_InsertText, styled,
                   MUIV_TextEditor_InsertText_Bottom);
     set(transcript, MUIA_TextEditor_HasChanged, FALSE);
-    set(transcript, MUIA_TextEditor_Prop_First,
-        follow ? value(transcript, MUIA_TextEditor_Prop_Entries) : first);
+    activity_scroll_bottom(transcript);
     free(styled);
 }
 static void poll_jobs(void)
@@ -1539,6 +1536,7 @@ int main(int argc, char **argv)
     set(win, MUIA_Window_Open, TRUE);
     if (!value(win, MUIA_Window_Open))
         goto cleanup;
+    activity_scroll_bottom(transcript);
     while (!done)
     {
         update_menus();
