@@ -8,6 +8,19 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 
 ![Termic Amiga with CLI beneath Files](docs/screenshots/workspace-cli.png)
 
+## Downloads
+
+- [Native Amiga application and SDK kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-Amiga-0.1.0-beta.lha)
+  and [pinned AmiPkg entry](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/termic-amiga.json).
+- [Standalone Process Monitor](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-Process-Monitor-0.1.0-beta.lha),
+  including source and a Workbench icon.
+- AI Proxy for [Apple Silicon macOS](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-AI-Proxy-macOS.zip)
+  or [Windows 11 x64](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-AI-Proxy-Windows11.zip).
+
+Read the installation requirements below before upgrading an existing drawer.
+[Release notes and checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.1.0-beta)
+include verification details.
+
 ## Features
 
 - Projects and independent source-copy task workspaces.
@@ -79,6 +92,23 @@ preferences and clipboard behavior and its remaining limitations.
 
 See [Task workflow](docs/task-workflow.md) for the Kanban board, queue, edit review,
 notes, compiler locations and Git worktree controls.
+
+![Kanban task completed after native build, tests and review](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/kanban-monitor-done.png)
+
+## Process Monitor example application
+
+[Termic Process Monitor](amiga/apps/process-monitor/README.md) is a full native
+MUI application developed through the Kanban workflow. It lists Exec tasks,
+priority, stack capacity, partial tracked allocation and statistical CPU load.
+It includes cooperative Stop and opt-in service restart with declared port
+dependencies, confirmation, identity checks and bounded waits.
+
+The TF4060 target is detected as a 68060 through Exec. ZZ9000 graphics/shared
+RAM boards and an optional ARM debug owner are reported. The installed legacy
+firmware does not expose ARM processes or per-process telemetry; the app labels
+those values unavailable. It does not reset or replace ARM firmware.
+
+![Process Monitor with synthetic tasks and disabled process controls](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/process-monitor.png)
 
 ## Requirements and installation
 

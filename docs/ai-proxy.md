@@ -7,17 +7,18 @@ DevBench bridge are separate prerequisites.
 
 ![Termic AI Proxy with synthetic account status](screenshots/ai-proxy.png)
 
-Proxy build `027f7b7` adds host Git worktrees and the native MicroPython agent
-command while retaining batched mailbox checks, live-text batching and alternating
-reply files. Verified bundles are available as
-[macOS download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43664728871/artifacts/14142051410)
-and [Windows download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43664728871/artifacts/14141647536).
-Both passed 46 portable tests, packaging, MCP smoke, both mailbox modes and
+Proxy build `11fb72f` includes host Git worktrees, native MicroPython tools and
+a 15-minute native build reply budget. Other tool replies retain a 3-minute
+limit; cancellation stays available and timed-out builds are never replayed.
+Verified bundles are available as
+[macOS Apple Silicon download](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-AI-Proxy-macOS.zip)
+and [Windows 11 x64 download](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-AI-Proxy-Windows11.zip).
+Both passed 47 portable tests, packaging, MCP smoke, both mailbox modes and
 desktop lifecycle checks. Update the native worker and proxy together to use
 the new commands. Older peers retain their compatible transport but do not gain
 new native tools from a host-only update. Build the native worker with
-`BuildNative`. GitHub sign-in is required for CI artifacts; they expire after
-30 days.
+`BuildNative`. Release downloads are public; the separate CI artifacts described
+below require GitHub sign-in and expire after 30 days.
 
 ## Start the app
 
@@ -26,12 +27,13 @@ extract the Windows download completely and open **Termic AI Proxy.exe**.
 Keep the `_internal` folder beside the executable. No Python installation or
 Terminal window is needed to run the packaged app.
 
-Build downloads are attached to successful
+Additional development builds are attached to successful
 [AI Proxy desktop builds](https://github.com/SkiltonUSA/Termic-Amiga/actions/workflows/ai-proxy.yml)
 runs. The macOS artifact contains an app ZIP; the Windows artifact contains
 an executable and its dependencies. GitHub requires sign-in for these artifacts,
 and retains them for 30 days. Builds are unsigned development builds, not
-notarized releases. The Mac app is built for its runner's architecture.
+notarized releases. The release Mac app is ARM64 (Apple Silicon); build locally
+on Intel macOS for an Intel bundle. The Windows download is x64.
 
 The window provides:
 

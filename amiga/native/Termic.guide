@@ -135,7 +135,8 @@ Settings contains a per-workspace build command. For several sources:
   vc +aos68k -cpu=68020 main.c helper.c -o Program.new -lamiga
 
 Choose Save build command to store it. This is project data, separate
-from application preferences. It must produce Program.new. BuildProject
+from application preferences. It must produce Program.new. Successful scripts
+must reach EOF without Quit 0; early exits are rejected. BuildProject
 promotes that output to Program only after the command succeeds.
 
 A failed build preserves the last successful Program. Run after a failure

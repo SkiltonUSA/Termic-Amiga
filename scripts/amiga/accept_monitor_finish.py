@@ -8,6 +8,10 @@ from pathlib import Path
 from codex_relay import Bridge,Mailbox,validate_job
 
 async def exercise(root,out,fixture,project,shell,push,call,state,click,capture,menu):
+    # The long-running audit coordinator may have imported an older relay.
+    import importlib, codex_relay
+    importlib.reload(codex_relay)
+    Bridge,Mailbox,validate_job=codex_relay.Bridge,codex_relay.Mailbox,codex_relay.validate_job
     work=root/'.context/process-monitor';board='Termic: Kanban board';queue='Termic: Task queue'
     audit=json.loads((work/'audit-finished').read_text())
     assert audit['kernel_code_reviewed'] and audit['fixture_only_execution']
@@ -20,8 +24,15 @@ async def exercise(root,out,fixture,project,shell,push,call,state,click,capture,
         finally:await call('amiga_input_key',{'rawkey':code,'direction':'up'})
     async def read(name):
         local=work/('final-'+name.replace('/','-'))
-        await call('amiga_pull_file',{'amiga_path':project+'/'+name,'local_path':str(local)})
-        return local.read_text()
+        for attempt in range(5):
+            local.unlink(missing_ok=True)
+            try:
+                reply=await call('amiga_pull_file',{'amiga_path':project+'/'+name,'local_path':str(local)})
+                assert 'CRC32 verified' in reply,reply
+                return local.read_text(encoding='latin1' if name=='report.txt' else 'utf-8')
+            except (AssertionError,FileNotFoundError):
+                if attempt==4:raise
+                await asyncio.sleep(1)
     async def write(name,text):
         local=work/('stage-'+name);local.write_text(text);await push(local,project+'/'+name)
     async def queue_current(build):
@@ -34,10 +45,16 @@ async def exercise(root,out,fixture,project,shell,push,call,state,click,capture,
         for _ in range(240):
             value=await shell('If EXISTS '+project+'/.busy\n Echo BUSY\nEndIf')
             local=work/'queue-state.json'
-            await call('amiga_pull_file',{'amiga_path':fixture+'/Config/queue.json','local_path':str(local)})
-            rows=json.loads(local.read_text())['items']
+            for attempt in range(5):
+                try:
+                    await call('amiga_pull_file',{'amiga_path':fixture+'/Config/queue.json','local_path':str(local)})
+                    rows=json.loads(local.read_text())['items'];break
+                except (ConnectionError,AssertionError,json.JSONDecodeError):
+                    if attempt==4:raise
+                    await asyncio.sleep(1)
             if rows and rows[-1]['path']==project and rows[-1]['state'] in (2,3) and 'BUSY' not in value:return
-            await asyncio.sleep(1)
+            # AmigaDOS polling competes with the low-priority native compiler.
+            await asyncio.sleep(5)
         raise AssertionError('Monitor queue entry did not complete')
     if (work/'fixture-restarted.json').exists():
         # A rebuilt native GUI may be installed at the local audit barrier.
@@ -57,11 +74,15 @@ async def exercise(root,out,fixture,project,shell,push,call,state,click,capture,
             await key('44')
         finally:await shell(fixture+'/ClipboardProbe restore-clip '+fixture+'/monitor-clipboard')
         await asyncio.sleep(3);await capture(board,'monitor-native-restart.png')
-        column=1 if (await read('state.txt')).strip()=='Needs attention' else 3
-        await click(p['x']+(270 if column==1 else 630),p['y']+84,board)
+        column={'Ready':0,'Needs attention':1,'Review':3,'Done':4,'Running':1}.get((await read('state.txt')).strip())
+        assert column is not None,'Task is not ready for an explicit queued update'
+        await click(p['x']+90+180*column,p['y']+84,board)
         await asyncio.sleep(3)
     # Audited corrections use the actual native file tools, preserving the review
     # journal and all read-only/queue protections. No host writes bypass it.
+    # An early successful Quit must not authorize an old Program as a new build.
+    await write('build-command.txt','Echo Intentional early-exit regression\nQuit 0\n')
+    before=await call('amiga_checksum',{'path':project+'/Program'})
     await queue_current(False)
     async with Bridge('http://127.0.0.1:55010/mcp',fixture+'/Relay') as bridge:
         for _ in range(40):
@@ -71,7 +92,7 @@ async def exercise(root,out,fixture,project,shell,push,call,state,click,capture,
             await asyncio.sleep(1)
         else:raise AssertionError('Audited source update was not queued')
         job=validate_job(json.loads(raw));box=Mailbox(bridge,job)
-        assert not job['readonly'] and len(audit['files'])+1<=job['limit']
+        assert not job['readonly'] and len(audit['files'])+2<=job['limit']
         try:
             await box.text('Applying coordinator-reviewed source corrections through native file tools.\n')
             for name in audit['files']:
@@ -79,6 +100,22 @@ async def exercise(root,out,fixture,project,shell,push,call,state,click,capture,
                 assert len(text)<=32768
                 result=await box.send('tool',name='write_file',arguments={'path':name,'source':text})
                 assert 'saved' in result.lower(),(name,result)
+            failed=json.loads(await box.send('tool',name='build',arguments={}))
+            assert failed.get('success') is False and failed.get('exit_code')==20,failed
+            assert 'before Program.new was promoted' in failed.get('error',''),failed
+            after=await call('amiga_checksum',{'path':project+'/Program'})
+            import re
+            assert re.search(r'CRC32[: ]+([A-Fa-f0-9]+)',before).group(1)==re.search(r'CRC32[: ]+([A-Fa-f0-9]+)',after).group(1)
+            (work/'early-exit-passed.json').write_text(json.dumps({'rejected':True,'old_program_preserved':True}))
+            await write('build-command.txt','vc +aos68k -cpu=68020 -O1 -ITermic:SDK/MUI/Developer/C/Include main.c -o Program.new -lamiga -lmieee\n')
+            if not (work/'extended-build-passed.json').exists():
+                import time
+                started=time.monotonic()
+                result=await box.send('tool',name='build',arguments={})
+                (work/'extended-build-result.txt').write_text(result)
+                built=json.loads(result)
+                assert built.get('success') is True and built.get('exit_code')==0, built
+                (work/'extended-build-passed.json').write_text(json.dumps({'seconds':time.monotonic()-started,'result':built}))
             await box.send('done',status='completed')
         except BaseException:
             try:await box.send('done',status='failed')
@@ -90,15 +127,51 @@ async def exercise(root,out,fixture,project,shell,push,call,state,click,capture,
     # This queue build compiles and tests before BuildProject promotes Program.new.
     build='\n'.join(['FailAt 21','Stack 262144',
         'vc +aos68k -cpu=68020 -O1 -ITermic:SDK/MUI/Developer/C/Include main.c -o Program.new -lamiga -lmieee',
-        'If WARN',' Quit 20','EndIf','Program.new --self-test','If WARN',' Quit 20','EndIf','Quit 0',''])
+        'If WARN',' Quit 20','EndIf','Program.new --self-test','If WARN',' Quit 20','EndIf',''])
     await write('build-checked',build)
     await write('build-command.txt','Execute build-checked\n')
     await queue_current(True);await wait_finished()
-    log=await read('job.log');assert 'PROCESS_MONITOR_SELFTEST_PASS' in log,log
+    log=await read('job.log');build_log=await read('build.log')
+    assert 'PROCESS_MONITOR_SELFTEST_PASS' in log and 'PROCESS_MONITOR_SELFTEST_PASS' in build_log,(log,build_log)
     assert (await read('.result')).strip()=='0'
     assert (await read('state.txt')).strip()=='Review'
     await key('33');await menu('15');await asyncio.sleep(3)
     await capture(board,'monitor-tests-passed.png')
+    (work/'native-build-passed.json').write_text(json.dumps({'task':project,'source_audit':audit,'self_test':True,'queued_build':True}))
+    await finalize(root,out,fixture,project,shell,push,call,state,click,capture,menu)
+
+
+async def finalize(root,out,fixture,project,shell,push,call,state,click,capture,menu):
+    # Resume post-build checks without recompiling a verified native artifact.
+    import zlib
+    work=root/'.context/process-monitor';board='Termic: Kanban board'
+    proof=json.loads((work/'native-build-passed.json').read_text())
+    assert proof['task']==project and proof['self_test'] and proof['queued_build']
+    audit=proof['source_audit']
+    for name,digest in audit['files'].items():
+        local=root/'amiga/apps/process-monitor'/name
+        assert hashlib.sha256(local.read_bytes()).hexdigest()==digest
+        checksum=await call('amiga_checksum',{'path':project+'/'+name})
+        assert f'{zlib.crc32(local.read_bytes()):08X}' in checksum and f'{local.stat().st_size} bytes' in checksum
+    async def key(code):
+        try:await call('amiga_input_key',{'rawkey':code,'direction':'down'})
+        finally:await call('amiga_input_key',{'rawkey':code,'direction':'up'})
+    async def read(name):
+        local=work/('final-'+name.replace('/','-'))
+        for attempt in range(5):
+            local.unlink(missing_ok=True)
+            try:
+                reply=await call('amiga_pull_file',{'amiga_path':project+'/'+name,'local_path':str(local)})
+                assert 'CRC32 verified' in reply,reply
+                return local.read_text(encoding='latin1' if name=='report.txt' else 'utf-8')
+            except (AssertionError,FileNotFoundError):
+                if attempt==4:raise
+                await asyncio.sleep(1)
+    async def write(name,text):
+        local=work/('stage-'+name);local.write_text(text);await push(local,project+'/'+name)
+    assert (await read('.result')).strip()=='0'
+    assert (await read('state.txt')).strip()=='Review'
+    assert 'PROCESS_MONITOR_SELFTEST_PASS' in await read('build.log')
     # Read-only physical report is private evidence, never a public fixture.
     await shell('Stack 262144\n'+project+'/Program --report > '+project+'/report.txt',timeout=60)
     report=await read('report.txt');assert report.strip()
@@ -111,6 +184,7 @@ async def exercise(root,out,fixture,project,shell,push,call,state,click,capture,
             if p['address']:break
             await asyncio.sleep(1)
         else:raise AssertionError('Monitor MUI window did not open')
+        await call('amiga_window_resize',{'window':format(p['address'],'08x'),'width':1200,'height':650})
         await state(title,front=True);await asyncio.sleep(4)
         await capture(title,'process-monitor.png')
         await call('amiga_window_resize',{'window':format(p['address'],'08x'),'width':1000,'height':580})
@@ -127,15 +201,30 @@ async def exercise(root,out,fixture,project,shell,push,call,state,click,capture,
     await write('build-command.txt','vc +aos68k -cpu=68020 -O1 -ITermic:SDK/MUI/Developer/C/Include main.c -o Program.new -lamiga -lmieee\n')
     p=await state(board,front=True)
     await click(p['x']+510,p['y']+p['height']-34,board) # Review
-    review='Termic: Review agent changes';p=await state(review);assert p['address']
+    review='Termic: Review agent changes'
+    for _ in range(60):
+        p=await state(review)
+        if p['address']:break
+        await asyncio.sleep(1)
+    else:raise AssertionError('Review window did not finish loading')
+    await state(review,front=True)
     for _ in range(64):
-        if not json.loads(await read('.review.json'))['files']:break
+        files=json.loads(await read('.review.json'))['files']
+        if not files:break
+        assert all(item['name'] in audit['files'] for item in files)
         await click(p['x']+65,p['y']+p['height']-24,review)
+        for attempt in range(60):
+            if len(json.loads(await read('.review.json'))['files'])<len(files):break
+            await asyncio.sleep(1)
+        else:raise AssertionError('Accept file did not update the review journal')
     else:raise AssertionError('Audited edits did not resolve')
     await click(p['x']+p['width']-24,p['y']+p['height']-24,review)
     await menu('15');p=await state(board)
     await click(p['x']+604,p['y']+p['height']-34,board)
-    assert (await read('state.txt')).strip()=='Done'
+    for _ in range(30):
+        if (await read('state.txt')).strip()=='Done':break
+        await asyncio.sleep(1)
+    else:raise AssertionError('Mark Done did not persist')
     await asyncio.sleep(3);await capture(board,'monitor-done.png')
     await call('amiga_pull_file',{'amiga_path':project+'/Program','local_path':str(work/'Program-tested')})
     (work/'passed.json').write_text(json.dumps({'task':project,'real_agent_queued':True,

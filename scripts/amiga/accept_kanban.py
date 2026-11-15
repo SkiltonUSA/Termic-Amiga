@@ -16,7 +16,7 @@ async def stage(root, out, fixture, shell, push, call):
         await shell('If NOT EXISTS '+base+'/'+name+'\n MakeDir '+base+'/'+name+'\nEndIf\nEcho \"'+name.title()+'\" > '+base+'/'+name+'/name.txt\nEcho \"'+state+'\" > '+base+'/'+name+'/state.txt')
     await write('fail','1',base+'/failure/fail')
     # Queue test exercises real worker completion using a deterministic local build script.
-    await write('build','Echo "Synthetic queue build started"\nWait 3\nIf EXISTS fail\n Quit 20\nEndIf\nEcho "Synthetic queue build passed"\nQuit 0\n',fixture+'/BuildProject')
+    await write('build','Echo "Synthetic queue build started"\nWait 3\nIf EXISTS fail\n Quit 20\nEndIf\nEcho "Synthetic queue build passed"\nEcho "complete" >.build-ok\nQuit 0\n',fixture+'/BuildProject')
     queue={'version':1,'paused':False,'items':[{'path':base+'/'+name,'build':True,'state':0}
                                             for name in ['first','failure','last']]}
     await write('queue',json.dumps(queue),fixture+'/Config/queue.json')

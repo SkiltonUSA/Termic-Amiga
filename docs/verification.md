@@ -678,10 +678,10 @@ to Amiga connection remains untested.
 
 ## Task workflow and development services
 
-The portable suite passes 66 tests, including ASan/UBSan checks for persistent
+The portable suite passes 72 tests, including ASan/UBSan checks for persistent
 queue serialization/recovery, allocation failures, review conflicts and interrupted
 reverts, compiler locations, syntax modes and protected file names. The proxy
-suite passes 46 tests. The rebuilt macOS bundle passes its GUI/MCP smoke, both
+suite passes 47 tests. The rebuilt macOS bundle passes its GUI/MCP smoke, both
 mailbox protocols and reconnect/Start/Stop/window-close acceptance.
 
 On the physical 68060, the written execution suite passes ARexx, MicroPython,
@@ -697,8 +697,8 @@ SDK, MicroPython, Git, ARexx and AmiSSL requirements. Editor recolouring preserv
 text, cursor, dirty state and Undo on the installed TextEditor class. Written MUI
 checks cover accepting/reverting agent changes and creating/saving a scratchpad.
 
-[Workflow proxy build 43664728871](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43664728871)
-passed the 46-test suite, packaging, bundled MCP smoke, both mailbox modes and
+[Workflow proxy build 43671383900](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43671383900)
+passed the 47-test suite, packaging, bundled MCP smoke, both mailbox modes and
 desktop lifecycle checks on macOS and Windows. The tested macOS bundle was
 installed with an independent rollback copy. A physical Windows-to-Amiga
 connection remains outside that CI acceptance.
@@ -711,3 +711,59 @@ queue reorder/removal and clearing completed history. Review accept/revert and
 scratchpad creation/save also passed in that installation. A second GUI launch
 is rejected before changing the running installation's assign or preferences;
 the hardware regression checks both the assign and original window identity.
+
+The full queue regression was repeated with the final native-built GUI and
+worker after repairing completion publication. A deterministic observer test
+fails with the previous port-before-result ordering and passes with final
+state, flushed output and result published before unregistering the worker.
+The GUI now counts consecutive absent-worker polls and waits for registration
+to disappear even when a result is already present. Time spent compiling no
+longer consumes the missing-result grace period.
+
+The process-monitor task also reproduced a native build that outlasted the
+old 180-second proxy budget. The updated proxy completed a 298-second native
+build with exit zero. A deliberately early `Quit 0` now fails with a structured
+error and leaves the old executable unchanged; BuildProject must publish its
+fresh completion receipt after promoting Program.new.
+
+The Process Monitor task completed the actual native queue workflow: reviewed
+source updates through agent file tools, queued VBCC compilation and self-test,
+Review, acceptance of all six audited files and Done. The self-test enumerated
+and sampled the physical Exec task list, rejected self/stale/dependency failures,
+restarted its authenticated disposable service through the shared state machine,
+and cooperatively stopped it. It never signalled an unrelated process.
+All six remote source checksums matched the audited host files.
+
+The read-only report detected the 68060 and ZZ9000 AutoConfig graphics/shared
+RAM boards. Its live task data stays private. The synthetic MUI window opened,
+resized to 1200 by 650 and 1000 by 580, and closed normally; both screenshots
+were inspected. The task's review journal was empty before marking it Done.
+Host tests also cover the actual UI control handler, including selected service,
+confirmation, dependencies and ownership changing before restart.
+
+CPU percentages are statistical VBlank samples. Per-process memory is partial
+Exec tracking plus stack capacity, not RSS or a complete heap measurement.
+Dependencies require opt-in service definitions. The installed legacy ZZ9000
+firmware has no supported ARM task/load/private-heap API; those fields remain
+unavailable, and no firmware/reset operation was attempted.
+
+The final live-window check exposed selection scrolling as Exec moved tasks
+between Ready and Wait lists. The monitor now orders its copied inventory by
+address outside the scheduling/interrupt locks. Its queued native build,
+disposable-service self-test, review and Done flow passed again. The installed
+live window retained the selected row during refresh; its private screenshot
+was inspected. The final monitor is 34844 bytes, CRC32 `44F08E90`.
+
+The tested platform and monitor were installed with separate rollback copies.
+Existing projects/preferences were preserved, and the new Process Monitor
+project/task received missing AGENTS, CLAUDE and Termic skill guidance without
+replacing project-owned files. Production window geometry was restored and
+the AI Proxy restarted. The installed dependency checker reports zero missing
+requirements.
+
+The final native LHA and pinned AmiPkg entry passed upstream schema validation,
+client parser/resolver/CPU constraints and a fresh host copy-plan installation.
+The expected validator notice concerns the explicitly reviewed AmigaDOS pre/post
+scripts. Those SDK/UI scripts and dependency checks also passed the earlier
+fresh installation on the actual Amiga. The standalone monitor LHA passed its
+archive integrity check and includes the tested binary, Workbench icon and source.

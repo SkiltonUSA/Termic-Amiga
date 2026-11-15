@@ -7,6 +7,7 @@
 #include "version.h"
 #include "workspace.h"
 #include "taskflow.h"
+#include "job_watch.h"
 #include "change_review.h"
 #include "diagnostics.h"
 #include <ctype.h>
@@ -911,7 +912,7 @@ static void refresh_transcript(void)
 }
 static void poll_jobs(void)
 {
-    int i;
+    int i,completion;
     char path[PATH_SIZE], *s;
     for (i = 0; i < 16; i++)
         if (jobs[i].active)
@@ -936,7 +937,8 @@ static void poll_jobs(void)
             }
             join(path, jobs[i].path, ".result");
             s = read_text(path, 32);
-            if (!s && ++jobs[i].polls > 20 && !worker_registered(jobs[i].path))
+            completion=job_watch(worker_registered(jobs[i].path),s!=NULL,&jobs[i].polls);
+            if (completion<0)
             {
                 jobs[i].active = 0;
                 join(path,jobs[i].path,"state.txt");save_text(path,"Needs attention",32);
@@ -945,7 +947,7 @@ static void poll_jobs(void)
                     message("Worker exited without a result. Check its log and any stale .busy "
                             "drawer.");
             }
-            if (s)
+            if (s && completion>0)
             {
                 jobs[i].active = 0;
                 join(path, jobs[i].path, "state.txt");
@@ -973,6 +975,7 @@ static void poll_jobs(void)
                 }
                 free(s);
             }
+            else free(s);
         }
     editor_recolour();
     flow_tick();

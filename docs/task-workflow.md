@@ -20,8 +20,10 @@ move pending entries up/down, remove pending/finished entries and clear
 finished history. The queue holds 64 entries. Queued workspaces are reserved
 against simultaneous GUI/MCP writes. Other tasks can still be edited.
 
-Resume runs one queued job at a time after existing workers finish. A failed
-job pauses the queue and leaves later entries pending. Inspect the failed
+Resume runs one queued job at a time, waiting for jobs attached to the open
+workspace and any active host relay. Externally launched workers in other
+projects can run independently; task locks prevent simultaneous access to the
+same task. A failed job pauses the queue and leaves later entries pending. Inspect the failed
 task's activity before resuming. Resume continues the remaining work; it does
 not retry the failed entry. Add that task again explicitly to retry it.
 
@@ -98,3 +100,18 @@ leave a dirty worktree for inspection; it is not automatically reset or retried.
 The proxy stores repositories/worktrees below its state drawer's `git/` folder.
 These controls target GitHub HTTPS repositories; alternate hosts/remotes and
 pull-request merging are outside this implementation.
+
+## Process-monitor acceptance task
+
+The [Process Monitor](../amiga/apps/process-monitor/README.md) exercises a
+complete development task: queue the agent, generate source through native
+file tools, inspect kernel-facing code, queue compilation and a disposable
+service self-test, review edits and mark the task Done. Its real hardware
+report remains local; screenshots use synthetic data with controls disabled.
+
+Long builds keep their worker registered until final state, log and result
+are published. The queue waits for that registration to disappear before
+starting another entry. A successful build also requires BuildProject's
+fresh completion marker after Program.new promotion. Successful nested build
+scripts must reach EOF; `Quit 0` can unwind the outer AmigaDOS script early.
+Update TermicAgent and BuildProject together.

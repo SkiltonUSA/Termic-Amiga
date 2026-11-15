@@ -93,6 +93,9 @@ Build uses the current workspace, produces Program, and displays diagnostics
 in Build / CLI. The default compiles main.c with VBCC. Settings can save
 a different build command per workspace, including additional C files and
 libraries. It must produce Program.new; BuildProject promotes it on success.
+Successful nested build scripts must reach EOF, without Quit 0. A premature
+exit is rejected so that an old Program cannot be mistaken for a new build.
+Upgrade TermicAgent and BuildProject together from the same release.
 A failed build retains the last executable, so Run would launch that older build.
 MUI headers and mui_compat.h are on the installed include search path.
 Run launches the compiled program. Only an explicit Run or shell command

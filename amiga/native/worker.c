@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "job_finish.h"
 const char version_tag[] = TERMIC_VERSION_TAG("TermicAgent");
 const char stack_size[] = "$STACK:262144";
 int cancel_requested(void)
@@ -54,9 +55,32 @@ static LONG run_command(const char *command)
     free(errors);
     return rc;
 }
+static const char *last_build_error;
+static LONG run_build(void)
+{
+    LONG rc;
+    char *receipt;
+    const char *message = "Build exited before Program.new was promoted. Let successful nested scripts reach EOF instead of Quit 0.\n";
+    last_build_error=NULL;
+    if (!DeleteFile((STRPTR)".build-ok") && IoErr()!=ERROR_OBJECT_NOT_FOUND) {
+        last_build_error="Cannot clear the previous build completion marker.";
+        puts(last_build_error);
+        return 20;
+    }
+    rc=run_command("Execute Termic:BuildProject");
+    if(rc==0) {
+        receipt=read_text(".build-ok",32);
+        if(!receipt || strcmp(receipt,"complete\n")) {
+            last_build_error=message;
+            fputs(message,stdout);rc=20;
+        }
+        free(receipt);
+    }
+    return rc;
+}
 int build_project(void)
 {
-    LONG r = run_command("Execute Termic:BuildProject");
+    LONG r = run_build();
     printf("Local compiler exit code: %ld\n", (long)r);
     return r == 0;
 }
@@ -177,7 +201,7 @@ char *project_execute(const char *action, const char *path)
     /* Never return stale output after a failed preflight/load. */
     DeleteFile((STRPTR)".command.log");
     if (cancel_requested()) error = "Execution cancelled before launch.";
-    else if (!strcmp(action, "build")) rc = run_command("Execute Termic:BuildProject");
+    else if (!strcmp(action, "build")) rc = run_build();
     else if (!strcmp(action, "arexx")) {
         int rexx;
         const char *ext = path ? strrchr(path, '.') : NULL;
@@ -241,6 +265,8 @@ char *project_execute(const char *action, const char *path)
     cJSON_AddStringToObject(object, "output", output);
     cJSON_AddBoolToObject(object, "output_truncated", truncated);
     if (error) cJSON_AddStringToObject(object, "error", error);
+    else if(!strcmp(action,"build") && last_build_error)
+        cJSON_AddStringToObject(object,"error",last_build_error);
     else if (rc == -1) cJSON_AddStringToObject(object, "error", "Command could not be loaded or launched.");
     result = cJSON_PrintUnformatted(object); cJSON_Delete(object);
     return result;
@@ -402,6 +428,8 @@ int main(int argc, char **argv)
     }
     UnLock(lock);
     DeleteFile((STRPTR)".launch");
+    DeleteFile((STRPTR)".result");
+    DeleteFile((STRPTR)".result.new");
     for (p = path; *p; ++p)
         hash = hash * 33 + (unsigned char)*p;
     sprintf(portname, "TermicJob.%08lx", hash);
@@ -538,20 +566,7 @@ int main(int argc, char **argv)
         free(msg);
     }
     if (cancel_requested()) result = 20;
-    printf("\nFinished with exit code %d.\n", result);
-    /* Publish completion only after the captured output is visible to the UI. */
-    fflush(stdout);
-    RemPort(&port);
-    DeleteFile((STRPTR) ".busy");
-    f = fopen(".result.new", "w");
-    if (f)
-    {
-        fprintf(f, "%d\n", result);
-        fclose(f);
-        remove(".result");
-        rename(".result.new", ".result");
-    }
-    save_text("state.txt",result==0?"Review":"Needs attention",32);
+    result = finish_job(&port,result);
     Forbid();
     {struct MsgPort *ui=FindPort((STRPTR)"TermicWorkspaceUI");if(ui)Signal(ui->mp_SigTask,SIGBREAKF_CTRL_D);}
     Permit();
