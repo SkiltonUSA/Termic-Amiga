@@ -311,7 +311,10 @@ class Mailbox:
         stopped_name = ident + '.stopped'
         await self.bridge.write(ident + '.in', frame, stopped=stopped_name,
                                 previous=None if self.job.get('reply_slots', False) else response_name)
-        deadline = time.monotonic() + (180 if kind == 'tool' else 45)
+        # A native compiler can take several minutes on a 68k machine. Keep
+        # ordinary calls bounded, but do not abandon a healthy larger build.
+        timeout = 900 if kind == 'tool' and fields.get('name') == 'build' else 180 if kind == 'tool' else 45
+        deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             replies = await self.bridge.read_many(response_name, stopped_name)
             raw = replies[response_name]

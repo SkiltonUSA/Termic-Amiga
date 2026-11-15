@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -89,6 +90,30 @@ class AsyncRelayTests(unittest.IsolatedAsyncioTestCase):
         bridge.stop = True
         with self.assertRaises(ConnectionError): await box.send('tool', name='build', arguments={})
         self.assertEqual(len(bridge.frames), 2)
+
+    async def test_slow_native_build_budget_and_cancellation(self):
+        for tool, ready, stop_at, error, elapsed in [
+                ('build',240,None,None,240),
+                ('run_program',240,None,TimeoutError,180),
+                ('build',1000,None,TimeoutError,900),
+                ('build',1000,240,ConnectionError,240)]:
+            with self.subTest(tool=tool,ready=ready,stop_at=stop_at):
+                clock=SimpleNamespace(now=0)
+                async def pause(_):clock.now+=60
+                class SlowBridge(FakeBridge):
+                    async def read(self,name):
+                        if name.endswith('.stopped'):
+                            return 'stopped' if stop_at is not None and clock.now>=stop_at else None
+                        if clock.now<ready:return None
+                        return await super().read(name)
+                bridge=SlowBridge();box=relay.Mailbox(bridge,job())
+                with patch.object(relay,'time',SimpleNamespace(monotonic=lambda:clock.now)), \
+                     patch.object(relay,'asyncio',SimpleNamespace(sleep=pause)):
+                    if error:
+                        with self.assertRaises(error):await box.send('tool',name=tool,arguments={})
+                    else:self.assertEqual(await box.send('tool',name=tool,arguments={}),'fixture.c')
+                self.assertEqual(clock.now,elapsed)
+                self.assertEqual(len(bridge.frames),1,'Uncertain tools must never be replayed')
 
     async def test_reply_slots_avoid_per_frame_host_cleanup(self):
         bridge = FakeBridge(); data = job(); data['reply_slots'] = True

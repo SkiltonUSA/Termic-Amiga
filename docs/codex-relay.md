@@ -93,7 +93,9 @@ The Amiga waits up to 60 seconds for the initial connection and 120 seconds
 between operations. The Mac sends keepalives while Codex works. A turn has a
 25-minute Mac limit and a 30-minute native wait-loop limit, excluding time spent
 inside synchronous native tool calls. An interrupted build may take time to
-return from the native compiler before cancellation is observed.
+return from the native compiler before cancellation is observed. The host allows
+up to 15 minutes for a native build reply and 3 minutes for other native tools.
+A slow build is sent once; a timeout never automatically repeats it.
 
 If the relay stops or the bridge disconnects, the worker fails or times out
 and preserves source backups. The desktop proxy reconnects after transient
