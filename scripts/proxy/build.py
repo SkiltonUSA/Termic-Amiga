@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parents[2]
 command = [sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onedir',
     '--name', 'Termic AI Proxy', '--paths', str(root / 'scripts/amiga'),
     '--copy-metadata', 'PySide6-Essentials', '--copy-metadata', 'shiboken6', '--copy-metadata', 'mcp',
-    '--hidden-import', 'cli_relay', '--hidden-import', 'relay_mcp',
+    '--hidden-import', 'cli_relay', '--hidden-import', 'git_service', '--hidden-import', 'relay_mcp',
     '--hidden-import', 'mcp.client.streamable_http', '--hidden-import', 'mcp.server.stdio', '--distpath', str(root / 'dist/proxy'),
     '--workpath', str(root / '.context/proxy-build'), '--specpath', str(root / '.context')]
 if sys.platform == 'darwin':

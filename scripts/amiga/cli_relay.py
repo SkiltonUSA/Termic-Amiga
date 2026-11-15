@@ -294,7 +294,7 @@ async def run_cli_job(bridge, job, executable, state):
             guidance = '\n\n'.join(g['path'] + ':\n' + g['text'] for g in job['guidance'])
             prompt = (job['instructions'] + '\nUse only the amiga MCP tools for the remote Amiga task. '
                       'The host workspace is empty. Do not use local files, commands, browser, subagents or other tools. '
-                      'Write ASCII C89 or ARexx. Use run_arexx or build then run_program when execution is requested.\n' + guidance + '\nUser task:\n' + job['prompt'])
+                      'Write ASCII C89 or ARexx. Use run_arexx, run_python, or build then run_program when execution is requested.\n' + guidance + '\nUser task:\n' + job['prompt'])
             if provider == 'cursor':
                 prompt += ('\nAmiga tools return an operation_id immediately. Call await_operation with that ID '
                            'until completed or failed, then inspect the actual result. A running response is not '

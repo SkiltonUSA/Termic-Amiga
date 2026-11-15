@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/proxy/**'
       - 'scripts/amiga/*relay*'
+      - 'scripts/amiga/*git_service*'
       - 'scripts/amiga/test_bridge_mailbox.py'
       - '.github/workflows/ai-proxy.yml'
 permissions:

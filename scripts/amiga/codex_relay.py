@@ -21,8 +21,8 @@ from host_process import executable_command, process_options
 
 ID = re.compile(r'[0-9a-f]{8}-[0-9a-f]{8}-[0-9a-f]{4}\Z')
 THREAD = re.compile(r'[0-9a-fA-F-]{1,64}\Z')
-TOOLS = {'list_sources', 'read_source', 'read_file', 'write_source', 'write_file', 'build', 'system_info', 'run_arexx', 'run_program'}
-WRITE = {'write_source', 'write_file', 'build', 'run_arexx', 'run_program'}
+TOOLS = {'list_sources', 'read_source', 'read_file', 'write_source', 'write_file', 'build', 'system_info', 'run_arexx', 'run_python', 'run_program'}
+WRITE = {'write_source', 'write_file', 'build', 'run_arexx', 'run_python', 'run_program'}
 MAX_JSON = 65536
 
 
@@ -30,7 +30,7 @@ def validate_job(job):
     if not isinstance(job, dict) or job.get('protocol') not in (1, 2) or not ID.fullmatch(job.get('id', '')):
         raise ValueError('Unsupported relay request')
     provider = job.get('provider', 'codex')
-    if provider not in ('codex', 'claude', 'cursor') or (job['protocol'] == 1 and provider != 'codex'):
+    if provider not in ('codex', 'claude', 'cursor', 'git') or (job['protocol'] == 1 and provider != 'codex'):
         raise ValueError('Unsupported relay provider')
     for key, limit in [('prompt', 8192), ('instructions', 8192), ('model', 127), ('thread', 64)]:
         value = job.get(key)
@@ -38,10 +38,14 @@ def validate_job(job):
             raise ValueError('Invalid relay request field')
     if not job['prompt'].strip() or (job['thread'] and not THREAD.fullmatch(job['thread'])):
         raise ValueError('Invalid prompt or conversation identifier')
-    if type(job.get('readonly')) is not bool or type(job.get('limit')) is not int or not 1 <= job['limit'] <= 32:
+    if type(job.get('readonly')) is not bool or type(job.get('limit')) is not int or not 1 <= job['limit'] <= (129 if provider=='git' else 32):
         raise ValueError('Invalid relay access limits')
     if type(job.get('reply_slots', False)) is not bool:
         raise ValueError('Invalid reply capability')
+    if provider=='git':
+        if not job['readonly']:raise ValueError('Git service only reads Amiga sources')
+        from git_service import request
+        request(job['prompt'])
     guides = job.get('guidance')
     if not isinstance(guides, list) or len(guides) > 2:
         raise ValueError('Invalid project guidance')
@@ -57,14 +61,15 @@ def dynamic_tools(readonly):
         return {'type': 'function', 'name': name, 'description': description,
                 'inputSchema': {'type': 'object', 'properties': {x: {'type': 'string'} for x in fields},
                                 'required': fields, 'additionalProperties': False}}
-    all_tools = [spec('list_sources', 'List C/H and ARexx sources in the selected Amiga task.', []),
+    all_tools = [spec('list_sources', 'List C/H, Python, ARexx, text and Markdown files in the selected Amiga task.', []),
                  spec('read_source', 'Read main.c from the Amiga task.', []),
-                 spec('read_file', 'Read a task C/H or ARexx source or named project guidance.', ['path']),
+                 spec('read_file', 'Read a task C/H, Python, ARexx, text or Markdown file or named project guidance.', ['path']),
                  spec('write_source', 'Replace main.c, preserving a backup. Maximum 32 KiB.', ['source']),
-                 spec('write_file', 'Save a task C/H or ARexx file with a backup. Maximum 32 KiB.', ['path', 'source']),
+                 spec('write_file', 'Save a task C/H, Python, ARexx, text or Markdown file with a backup. Maximum 32 KiB.', ['path', 'source']),
                  spec('build', 'Compile the selected task on the Amiga. Returns output and exit code.', []),
                  spec('system_info', 'Read live Amiga hardware, OS and runtime information.', []),
                  spec('run_arexx', 'Execute a saved workspace .rexx or .rx script. Waits for exit; returns output and exit code.', ['path']),
+                 spec('run_python', 'Execute a saved workspace .py file with MicroPython. Waits for exit; returns output and exit code.', ['path']),
                  spec('run_program', 'Run workspace Program after a successful build in this turn. Waits for exit; returns output and exit code.', [])]
     return [t for t in all_tools if not readonly or t['name'] not in WRITE]
 
@@ -514,7 +519,7 @@ async def run_job(bridge, job, executable, home, work):
         heartbeat = asyncio.create_task(keepalive())
         config = {'cwd': str(work), 'approvalPolicy': 'never', 'sandbox': 'read-only',
                   'developerInstructions': job['instructions'] + '\nUse only the supplied Amiga tools. '
-                  'There is no local project, shell, browser or subagent access. Use run_arexx or build then run_program when the task requests execution. '
+                  'There is no local project, shell, browser or subagent access. Use run_arexx, run_python, or build then run_program when the task requests execution. '
                   'Write ASCII C89 or ARexx source. Do not attempt to install tools or obtain credentials.'}
         if job['model']:
             config['model'] = job['model']
@@ -614,6 +619,9 @@ async def run_job(bridge, job, executable, home, work):
 
 async def dispatch_job(bridge, job, args):
     provider = job.get('provider', 'codex')
+    if provider=='git':
+        from git_service import run_git_job
+        return await run_git_job(bridge,job,args.state_dir)
     if provider == 'codex':
         home, work = prepare_home(args.state_dir, args.auth_home)
         return await run_job(bridge, job, args.codex, home, work)

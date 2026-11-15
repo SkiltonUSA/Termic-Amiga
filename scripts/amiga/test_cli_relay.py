@@ -90,7 +90,7 @@ class CLIAsyncTests(unittest.IsolatedAsyncioTestCase):
             return json.loads(await server.dispatch({'token': server.token, 'op': 'call',
                                                      'name': name, 'arguments': arguments}))
         try:
-            for name in ('build', 'run_program', 'run_arexx', 'write_source', 'write_file'):
+            for name in ('build', 'run_program', 'run_arexx', 'run_python', 'write_source', 'write_file'):
                 with self.assertRaises(ValueError): await call(name)
             with self.assertRaises(ValueError):
                 await server.dispatch({'token':'wrong','op':'call','name':'await_operation','arguments':{}})
@@ -115,7 +115,7 @@ class CLIAsyncTests(unittest.IsolatedAsyncioTestCase):
         token = server.token
         with self.assertRaises(ValueError): await server.dispatch({'token': 'wrong', 'op': 'list'})
         self.assertEqual(len(await server.dispatch({'token': token, 'op': 'list'})), 4)
-        for name in ('write_source', 'build', 'run_arexx', 'run_program', 'shell'):
+        for name in ('write_source', 'build', 'run_arexx', 'run_python', 'run_program', 'shell'):
             with self.assertRaises(ValueError): await server.dispatch({'token': token, 'op': 'call', 'name': name, 'arguments': {}})
         listener = await asyncio.start_server(server.handle, '127.0.0.1', 0)
         try:

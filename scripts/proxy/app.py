@@ -89,7 +89,7 @@ def worker_entry():
                 return 1
         return True
     if sys.argv[1] == '--self-test':
-        import cli_relay, relay_mcp
+        import cli_relay, relay_mcp, git_service
         from PySide6.QtWidgets import QApplication
         app = QApplication([])
         from PySide6.QtCore import QTimer
