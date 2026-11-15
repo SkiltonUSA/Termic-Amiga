@@ -68,7 +68,7 @@ was developed against Codex CLI 0.166.0; recheck it when upgrading Codex.
 
 Nine tools are exposed: list_sources, read_source, read_file, write_source,
 write_file, build, system_info, run_arexx and run_program. Reads/writes cover
-C/header and ARexx sources; reads also cover named project guidance. The
+C/H, Python, ARexx and text/Markdown sources; reads also cover named project guidance. The
 worker enforces task paths, backup saves and read-only access independently
 of the host. Read-only mode blocks builds and execution. The worker owns the
 task busy lock during execution. See [Agent execution](agent-execution.md).

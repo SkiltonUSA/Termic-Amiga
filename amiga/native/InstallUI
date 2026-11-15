@@ -15,7 +15,7 @@ If NOT EXISTS Termic:Template
   MakeDir Termic:Template
   Copy Termic:Source/Template/#? Termic:Template/
 EndIf
-Echo "MUI editor and native Git installed. MUI 3.8 or newer must already be installed."
+Echo "MUI editor and native Git installed. MUI 5.0 must already be installed."
 If NOT EXISTS Termic:SDK/DiskImage
   MakeDir Termic:SDK/DiskImage
 EndIf

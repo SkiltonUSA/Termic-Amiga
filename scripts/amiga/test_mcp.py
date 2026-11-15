@@ -61,6 +61,9 @@ class MCPTests(unittest.TestCase):
         self.assertEqual((task/'main.c').read_text(),(self.cwd/'Projects/demo/main.c').read_text())
         self.assertFalse(self.call('file_write',project='demo',task='fixture',path='main.c',content='/* changed */')['isError'])
         self.assertTrue((task/'main.c.bak').exists())
+        for path in ['script.py','script.rexx','README.md','notes.txt']:
+            self.assertFalse(self.call('file_write',project='demo',task='fixture',path=path,content='fixture')['isError'])
+            self.assertEqual(self.call('file_read',project='demo',task='fixture',path=path)['content'][0]['text'],'fixture')
         self.assertFalse(self.call('scratchpad_write',project='demo',task='fixture',pad='notes',content='Fixture notes')['isError'])
         self.assertEqual(self.call('scratchpad_read',project='demo',task='fixture',pad='notes')['content'][0]['text'],'Fixture notes')
         self.assertTrue(self.call('task_new',project='demo',name='fixture')['isError'])
@@ -69,6 +72,8 @@ class MCPTests(unittest.TestCase):
         task=self.create();(self.cwd/'Config/api-key').write_text('fixture-secret')
         for path in ['../../../../Config/api-key','DH0:Config/api-key','.mcp-owned','task.txt']:
             self.assertTrue(self.call('file_read',project='demo',task='fixture',path=path)['isError'])
+        for path in ('State.txt','TASK.txt','Session-123.txt','agents.md'):
+            self.assertTrue(self.call('file_write',project='demo',task='fixture',path=path,content='blocked')['isError'])
         (task/'escape.c').symlink_to(self.cwd/'Config/api-key')
         self.assertTrue(self.call('file_read',project='demo',task='fixture',path='escape.c')['isError'])
         self.assertTrue(self.call('file_write',project='demo',task='fixture',path='escape.c',content='oops')['isError'])
@@ -78,6 +83,9 @@ class MCPTests(unittest.TestCase):
         (task/'.busy').mkdir()
         self.assertTrue(self.call('file_write',project='demo',task='fixture',path='main.c',content='oops')['isError'])
         (task/'.busy').rmdir()
+        (task/'.queued').write_text('pending')
+        self.assertTrue(self.call('file_write',project='demo',task='fixture',path='main.c',content='oops')['isError'])
+        (task/'.queued').unlink()
         (self.cwd/'Config/last-workspace').write_text('Projects/demo/Tasks/fixture')
         self.assertTrue(self.call('file_write',project='demo',task='fixture',path='main.c',content='oops')['isError'])
         (self.cwd/'Config/last-workspace').write_text(str(task.resolve()))

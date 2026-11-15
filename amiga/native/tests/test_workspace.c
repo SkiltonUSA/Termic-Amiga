@@ -19,6 +19,13 @@ int main(void)
     assert(source_name("scripts/demo.rx"));
     for (i = 0; bad[i]; i++)
         assert(!source_name(bad[i]));
+    assert(agent_source_name("scripts/demo.py"));assert(agent_source_name("README.md"));
+    assert(agent_source_name("docs/notes.txt"));assert(!agent_source_name("state.txt"));
+    assert(!agent_source_name("session-123.txt"));assert(!agent_source_name("AGENTS.md"));
+    assert(!agent_source_name("build-command.txt"));
+    assert(!agent_source_name("State.txt"));assert(!agent_source_name("agents.md"));
+    assert(!agent_source_name("src/Session-123.txt"));
+    assert(workspace_name_equal("Task/Main.c","task/main.c"));
     assert(save_text("fixture.c", "original", 32));
     assert(save_text("fixture.c", "replacement", 32));
     text = read_text("fixture.c.bak", 32);

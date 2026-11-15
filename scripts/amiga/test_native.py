@@ -11,6 +11,46 @@ SOURCE = ROOT / "amiga/native"
 
 
 class NativeProtocolTests(unittest.TestCase):
+    def test_streaming_archive_checksum(self):
+        import zlib
+        with tempfile.TemporaryDirectory() as directory:
+            work=Path(directory);binary=work/'checksum';data=work/'fixture.bin'
+            subprocess.run(['cc','-std=c99','-Wall','-Wextra','-Werror',
+                '-fsanitize=address,undefined',str(SOURCE/'tests/check_archive.c'),
+                '-o',str(binary)],check=True)
+            for raw in (b'',b'123456789',bytes(range(256))*1024):
+                data.write_bytes(raw)
+                result=subprocess.check_output([str(binary),str(data)],text=True)
+                self.assertEqual(result.strip(),f'{zlib.crc32(raw):08x} {len(raw)} {data}')
+            self.assertEqual(subprocess.run([str(binary),str(work/'absent')]).returncode,20)
+
+    def test_diagnostics(self):
+        with tempfile.TemporaryDirectory() as directory:
+            binary=Path(directory)/'diagnostics'
+            subprocess.run(['cc','-std=c99','-Wall','-Wextra','-Werror',
+                '-fsanitize=address,undefined','-I',str(SOURCE),
+                *[str(SOURCE/f) for f in ['diagnostics.c','workspace.c','tests/test_diagnostics.c']],
+                '-o',str(binary)],check=True)
+            subprocess.run([str(binary)],cwd=directory,check=True)
+
+    def test_change_review(self):
+        with tempfile.TemporaryDirectory() as directory:
+            binary=Path(directory)/'review'
+            subprocess.run(['cc','-std=c99','-Wall','-Wextra','-Werror','-Wno-deprecated-declarations',
+                '-fsanitize=address,undefined','-I',str(SOURCE),
+                *[str(SOURCE/f) for f in ['change_review.c','workspace.c','files.c','vendor/cJSON.c','tests/test_change_review.c']],
+                '-o',str(binary)],check=True)
+            subprocess.run([str(binary)],cwd=directory,check=True)
+
+    def test_taskflow(self):
+        with tempfile.TemporaryDirectory() as directory:
+            binary=Path(directory)/'taskflow'
+            subprocess.run(['cc','-std=c99','-Wall','-Wextra','-Werror','-Wno-deprecated-declarations',
+                '-fsanitize=address,undefined','-I',str(SOURCE),
+                *[str(SOURCE/f) for f in ['taskflow.c','workspace.c','files.c','vendor/cJSON.c','tests/test_taskflow.c']],
+                '-o',str(binary)],check=True)
+            subprocess.run([str(binary)],cwd=directory,check=True)
+
     def test_prompts(self):
         with tempfile.TemporaryDirectory() as directory:
             binary = str(Path(directory) / "prompts")
@@ -139,6 +179,7 @@ class NativeProtocolTests(unittest.TestCase):
                     str(SOURCE / f)
                     for f in [
                         "agent.c",
+                        "change_review.c",
                         "profiles.c",
                         "files.c",
                         "workspace.c",
@@ -157,6 +198,7 @@ class NativeProtocolTests(unittest.TestCase):
             (work / "Project/build.log").write_text("Fixture compiler succeeded.\n")
             for mode in range(15):
                 with self.subTest(mode=mode):
+                    for journal in (work / "Project").glob(".review*"): journal.unlink()
                     (work / "Config/api-key").write_text(
                         "" if mode == 6 else "test-key\n"
                     )

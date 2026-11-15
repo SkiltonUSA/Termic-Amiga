@@ -106,6 +106,13 @@ async def main(args):
                 assert run['success'] and run['exit_code']==0 and 'NATIVE_EXECUTION_OK' in run['output'],run
                 assert 'Invalid path' in await tool('read_file', path='../outside.c')
                 await finish()
+                box=await start()
+                assert 'saved' in await tool('write_file', path='hello.py', source='print("MICROPYTHON_AGENT_OK")\n')
+                run=json.loads(await tool('run_python', path='hello.py'))
+                assert run['success'] and run['exit_code']==0 and 'MICROPYTHON_AGENT_OK' in run['output'],run
+                assert 'Invalid MicroPython path' in await tool('run_python', path='SYS:outside.py')
+                assert 'Invalid path' in await tool('write_file', path='State.txt', source='must not change state')
+                await finish()
                 checksum=await call('amiga_checksum', {'path':fixture+'/Program'})
                 box=await start()
                 assert 'saved' in await tool('write_file', path='failure.rexx', source='/* synthetic syntax failure */\nsay (1 +\n')
@@ -136,12 +143,13 @@ async def main(args):
                 except ConnectionError: pass # Stop may be seen before the final reply is downloaded.
                 await completed()
                 assert await bridge.read(box.job['id']+'.stopped')=='stopped'
-                output=json.loads(await bridge.read(box.job['id']+'.out'))
+                reply=box.job['id']+('.r'+str(box.seq & 1) if box.job.get('reply_slots') else '.out')
+                output=json.loads(await bridge.read(reply))
                 run=json.loads(output['text'])
                 assert not run['success'] and run['cancelled'] and run['exit_code']==20,run
-                await bridge.remove(box.job['id']+'.out',box.job['id']+'.stopped')
+                await bridge.remove(box.job['id']+'.out',box.job['id']+'.r0',box.job['id']+'.r1',box.job['id']+'.stopped')
                 (out/'passed.json').write_text(json.dumps({'fixture':fixture,'hardware':True,'arexx_run':True,
-                    'native_build_run':True,'actual_output_exit':True,'failed_build_preserves_program':True,
+                    'micropython_run':True,'protected_metadata_rejected':True,'native_build_run':True,'actual_output_exit':True,'failed_build_preserves_program':True,
                     'stale_run_blocked':True,'paths_rejected':True,'program_failure':True,'cooperative_stop':True},indent=2))
             finally:
                 if box and await busy():

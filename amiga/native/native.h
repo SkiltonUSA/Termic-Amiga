@@ -21,6 +21,7 @@ int decode_http(const char *raw, size_t size, int eof, int *status, char **body)
 int cloud_request(const char *key, const char *json, char **reply);
 int run_agent(void);
 int run_relay(void);
+int run_git_relay(void);
 extern const char agent_instructions[], agent_tools_json[];
 char *agent_tool_result(const char *name, const char *arguments, int readonly);
 char *list_project_sources(void);

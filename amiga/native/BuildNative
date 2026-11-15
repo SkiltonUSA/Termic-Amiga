@@ -6,11 +6,11 @@ vc +aos68k -cpu=68020 -O0 -ITermic:SDK/AmiSSL/Developer/include -c tls.c -o tls.
 If WARN
   Quit 20
 EndIf
-vc +aos68k -cpu=68020 -O1 worker.c hardware.c relay.c profiles.c agent.c files.c workspace.c http.c tls.o vendor/cJSON.c -o Termic:TermicAgent.new -lamiga -lmieee
+vc +aos68k -cpu=68020 -O1 worker.c hardware.c relay.c profiles.c agent.c change_review.c files.c workspace.c http.c tls.o vendor/cJSON.c -o Termic:TermicAgent.new -lamiga -lmieee
 If WARN
   Quit 20
 EndIf
-vc +aos68k -cpu=68020 -O1 -ITermic:SDK/MUI/Developer/C/Include -ITermic:SDK/MCC_TextEditor/Developer/C/include gui.c prompts.c profiles.c vendor/cJSON.c files.c workspace.c syntax.c -o Termic:TermicNative.new -lamiga -lmieee
+vc +aos68k -cpu=68020 -O1 -ITermic:SDK/MUI/Developer/C/Include -ITermic:SDK/MCC_TextEditor/Developer/C/include gui.c diagnostics.c change_review.c taskflow.c prompts.c profiles.c vendor/cJSON.c files.c workspace.c syntax.c -o Termic:TermicNative.new -lamiga -lmieee
 If WARN
   Quit 20
 EndIf
@@ -18,6 +18,11 @@ vc +aos68k -cpu=68020 -O1 mcp.c profiles.c files.c workspace.c vendor/cJSON.c -o
 If WARN
   Quit 20
 EndIf
+vc +aos68k -cpu=68020 -O1 check_deps.c -o Termic:TermicCheck -lamiga
+If WARN
+  Quit 20
+EndIf
+Protect Termic:TermicCheck +e
 vc +aos68k -cpu=68020 -O1 storage.c files.c workspace.c -o Termic:TermicStorage.new -lamiga
 If WARN
   Quit 20

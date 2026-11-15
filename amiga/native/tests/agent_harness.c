@@ -36,7 +36,7 @@ char *project_execute(const char *action, const char *path)
 {
     char *s = malloc(128);
     if (!strcmp(action, "build")) builds++;
-    else { assert(!strcmp(action, "program") || (path && strstr(path, ".rexx"))); executions++; }
+    else { assert(!strcmp(action, "program") || (path && strstr(path, ".rexx")) || (!strcmp(action,"python") && path && strstr(path,".py"))); executions++; }
     strcpy(s, fail_build ? "{\"success\":false,\"exit_code\":20,\"output\":\"Fixture failed\"}" :
         "{\"success\":true,\"exit_code\":0,\"output\":\"Fixture completed\"}");
     return s;
@@ -49,7 +49,7 @@ static void tool_check(const char *name, const char *args, int readonly, const c
 static void execution_tests(void)
 {
     cJSON *tools = cJSON_Parse(agent_tools_json);
-    assert(tools && cJSON_GetArraySize(tools) == 9); cJSON_Delete(tools);
+    assert(tools && cJSON_GetArraySize(tools) == 10); cJSON_Delete(tools);
     tool_check("system_info", "{}", 1, "synthetic hardware");
     tool_check("run_program", "{}", 0, "Build required");
     tool_check("run_arexx", "{\"path\":\"../outside.rexx\"}", 0, "Invalid ARexx path");
@@ -72,7 +72,11 @@ static void execution_tests(void)
     fail_build = 1;
     tool_check("build", "{}", 0, "\"success\":false");
     tool_check("run_program", "{}", 0, "Build required");
-    assert(executions == 2 && builds == 3);
+    tool_check("write_file", "{\"path\":\"test.py\",\"source\":\"print(42)\"}", 0, "File saved");
+    tool_check("run_python", "{\"path\":\"test.py\"}", 1, "Read-only profile");
+    tool_check("run_python", "{\"path\":\"../bad.py\"}", 0, "Invalid MicroPython path");
+    tool_check("run_python", "{\"path\":\"test.py\"}", 0, "exit_code");
+    assert(executions == 3 && builds == 3);
 }
 int cloud_request(const char *key, const char *json, char **reply)
 {

@@ -7,7 +7,7 @@ The application and compiler run on the Amiga. No Mac, Docker, DevBench or
 LAN model server is needed at runtime.
 
 REQUIREMENTS
-68020+, AmigaOS 3.2, MUI 3.8+, TextEditor.mcc 15.56, Fast RAM, VBCC and NDK.
+68020+, AmigaOS 3.2, MUI 5.0, TextEditor.mcc 15.56, Fast RAM, VBCC and NDK.
 Cloud access needs Roadshow or compatible bsdsocket.library, AmiSSL with CA
 certificates, an accurate clock and an OpenAI API key. The bundled native
 Git client was verified with AmiSSL 5.27; install that runtime from its
@@ -110,7 +110,7 @@ Changes offers Init repository, Status, Diff, and Stage source and commit.
 Set repository identity in the CLI panel before the first commit:
   Termic:Tools/amiga-git/git config user.name "Your Name"
   Termic:Tools/amiga-git/git config user.email you@example.com
-The commit action stages existing C/header and ARexx files. Use the shell for deleted
+The commit action stages existing C/H, Python, ARexx and text/Markdown files. Use the shell for deleted
 files, branches, remotes, fetch/push, merge, stash and other Git operations.
 Commit messages accept letters, digits, spaces and . , : / ( ) _ - .
 New repositories ignore build products and Termic job metadata. Existing
@@ -120,7 +120,7 @@ AGENT
 Enter task instructions, select a model and save an API key in Settings.
 The secret field never loads the existing key. Leaving it blank preserves
 that key. Start agent sends the task and requested source/compiler output
-to OpenAI. The model may list/read/write C/header and ARexx files, build and execute. It has
+to OpenAI. The model may list/read/write C/H, Python, ARexx and text/Markdown files, build and execute. It has
 no shell-command tool, and file tools reject device paths and traversal.
 Completed conversation IDs persist per task; New conversation resets the
 ID while retaining the transcript. API responses are stored for continuity.
@@ -149,8 +149,8 @@ Tab to a button first or choose a command using the mouse menu.
 BOUNDARIES
 This native implementation does not run the React/Tauri frontend or desktop
 agent CLIs. Host profiles provide buffered live response text through the proxy.
-There is no xterm terminal, automatic
-queue, broadcast/race mode, integrated remote PR UI or Git worktree support.
+There is no xterm terminal or broadcast/race mode. The serial queue and
+host worktree/PR controls are described below. Native tasks remain source copies.
 The shell exposes the installed native Git client's additional commands.
 Task instructions: 8 KiB. Individual source: 32 KiB. Agent compiler output:
 16 KiB. HTTP response: 256 KiB. File list: 128 files, six directory levels.
@@ -239,10 +239,10 @@ For examples, choose ARexx with Termic:Examples/hello.rexx or MicroPython with
 Termic:Examples/hello.py. Add ARexx / Add MicroPython creates a launch profile
 with the corresponding example already selected. Change Default arguments to
 run your own script. Add CLI opens a separate C:NewShell console.
-The editor supports .py, .rexx and .rx alongside C/H and text files. C/H syntax
-colouring remains C-specific; script files use plain text. Agent file writes
-support C/H and ARexx; named project guidance is readable.
-The separate task-orchestration MCP file interface remains C/H-only. No Termic-specific ARexx host commands added.
+The editor supports .py, .rexx and .rx alongside C/H and text files. C/H, Python and ARexx receive live lexical colours. Agent and MCP source
+file tools support C/H, Python, ARexx and text/Markdown. Named project
+guidance is readable but remains protected from agent writes.
+No Termic-specific ARexx host commands added.
 ARexx requires SYS:Rexxc/RX and RexxMast. MicroPython is installed under
 Termic:Tools/MicroPython with its license, upstream README and provenance.
 MicroPython runs on the 68k CPU; it is not full desktop CPython and does not
@@ -328,7 +328,7 @@ AI Proxy app when the bridge cannot deliver them to the Amiga.
 The direct API profile does not stream tokens.
 
 AGENT EXECUTION FRAMEWORK
-All agent providers share system_info, run_arexx and run_program.
+All agent providers share system_info, run_arexx, run_python and run_program.
 Use system_info for detected CPU, memory, OS/library versions, RexxMast and
 raw AutoConfig IDs. Machine model, CPU MHz and ARM availability are unknown.
 Save a task .rexx/.rx file, then use run_arexx. For C, build successfully
@@ -348,3 +348,19 @@ The original operation continues between polls; polls do not repeat execution
 or consume native tool calls. A running operation is not a successful result.
 Stop during native build/file I/O now preserves normal task-lock and port cleanup.
 Full details: docs/agent-execution.md in the source repository.
+
+TASK BOARD, QUEUE, REVIEW AND NOTES
+Right Amiga Y: Kanban board (Backlog, Needs attention, Working, Review,
+Done, Archived). Filter by project/name; select tasks and use the actions.
+Right Amiga J: persistent queue. Resume starts serial jobs, failure pauses
+remaining work, and restart always pauses. Pause does not stop an active job.
+Right Amiga U: review agent file-tool edits, accept or revert with backup.
+Later user edits are protected. ARexx/program side effects need Git review.
+Right Amiga L: scratchpad notes shared with MCP, 32 KiB each, backup saves.
+Right Amiga G: native branches and host worktree/GitHub PR controls.
+Host operations need updated Termic AI Proxy, Git and authenticated gh.
+Sync refuses dirty worktrees and does not delete host files absent on Amiga.
+PR creation requires confirmation and uses host credentials.
+Build / CLI compiler locations open the matching source line on double-click.
+Full usage and limits: docs/task-workflow.md and the linked AmigaGuide topics.
+TermicCheck reports runtime, SDK, Git, ARexx and MicroPython dependencies.

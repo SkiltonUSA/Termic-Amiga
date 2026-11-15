@@ -35,6 +35,11 @@ int main(void)
     assert(strstr(v, "\033P[FFB86C]42"));
     assert(strstr(v, "\033P[A6AFBD]// comment"));
     free(v);
+    assert(syntax_language("main.c")==1 && syntax_language("test.py")==2 && syntax_language("test.rexx")==3);
+    v=syntax_colours("def hello(): # comment\n    return True\n",2);
+    assert(v && strstr(v,"\033P[FF7B8B]def") && strstr(v,"\033P[A6AFBD]# comment") && strstr(v,"\033P[FF7B8B]True"));free(v);
+    v=syntax_colours("SAY 'hello'\nexit 0\n",3);
+    assert(v && strstr(v,"\033P[FF7B8B]SAY") && strstr(v,"\033P[FF7B8B]exit"));free(v);
     s = malloc(32770);
     memset(s, ';', 32768);
     s[32768] = 0;

@@ -9,11 +9,17 @@ const char *guidance_files[GUIDANCE_COUNT] = {
     ".agents/skills/termic/references/development.md",
     ".agents/skills/termic/references/mcp.md"
 };
+int workspace_name_equal(const char *a,const char *b)
+{
+    if(!a || !b)return 0;
+    while(*a && *b)if(tolower((unsigned char)*a++)!=tolower((unsigned char)*b++))return 0;
+    return !*a && !*b;
+}
 int guidance_name(const char *name)
 {
     int i;
     if (!name) return 0;
-    for (i=0;i<GUIDANCE_COUNT;i++) if (!strcmp(name,guidance_files[i])) return 1;
+    for (i=0;i<GUIDANCE_COUNT;i++) if (workspace_name_equal(name,guidance_files[i])) return 1;
     return 0;
 }
 int source_name(const char *s)
@@ -42,11 +48,16 @@ int source_name(const char *s)
 }
 int agent_source_name(const char *path)
 {
-    const char *ext;
-    if (!source_name(path)) return 0;
-    ext = strrchr(path, '.');
-    return ext && (!strcmp(ext, ".c") || !strcmp(ext, ".h") ||
-                   !strcmp(ext, ".rexx") || !strcmp(ext, ".rx"));
+    const char *base;int i;
+    static const char *reserved[]={"task.txt","name.txt","state.txt","session.txt","last-prompt.txt",
+        "commit.txt","command.txt","branch.txt","build-command.txt","transcript.txt",NULL};
+    if(!source_name(path) || guidance_name(path))return 0;
+    base=strrchr(path,'/');base=base?base+1:path;
+    for(i=0;reserved[i];i++)if(workspace_name_equal(base,reserved[i]))return 0;
+    {char prefix[9];unsigned n;
+     for(n=0;n<8 && base[n];n++)prefix[n]=tolower((unsigned char)base[n]);prefix[n]=0;
+     if(!strncmp(prefix,"session-",8) || !strncmp(prefix,"usage-",6))return 0;}
+    return 1;
 }
 int save_text(const char *path, const char *text, unsigned long limit)
 {

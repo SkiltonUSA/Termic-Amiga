@@ -2,6 +2,7 @@
 #include "profiles.h"
 #include "vendor/cJSON.h"
 #include "workspace.h"
+#include "change_review.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,11 +11,12 @@ const char agent_instructions[] =
     "You develop native AmigaOS 3.x programs using VBCC, NDK3.2 and ARexx. "
     "Use system_info for live CPU, memory, OS, libraries and expansion IDs. "
     "Do not present project defaults as detected hardware or guess the machine model or clock. "
-    "Use list_sources and read_file before editing C/H or ARexx (.rexx/.rx) files. "
+    "Use list_sources and read_file before editing C/H, Python, text, Markdown or ARexx (.rexx/.rx) files. "
     "Use C89 and MUI, GadTools or Intuition, soft float, no POSIX or ixemul. "
     "main.c is the default build entry; build returns the actual exit code and output. "
     "Use run_program only after a successful build in this task turn. Source edits invalidate it. "
     "Use write_file to save ARexx and run_arexx to execute the saved script. "
+    "Use run_python for a saved .py script with the installed MicroPython runtime, not CPython. "
     "Run tools wait for exit; prefer bounded console tests without interactive input. "
     "A GUI program must be closed to finish its run. Stop is cooperative. "
     "Only claim execution after a run tool returns, and report nonzero exit codes as failures. "
@@ -41,21 +43,23 @@ const char agent_tools_json[] =
     "output\",\"strict\":true,"
     "\"parameters\":{\"type\":\"object\",\"properties\":{},\"required\":[],"
     "\"additionalProperties\":false}},"
-    "{\"type\":\"function\",\"name\":\"list_sources\",\"description\":\"List project C/H and ARexx "
+    "{\"type\":\"function\",\"name\":\"list_sources\",\"description\":\"List project C/H, Python, text, Markdown and ARexx "
     "files\",\"strict\":true,"
     "\"parameters\":{\"type\":\"object\",\"properties\":{},\"required\":[],"
     "\"additionalProperties\":false}},"
-    "{\"type\":\"function\",\"name\":\"read_file\",\"description\":\"Read project guidance, C/H or ARexx "
+    "{\"type\":\"function\",\"name\":\"read_file\",\"description\":\"Read project guidance, C/H, Python, text, Markdown or ARexx "
     "file\",\"strict\":true,"
     "\"parameters\":{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"}},"
     "\"required\":[\"path\"],\"additionalProperties\":false}},"
-    "{\"type\":\"function\",\"name\":\"write_file\",\"description\":\"Save a project C/H or ARexx file "
+    "{\"type\":\"function\",\"name\":\"write_file\",\"description\":\"Save a project C/H, Python, text, Markdown or ARexx file "
     "with a backup, up to 32 KiB\",\"strict\":true,"
     "\"parameters\":{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"source\":"
     "{\"type\":\"string\"}},\"required\":[\"path\",\"source\"],\"additionalProperties\":false}},"
     "{\"type\":\"function\",\"name\":\"system_info\",\"description\":\"Read live Amiga hardware and runtime information\",\"strict\":true,"
     "\"parameters\":{\"type\":\"object\",\"properties\":{},\"required\":[],\"additionalProperties\":false}},"
     "{\"type\":\"function\",\"name\":\"run_arexx\",\"description\":\"Execute a saved workspace .rexx or .rx script; return output and exit code. Waits for exit.\",\"strict\":true,"
+    "\"parameters\":{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"}},\"required\":[\"path\"],\"additionalProperties\":false}},"
+    "{\"type\":\"function\",\"name\":\"run_python\",\"description\":\"Execute a saved workspace .py file with MicroPython; return output and exit code. Waits for exit.\",\"strict\":true,"
     "\"parameters\":{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"}},\"required\":[\"path\"],\"additionalProperties\":false}},"
     "{\"type\":\"function\",\"name\":\"run_program\",\"description\":\"Execute workspace Program after this turn successfully builds it. Waits for exit; return output and exit code.\",\"strict\":true,"
     "\"parameters\":{\"type\":\"object\",\"properties\":{},\"required\":[],\"additionalProperties\":false}}]";
@@ -77,7 +81,7 @@ static int build_ready;
 static int mutating_tool(const char *name)
 {
     return !strcmp(name, "write_source") || !strcmp(name, "write_file") ||
-           !strcmp(name, "build") || !strcmp(name, "run_arexx") || !strcmp(name, "run_program");
+           !strcmp(name, "build") || !strcmp(name, "run_arexx") || !strcmp(name, "run_python") || !strcmp(name, "run_program");
 }
 char *agent_tool_result(const char *name, const char *arguments, int readonly)
 {
@@ -97,7 +101,7 @@ char *agent_tool_result(const char *name, const char *arguments, int readonly)
         {
             const char *path = string_field(args, "path");
             char full[384];
-            message = "Invalid path. Use workspace C/H or ARexx files, or read the named project guidance files.";
+            message = "Invalid path. Use workspace C/H, Python, text, Markdown or ARexx files, or read the named project guidance files.";
             if (path && (project_source_allowed(path) ||
                 (!strcmp(name,"read_file") && project_guidance_allowed(path))))
             {
@@ -111,9 +115,9 @@ char *agent_tool_result(const char *name, const char *arguments, int readonly)
                          (source = string_field(args, "source")) != NULL)
                 {
                     build_ready = 0;
-                    message = save_text(full, source, SOURCE_LIMIT)
+                    message = review_write(TERMIC_PROJECT,path,source)
                                   ? "File saved. Previous contents kept in .bak."
-                                  : "Save failed.";
+                                  : "Save failed or a pending review conflicts with a later edit.";
                 }
             }
         }
@@ -129,7 +133,7 @@ char *agent_tool_result(const char *name, const char *arguments, int readonly)
         {
             build_ready = 0;
             message =
-                replace_source(source)
+                (*source && review_write(TERMIC_PROJECT,"main.c",source))
                     ? "main.c saved; previous source is main.c.bak."
                     : "Source was not replaced. Check file permissions and 32 KiB size limit.";
         }
@@ -143,6 +147,13 @@ char *agent_tool_result(const char *name, const char *arguments, int readonly)
             {
                 build_ready = 0; /* Scripts may change source or build products. */
                 result = project_execute("arexx", path);
+            }
+        }
+        else if(!strcmp(name,"run_python") && cJSON_GetArraySize(args)==1) {
+            const char *path=string_field(args,"path"),*ext=path?strrchr(path,'.'):NULL;
+            message="Invalid MicroPython path. Use a saved .py file inside this workspace.";
+            if(ext && !strcmp(ext,".py") && project_source_allowed(path)) {
+                build_ready=0;result=project_execute("python",path);
             }
         }
         else if (!strcmp(name, "run_program") && cJSON_GetArraySize(args) == 0)

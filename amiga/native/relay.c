@@ -110,7 +110,7 @@ static int publish(const char *path,const char *text)
     if(!ok) {printf("Cannot publish relay output: %s (DOS %ld).\n",path,(long)IoErr());DeleteFile((STRPTR)temp);}
     return ok;
 }
-int run_relay(void)
+static int run_relay_mode(int host_git)
 {
     struct AgentProfiles *registry=calloc(1,sizeof(*registry));
     struct AgentProfile *p;struct RelayState s;
@@ -118,9 +118,15 @@ int run_relay(void)
     char in[128],out[128],stopped[128],*task=NULL,*json=NULL,*previous=NULL;
     cJSON *request=NULL,*guides=NULL;int selected,i,owned=0,idle=0,total=0,done=0;
     memset(&s,0,sizeof(s));s.result=20;
-    if(!registry || !profiles_load(registry) || (selected=profile_selected(registry))<0) {puts("Cannot load Mac relay profile.");goto end;}
-    p=&registry->items[selected];if(!profile_is_relay(p->kind)) {puts("Select a Mac agent profile.");goto end;}
-    task=read_text("task.txt",8192);if(!task || !*task) {puts("Enter task instructions first.");goto end;}
+    if(!registry)goto end;
+    if(host_git) {
+        p=&registry->items[0];strcpy(p->id,"host-git");p->kind=5;p->readonly=1;p->steps=129;
+    } else {
+        if(!profiles_load(registry) || (selected=profile_selected(registry))<0) {puts("Cannot load Mac relay profile.");goto end;}
+        p=&registry->items[selected];if(!profile_is_relay(p->kind)) {puts("Select a Mac agent profile.");goto end;}
+    }
+    task=read_text(host_git?".host-git-request":"task.txt",8192);
+    if(!task || !*task) {puts("Enter task instructions first.");goto end;}
     memset(&port,0,sizeof(port));port.mp_Node.ln_Name="TermicCodexRelay";
     port.mp_Node.ln_Type=NT_MSGPORT;port.mp_Flags=PA_IGNORE;port.mp_SigTask=FindTask(NULL);
     Forbid();if(!FindPort((STRPTR)"TermicCodexRelay")) {AddPort(&port);owned=1;}Permit();
@@ -135,15 +141,15 @@ int run_relay(void)
     profile_session(p,s.session);s.readonly=p->readonly;s.limit=p->steps;
     s.append=append_transcript;
     {char *heading=malloc(strlen(task)+80);int ok;
-     if(!heading)goto end;sprintf(heading,"\nTask (%s on Mac):\n%s\n\n",profile_provider(p->kind),task);
+     if(!heading)goto end;sprintf(heading,"\nTask (%s on Mac):\n%s\n\n",host_git?"Git service":profile_provider(p->kind),task);
      ok=s.append(heading);free(heading);
      if(!ok) {puts("Cannot update task transcript.");goto end;}}
 
     request=cJSON_CreateObject();guides=cJSON_CreateArray();
     if(!request || !guides) {puts("Not enough memory for relay request.");goto end;}
-    cJSON_AddNumberToObject(request,"protocol",p->kind==5?1:2);
+    cJSON_AddNumberToObject(request,"protocol",host_git?2:p->kind==5?1:2);
     cJSON_AddBoolToObject(request,"reply_slots",1);
-    cJSON_AddStringToObject(request,"provider",profile_provider(p->kind));
+    cJSON_AddStringToObject(request,"provider",host_git?"git":profile_provider(p->kind));
     cJSON_AddStringToObject(request,"id",s.id);
     cJSON_AddStringToObject(request,"prompt",task);
     cJSON_AddStringToObject(request,"model",p->model);
@@ -192,4 +198,6 @@ end:
     cJSON_Delete(request);cJSON_Delete(guides);free(previous);free(task);free(json);free(registry);
     return s.result;
 }
+int run_relay(void) {return run_relay_mode(0);}
+int run_git_relay(void) {return run_relay_mode(1);}
 #endif

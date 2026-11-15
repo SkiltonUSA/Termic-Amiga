@@ -6,12 +6,13 @@ compilation, execution and hardware queries happen on the Amiga.
 
 | Tool | Result |
 | --- | --- |
-| `list_sources` | C/header and `.rexx`/`.rx` files in the task. |
+| `list_sources` | C/H, Python, text/Markdown and `.rexx`/`.rx` files in the task. |
 | `read_source`, `write_source` | Read or replace the existing `main.c`. |
-| `read_file`, `write_file` | Task C/header or ARexx files; reads also accept the named guidance files. Writes keep backups. |
+| `read_file`, `write_file` | Task C/H, Python, ARexx or text/Markdown files; reads also accept the named guidance files. Writes keep backups. |
 | `system_info` | Live CPU flags/model, OS-visible memory, Exec/library versions, RexxMast status and raw AutoConfig board IDs. |
 | `build` | Run the task's configured build, returning output and the build-script exit code. |
 | `run_arexx` | Execute a saved task-relative `.rexx`/`.rx` file with `SYS:Rexxc/RX`. |
+| `run_python` | Execute a saved task-relative `.py` file with native MicroPython. |
 | `run_program` | Run the task's `Program` Hunk executable after a successful build in the current turn. |
 
 Dispatched execution results contain `success`, `exit_code`, `output`,

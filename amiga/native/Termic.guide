@@ -14,6 +14,8 @@ Native MUI development workspace for AmigaOS 3.2 / 68020+.
   @{"Workbench launchers" LINK Workbench}  @{"Version and credits" LINK About}
   @{"Agent profiles" LINK Profiles}     @{"MCP and CLI access" LINK MCP}
   @{"Codex on Mac" LINK Codex}          @{"Prompts" LINK Prompts}
+  @{"Kanban and queue" LINK TaskFlow}    @{"Review and notes" LINK ReviewNotes}
+  @{"Branches and worktrees" LINK HostGit}
   @{"Alphabetical index" LINK Index}
 
 Use Contents to return here, Index for topics, Retrace to go back,
@@ -50,7 +52,7 @@ Next: @{"Projects" LINK Projects}  @{"Editor" LINK Editor}  @{"Build" LINK Build
 @ENDNODE
 
 @NODE Install "Installation and dependencies"
-Requirements: AmigaOS 3.2, a 68020 or newer CPU, Fast RAM, MUI 3.8+
+Requirements: AmigaOS 3.2, a 68020 or newer CPU, Fast RAM, MUI 5.0
 and TextEditor.mcc 15.56. Builds require VBCC, vasm, vlink and the NDK.
 MultiView and the AmigaGuide datatype display this manual.
 
@@ -168,8 +170,8 @@ MicroPython lives in Termic:Tools/MicroPython; its license and provenance
 are included there. It runs on the 68k CPU, with no ZZ9000 ARM offload.
 Python packages written for desktop CPython may need adaptation.
 
-The editor opens .py, .rexx and .rx files as plain text. Agent tools expose C/H and ARexx sources plus read-only named guidance.
-The separate task-orchestration MCP file tools remain C/H-only. No Termic-specific ARexx commands
+The editor colours C/H, Python and ARexx. Agent and MCP source tools also
+support text/Markdown; named guidance remains read-only to agents. No Termic-specific ARexx commands
 are added to the application host port.
 
 This is a command runner. Interactive
@@ -206,7 +208,7 @@ field retains the effective key and never displays it.
 
 Enter instructions in the Agent tab and choose Start agent. The worker
 sends the instructions and requested source/compiler output to OpenAI.
-It can list/read/write C/header and ARexx files, build and execute.
+It can list/read/write C/H, Python, ARexx and text/Markdown files, build and execute.
 Use system_info for live CPU, memory, OS/library versions and raw board IDs.
 It leaves the machine model, CPU MHz and ARM availability unknown.
 Use run_arexx for a saved .rexx/.rx script. Use build then run_program for C.
@@ -408,7 +410,7 @@ copy. A .bak is not a substitute for a separate disk backup.
 @ENDNODE
 
 @NODE Trouble "Troubleshooting"
-No main window: check MUI 3.8+ and TextEditor.mcc installation. Run from
+No main window: check MUI 5.0 and TextEditor.mcc installation. Run from
 Shell for startup messages, using Stack 262144 before launching TermicNative.
 The Workbench icon already requests this stack. Keep supporting files together.
 MUI 5 uses Title-class tabs; MUI 3.8 uses its original Register tabs.
@@ -435,8 +437,8 @@ confirming its worker has stopped. Never remove an active worker's lock.
 Preference changes disappear: Use is temporary until reboot. Choose Save
 for persistent defaults. A changed project drawer requires app restart.
 
-Source colours look old: colours refresh when a file loads; saving does
-not recolour and preserves undo. Syntax highlighting is not live.
+Source colours look old: release a selection and pause typing briefly.
+Live C/H, Python and ARexx colours refresh while preserving Undo.
 @ENDNODE
 
 @NODE Limits "Limits and hardware"
@@ -446,7 +448,7 @@ Workers: 16 per application, one per task. Agent rounds: 1-32 per profile (defau
 Network deadline: 120 seconds after DNS; DNS timing belongs to the stack.
 Large imports copy synchronously and can delay the interface.
 
-Test hardware: A4000TX, TF4060/68060, Workbench 3.2.3, MUI 3.8,
+Test hardware: A4000TX, TF4060/68060, Workbench 3.2.3, MUI 5.0,
 TextEditor.mcc 15.56, AmiSSL 5.27 and a ZZ9000 RTG display.
 Compilation, TLS and file processing run on the 68k. The ZZ9000 supplies
 RTG graphics; ARM compute offload is not implemented. Termic does not
@@ -454,8 +456,8 @@ change firmware, display mode or ownership of ARM applications.
 
 This is a native MUI implementation, not the React/Tauri desktop app.
 No native desktop agent CLIs, interactive PTY or Git worktrees.
-Host profiles provide buffered live response text. No
-queue/broadcast/race modes or integrated remote PR controls are provided.
+Host profiles provide buffered live response text, worktrees and PR controls.
+The serial queue is available; broadcast/race modes are not implemented.
 Classic AmigaOS has no process isolation: review code before running it.
 @ENDNODE
 
@@ -662,4 +664,65 @@ Desktop setup, downloads and verification: docs/ai-proxy.md in the source repo.
 The optional command-line launcher remains available for developers.
 
 See also: @{"Profiles" LINK Profiles}  @{"MCP" LINK MCP}  @{"Cloud agent" LINK Agent}
+@ENDNODE
+
+@NODE TaskFlow "Kanban board and persistent queue"
+Right Amiga Y opens the board: Backlog, Needs attention, Working, Review,
+Done and Archived. Search task/project names and press Return. Select a
+task to open it, queue work, review, mark done, archive or restore it.
+Running jobs determine Working. Agent completion waits in Review for you.
+Use the buttons to change state; drag-and-drop is not implemented.
+
+Right Amiga J opens the queue. Add agent instructions or builds, reorder
+pending rows, remove rows or clear finished history. Resume runs serially.
+A failure pauses later work. Resume continues without retrying the failed
+entry. Re-add a failed task explicitly to retry it. Pause prevents the next
+launch; use Stop for active work. Queued tasks are reserved against edits.
+
+The queue survives in Config/queue.json and starts paused after a restart.
+Existing workers are reattached; uncertain interrupted jobs need attention.
+They are never replayed automatically. Up to 64 queue entries are retained.
+
+@{"Review and notes" LINK ReviewNotes}  @{"Projects" LINK Projects}
+@ENDNODE
+
+@NODE ReviewNotes "Agent edit review and scratchpads"
+Right Amiga U opens agent edit review. Select a file to see BEFORE/AFTER.
+Accept keeps the edit. Revert asks for confirmation, restores the original
+and retains generated contents in .bak. A new file moves to .bak. Later
+user edits cause a conflict and are never overwritten by review.
+
+The journal covers agent write_file/write_source tools, not external
+editors, MCP file writes or ARexx/program side effects. Use Git diff for
+those. Resolving edits does not automatically mark a task Done.
+
+Right Amiga L opens scratchpads. Name a note with letters, digits, - or _,
+choose New note, edit and Save. Notes share .scratchpads storage with MCP.
+Switching notes and closing save changes. A failed save keeps notes open.
+Each note is limited to 32 KiB; busy/queued tasks cannot save notes.
+
+C/H, Python and ARexx have live lexical colours. Recolouring preserves Undo
+and waits while text is selected. Compiler locations below Build / CLI
+output open source at the reported line on double-click.
+The run_python agent tool executes task .py files with native MicroPython.
+
+@{"Task board" LINK TaskFlow}  @{"Source editor" LINK Editor}
+@ENDNODE
+
+@NODE HostGit "Git branches and host worktrees"
+Right Amiga G opens native List/Create/Switch branch controls. Initialize
+the task repository first. Checkout uses normal Git protection, no force.
+
+Host worktrees require updated Termic AI Proxy, Git and authenticated gh
+on Mac or Windows. Enter GitHub owner/repository, task branch, base branch
+and title. Worktree status prepares and inspects a managed host worktree.
+Sync and commit copies supported Amiga source files to the task branch.
+Dirty host worktrees are refused. Missing Amiga files are not host deletes.
+
+Create PR asks before syncing, committing, pushing and creating/reusing a
+GitHub pull request. Credentials remain on the host. These operations do
+not use AI. Stop cancels host processes. Failed work is not reset/retried.
+Native amiga-git itself does not support worktrees.
+
+@{"Git review" LINK Git}  @{"Task board" LINK TaskFlow}
 @ENDNODE

@@ -7,17 +7,17 @@ DevBench bridge are separate prerequisites.
 
 ![Termic AI Proxy with synthetic account status](screenshots/ai-proxy.png)
 
-Proxy build 58d0f75 batches mailbox checks to further reduce bridge delays.
-It retains the faster task pickup, live-text batching and alternating reply
-files introduced in cfbf4f0. Existing profiles and conversations continue to work:
-[macOS download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43652953017/artifacts/14136628709)
-and [Windows download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43652953017/artifacts/14136752120).
-Both passed portable tests, packaging, MCP, legacy/fast task-pickup and desktop
-lifecycle checks. Update both proxy and native worker for the faster reply
-mode; older peers automatically retain the compatible exchange. If the
-cfbf4f0 worker is already installed, this update needs only the host proxy.
-Native worker source builds with `BuildNative`.
-GitHub sign-in is required; artifacts expire after 30 days.
+Proxy build `027f7b7` adds host Git worktrees and the native MicroPython agent
+command while retaining batched mailbox checks, live-text batching and alternating
+reply files. Verified bundles are available as
+[macOS download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43664728871/artifacts/14142051410)
+and [Windows download](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43664728871/artifacts/14141647536).
+Both passed 46 portable tests, packaging, MCP smoke, both mailbox modes and
+desktop lifecycle checks. Update the native worker and proxy together to use
+the new commands. Older peers retain their compatible transport but do not gain
+new native tools from a host-only update. Build the native worker with
+`BuildNative`. GitHub sign-in is required for CI artifacts; they expire after
+30 days.
 
 ## Start the app
 
@@ -186,3 +186,11 @@ Cursor uses its documented
 [partial-output filtering](https://cursor.com/docs/cli/reference/output-format)
 to skip duplicate pre-tool and final flushes. The direct OpenAI API profile
 does not gain token streaming from this update.
+
+## Task worktrees and GitHub controls
+
+The Amiga's **Right Amiga G** dialog uses this proxy for isolated host Git
+worktrees, sync/commit and confirmed PR creation. Install Git and GitHub CLI
+(`gh`) on the host and authenticate there. The credentials stay on the host;
+no AI model is involved. See [Task workflow](task-workflow.md#git-branches-host-worktrees-and-github)
+for repository/branch setup and dirty-worktree protection.

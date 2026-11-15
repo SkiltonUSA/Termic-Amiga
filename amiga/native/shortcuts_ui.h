@@ -138,6 +138,11 @@ static ULONG termic_key_event(struct IntuiMessage *im)
     if (im->Qualifier & IEQUALIFIER_CONTROL) mods|=KEY_CTRL;
     if (im->Qualifier & (IEQUALIFIER_LALT|IEQUALIFIER_RALT)) mods|=KEY_ALT;
     if (im->Qualifier & (IEQUALIFIER_LCOMMAND|IEQUALIFIER_RCOMMAND)) mods|=KEY_AMIGA;
+    /* Route board/queue shortcuts before an editor handles its own bindings. */
+    if((mods & KEY_AMIGA) && (im->Code==0x15 || im->Code==0x26 || im->Code==0x16 || im->Code==0x28 || im->Code==0x24)) {
+        if(!(im->Qualifier & IEQUALIFIER_REPEAT))queue_action(im->Code==0x15?KB_OPEN:im->Code==0x26?Q_OPEN:im->Code==0x16?CR_OPEN:im->Code==0x28?SP_OPEN:GT_OPEN);
+        return 1;
+    }
     if (compose && (im->Code==0x3a || im->Code==0x01 || im->Code==0x02 || (mods&KEY_ALT))) {
         char *text=(char *)DoMethod(prompt,MUIM_TextEditor_ExportText), *p=text;
         if(p) {while(isspace((unsigned char)*p)) p++;empty=!*p;FreeVec(text);}

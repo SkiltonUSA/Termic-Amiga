@@ -6,6 +6,9 @@
 #include "syntax.h"
 #include "version.h"
 #include "workspace.h"
+#include "taskflow.h"
+#include "change_review.h"
+#include "diagnostics.h"
 #include <ctype.h>
 #include <devices/timer.h>
 #include <dos/dosextens.h>
@@ -38,7 +41,9 @@ const char stack_size[] = "$STACK:262144";
 #define PATH_SIZE 384
 static Object *app, *win, *projects, *tasks, *files, *pages, *source, *prompt, *output, *review,
     *transcript, *cli_output;
-static Object *prompts_body;
+static Object *prompts_body,*diagnostic_list,*diagnostic_view;
+static struct Diagnostic diagnostic_rows[DIAGNOSTIC_MAX];
+static int diagnostic_count;
 static Object *status, *heading, *filename, *newname, *projectname, *taskname, *model, *keyfield,
     *command, *command_mode, *commit, *findtext, *buildcommand, *projectdrawer;
 static char project_paths[MAX_ITEMS][PATH_SIZE], task_paths[MAX_ITEMS][PATH_SIZE],
@@ -106,7 +111,7 @@ enum
     WINDOW_DEPTH,
     WINDOW_ZOOM,
     SHORTCUTS, SHORTCUTSCLOSE, INSTRUCTIONS, HISTORY, HISTORYFIND, HISTORYNEXT,
-    LASTPROMPT, MENTION, COMMANDS, COMMANDSCLOSE
+    LASTPROMPT, MENTION, COMMANDS, COMMANDSCLOSE, CR_OPEN=5200, SP_OPEN=5400, GT_OPEN=5500
 };
 struct Job
 {
@@ -118,6 +123,9 @@ struct Job
 
 static struct ActivityView activity;
 static int transcript_pending;
+static void editor_recolour(void);
+static int colour_pending,colour_delay;
+static void flow_tick(void), flow_changed(void), flow_completed(const char *, int);
 static struct MsgPort *timer_port;
 static struct timerequest *timer_io;
 static int timer_open, timer_pending, control_registered;
@@ -243,6 +251,13 @@ static void job_output(const char *text)
 {
     set(output, MUIA_TextEditor_Contents, text);
     set(cli_output, MUIA_TextEditor_Contents, text);
+    if(diagnostic_list) {
+        int i;set(diagnostic_list,MUIA_List_Quiet,TRUE);DoMethod(diagnostic_list,MUIM_List_Clear);
+        diagnostic_count=diagnostics_parse(text,diagnostic_rows,DIAGNOSTIC_MAX);
+        for(i=0;i<diagnostic_count;i++)DoMethod(diagnostic_list,MUIM_List_InsertSingle,
+            diagnostic_rows[i].message,MUIV_List_Insert_Bottom);
+        set(diagnostic_list,MUIA_List_Quiet,FALSE);
+    }
 }
 static int exists(const char *p)
 {
@@ -276,7 +291,8 @@ static int busy(const char *p)
     join(path, p, ".busy");
     if(exists(path)) return 1;
     join(path,p,".launch");if(exists(path))return 1;
-    join(path,p,".mcp-lock");return exists(path);
+    join(path,p,".mcp-lock");if(exists(path))return 1;
+    join(path,p,".queued");return exists(path);
 }
 static void content(Object *o, const char *p, const char *fallback)
 {
@@ -300,9 +316,7 @@ static void content(Object *o, const char *p, const char *fallback)
     }
     if (o == source)
     {
-        int csyntax = strlen(p) >= 2 &&
-                      (!strcmp(p + strlen(p) - 2, ".c") || !strcmp(p + strlen(p) - 2, ".h"));
-        char *styled = syntax_colours(s ? s : fallback, csyntax);
+        char *styled = syntax_colours(s ? s : fallback, syntax_language(p));
         set(o, MUIA_TextEditor_Contents, styled ? styled : (s ? s : fallback));
         free(styled);
         set(o, MUIA_TextEditor_Pen, 0xffe6edf3UL);
@@ -785,28 +799,26 @@ static int any_jobs(void)
             return 1;
     return 0;
 }
-static void launch(const char *action, int page)
+static int launch_at(const char *target, const char *action, int page)
 {
     char path[PATH_SIZE], line[512];
     BPTR in, out;
     int i;
-    if (!save_current())
-        return;
-    if (busy(current))
+    if (busy(target))
     {
         message("A job is already running in this workspace.");
-        return;
+        return 0;
     }
     for (i = 0; i < 16 && jobs[i].active; i++)
         ;
     if (i == 16)
     {
         message("All 16 worker slots are in use.");
-        return;
+        return 0;
     }
-    join(path, current, ".result");
+    join(path, target, ".result");
     DeleteFile((STRPTR)path);
-    join(path, current, "job.log");
+    join(path, target, "job.log");
     out = Open((STRPTR)path, MODE_READWRITE);
     in = Open((STRPTR) "NIL:", MODE_OLDFILE);
     if (!out || !in)
@@ -816,33 +828,39 @@ static void launch(const char *action, int page)
         if (in)
             Close(in);
         message("Cannot open job log.");
-        return;
+        return 0;
     }
     SetFileSize(out, 0, OFFSET_BEGINNING);
-    sprintf(line, "Stack 262144\nTermic:TermicAgent %s --project \"%s\"\n", action, current);
-    join(path, current, ".job");
+    sprintf(line, "Stack 262144\nTermic:TermicAgent %s --project \"%s\"\n", action, target);
+    join(path, target, ".job");
     if (!save_text(path, line, 1024))
     {
         Close(in);
         Close(out);
         message("Cannot write worker script.");
-        return;
+        return 0;
     }
     sprintf(line, "Execute \"%s\"", path);
+    join(path,target,".launch");
+    {BPTR reservation=CreateDir((STRPTR)path);
+     if(!reservation) {Close(in);Close(out);message("Cannot reserve task launch.");return 0;}
+     UnLock(reservation);}
     if (SystemTags((STRPTR)line, SYS_Input, in, SYS_Output, out, SYS_Asynch, TRUE, TAG_DONE) == -1)
     {
         Close(in);
         Close(out);
+        DeleteFile((STRPTR)path);
         message("Cannot launch worker.");
-        return;
+        return 0;
     }
-    strcpy(jobs[i].path, current);
+    strcpy(jobs[i].path, target);
     jobs[i].active = 1;
     jobs[i].polls = 0;
     jobs[i].bytes = -1;
-    join(path, current, "state.txt");
+    join(path, target, "state.txt");
     save_text(path, "Running", 32);
-    task_row(current);
+    task_row(target);
+    if (!strcmp(target,current)) {
     editor_readonly(source, TRUE);
     editor_readonly(prompt, TRUE);
     if (page >= 0)
@@ -850,7 +868,14 @@ static void launch(const char *action, int page)
     job_output("Starting native worker...\n");
     message(page == 0 ? "Agent running. Cyan responses and amber logs appear together."
                       : "Running. You can switch tasks while this worker continues.");
+    }
     arm_timer();
+    flow_changed();
+    return 1;
+}
+static void launch(const char *action, int page)
+{
+    if(save_current()) launch_at(current,action,page);
 }
 /* Follow the latest activity without disturbing a clipboard selection.
  * Catch up to the bottom when the selection is released. */
@@ -914,6 +939,8 @@ static void poll_jobs(void)
             if (!s && ++jobs[i].polls > 20 && !worker_registered(jobs[i].path))
             {
                 jobs[i].active = 0;
+                join(path,jobs[i].path,"state.txt");save_text(path,"Needs attention",32);
+                flow_completed(jobs[i].path,20);
                 if (!strcmp(current, jobs[i].path))
                     message("Worker exited without a result. Check its log and any stale .busy "
                             "drawer.");
@@ -923,6 +950,7 @@ static void poll_jobs(void)
                 jobs[i].active = 0;
                 join(path, jobs[i].path, "state.txt");
                 save_text(path, atoi(s) == 0 ? "Review" : "Needs attention", 32);
+                flow_completed(jobs[i].path,atoi(s));
                 task_row(jobs[i].path);
                 if (!strcmp(current, jobs[i].path))
                 {
@@ -946,7 +974,9 @@ static void poll_jobs(void)
                 free(s);
             }
         }
-    if (any_jobs())
+    editor_recolour();
+    flow_tick();
+    if (any_jobs() || colour_pending)
         arm_timer();
 }
 static void cancel(void)
@@ -1132,6 +1162,11 @@ static void open_about(void)
 }
 #include "prompts_ui.h"
 #include "shortcuts_ui.h"
+#include "editor_tools_ui.h"
+#include "change_review_ui.h"
+#include "taskflow_ui.h"
+#include "scratchpads_ui.h"
+#include "git_ui.h"
 static Object *menu_items[COMMANDSCLOSE + 1];
 static Object *edit_target(void)
 {
@@ -1222,6 +1257,11 @@ static Object *build_menus(void)
     menu_item(menu, "Git Status", NULL, GITSTATUS);
     menu_item(menu, "Git Diff", NULL, DIFF);
     menu = new_menu(strip, "View");
+    menu_item(menu, "Kanban board...", "Y", KB_OPEN);
+    menu_item(menu, "Task queue...", "J", Q_OPEN);
+    menu_item(menu, "Scratchpads...", "L", SP_OPEN);
+    menu_item(menu, "Review agent edits...", "U", CR_OPEN);
+    menu_item(menu, "Git branches and worktrees...", "G", GT_OPEN);
     menu_item(menu, "Agent", "1", PAGE_AGENT);
     menu_item(menu, "Editor", "2", PAGE_EDITOR);
     menu_item(menu, "Build / CLI", "3", PAGE_OUTPUT);
@@ -1285,7 +1325,8 @@ static int build_ui(void)
     End, Child, PaneGroup, GroupFrame, Child, label("\33bTasks"), InnerSpacing(6, 6),
     MUIA_Group_Spacing, 6, Child, list(&tasks), Child, taskname = entry(120), Child, HGroup, Child,
     button("New task", NEWTASK), Child, button("Rename", RENAMETASK), Child, HVSpace, End, Child,
-    HGroup, Child, button("Mark done", MARKDONE), Child, HVSpace, End, End, End;
+    HGroup, Child, button("Kanban", KB_OPEN), Child, button("Queue", Q_OPEN), Child,
+    button("Mark done", MARKDONE), Child, HVSpace, End, End, End;
     center = VGroup, MUIA_Weight, 65, Child, heading = label("Termic workspace"), Child,
     pages = MUI_NewObject(tabtitles ? MUIC_Group : MUIC_Register,
     tabtitles ? TAG_IGNORE : MUIA_Register_Titles, tabs, MUIA_Group_PageMode, TRUE,
@@ -1303,10 +1344,11 @@ static int build_ui(void)
     Child, HVSpace, End, End, End, Child,
     VGroup, Child, filename = label("main.c"), Child, editor(&source, 0), Child, HGroup, Child,
     findtext = entry(120), Child, button("Find", FIND), Child, button("Next", FINDNEXT), End, End,
-    Child, VGroup, Child, editor(&output, 1), Child,
+    Child, VGroup, Child, VGroup,MUIA_Weight,80,Child,editor(&output, 1),End,Child,
+    VGroup,MUIA_Weight,20,Child,label("Compiler locations (double-click to open)"),Child,diagnostic_view=list(&diagnostic_list),End,Child,
     label("Full job output. Run CLI commands from the panel below Files."), End, Child, VGroup,
     Child, HGroup, Child, button("Status", GITSTATUS), Child, button("Diff", DIFF), Child,
-    button("Init repository", GITINIT), End, Child, editor(&review, 1), Child,
+    button("Init repository", GITINIT), Child, button("Review agent edits", CR_OPEN), Child,button("Git branches...",GT_OPEN),End, Child, editor(&review, 1), Child,
     label("Commit message (configure Git identity in the shell first)"), Child, commit = entry(256),
     Child, button("Stage source and commit", GITCOMMIT), End, Child, VGroup, Child, VGroup,
     GroupFrame, Child, HGroup, Child, button("Agents / CLI / Scripts...", PF_OPEN), Child, button("Agent access / MCP...", AC_OPEN), End, Child, label("\33bDefault API connection"), InnerSpacing(8, 8), MUIA_Group_Spacing, 6, Child,
@@ -1367,6 +1409,7 @@ static int build_ui(void)
     if(!profile_window) return 0;
     access_window=build_access_window();
     if(!access_window) return 0;
+    if(!flow_build_windows() || !change_build_window() || !pad_build_window() || !git_build_window())return 0;
     profiles_picker_refresh();
     notify(win, MUIA_Window_CloseRequest, TRUE, QUIT);
     notify(win, MUIA_Window_InputEvent, (ULONG) "-repeat help", HELP);
@@ -1394,6 +1437,8 @@ static int build_ui(void)
         for (i = 0; i < 10; i++)
             notify(win, MUIA_Window_InputEvent, (ULONG)keys[i], ids[i]);
     }
+    notify(diagnostic_view,MUIA_Listview_DoubleClick,TRUE,ED_DIAGNOSTIC);
+    notify(source,MUIA_TextEditor_ContentsChanged,TRUE,ED_CHANGED);
     notify(history_find, MUIA_String_Acknowledge, MUIV_EveryTime, HISTORYNEXT);
     notify(newname, MUIA_String_Acknowledge, MUIV_EveryTime, NEWFILE);
     notify(commit, MUIA_String_Acknowledge, MUIV_EveryTime, GITCOMMIT);
@@ -1426,16 +1471,39 @@ int main(int argc, char **argv)
     }
     if (argc == 3 && !strcmp(argv[1], "--icon"))
         return icon(argv[2]);
+    /* Claim the singleton before touching the shared assign or preferences.
+       A second copy must not redirect the already running workspace's files. */
+    memset(&control_port, 0, sizeof(control_port));
+    control_port.mp_Node.ln_Name = (STRPTR)"TermicWorkspaceUI";
+    control_port.mp_Node.ln_Type = NT_MSGPORT;
+    control_port.mp_Flags = PA_IGNORE;
+    control_port.mp_SigTask = FindTask(NULL);
+    Forbid();
+    if (!FindPort((STRPTR)"TermicWorkspaceUI"))
+    {
+        AddPort(&control_port);
+        control_registered = 1;
+    }
+    Permit();
+    if (!control_registered)
+    {
+        puts("Termic is already running. Close its window before starting another copy.");
+        return 20;
+    }
     root = DupLock(GetProgramDir());
     if (!root)
+    {
+        RemPort(&control_port);
         return 20;
+    }
     if (!AssignLock((STRPTR) "Termic", root))
     {
         UnLock(root);
+        RemPort(&control_port);
         return 20;
     }
     IntuitionBase = (struct IntuitionBase *)OpenLibrary((STRPTR) "intuition.library", 37);
-    MUIMasterBase = OpenLibrary((STRPTR) "muimaster.library", 19);
+    MUIMasterBase = OpenLibrary((STRPTR) "muimaster.library", 21);
     if (!IntuitionBase || !MUIMasterBase)
         goto cleanup;
     GfxBase = (struct GfxBase *)OpenLibrary((STRPTR) "graphics.library", 37);
@@ -1472,7 +1540,7 @@ int main(int argc, char **argv)
     }
     if (!build_ui())
     {
-        puts("MUI 3.8 and TextEditor.mcc 15.56 are required. Run InstallUI.");
+        puts("MUI 5.0 and TextEditor.mcc 15.56 are required. Run TermicCheck.");
         goto cleanup;
     }
     mkdir_safe(project_root);
@@ -1516,18 +1584,6 @@ int main(int argc, char **argv)
         goto cleanup;
     }
     timer_open = 1;
-    memset(&control_port,0,sizeof(control_port));control_port.mp_Node.ln_Name=(STRPTR)"TermicWorkspaceUI";
-    control_port.mp_Node.ln_Type=NT_MSGPORT;control_port.mp_Flags=PA_IGNORE;control_port.mp_SigTask=FindTask(NULL);
-    Forbid();
-    if(!FindPort((STRPTR)"TermicWorkspaceUI")) {
-        AddPort(&control_port);control_registered=1;
-    }
-    Permit();
-    if(!control_registered) {
-        message("Another Termic window is registered. Close it before starting this copy. "
-                "If it exited abnormally, reboot the Amiga first.");
-        goto cleanup;
-    }
     if (any_jobs())
         arm_timer();
     if (storage_failed)
@@ -1537,6 +1593,7 @@ int main(int argc, char **argv)
     if (!value(win, MUIA_Window_Open))
         goto cleanup;
     activity_scroll_bottom(transcript);
+    flow_startup();
     while (!done)
     {
         update_menus();
@@ -1549,6 +1606,23 @@ int main(int argc, char **argv)
             if(id>=PF_OPEN && id<=PF_ADDCURSOR) {profile_event(id);continue;}
             if (shortcut_event(id)) continue;
             if(id>=PL_OPEN && id<=PL_INSERT) {prompts_event(id);continue;}
+            if(id==ED_DIAGNOSTIC) {
+                int row=value(diagnostic_list,MUIA_List_Active);
+                if(row>=0 && row<diagnostic_count && save_current()) {
+                    open_file(diagnostic_rows[row].path);set(pages,MUIA_Group_ActivePage,1);
+                    set(win,MUIA_Window_ActiveObject,source);
+                    SetAttrs(source,MUIA_TextEditor_CursorY,diagnostic_rows[row].line-1,MUIA_TextEditor_CursorX,0,TAG_DONE);
+                }
+                continue;
+            }
+            if(id==ED_CHANGED) {
+                set(source,MUIA_TextEditor_ContentsChanged,FALSE);
+                colour_pending=1;colour_delay=1;arm_timer();continue;
+            }
+            if(id>=GT_OPEN && id<=GT_PR) {git_event(id);continue;}
+            if(id>=SP_OPEN && id<=SP_REFRESH) {pad_event(id);continue;}
+            if(id>=CR_OPEN && id<=CR_REFRESH) {change_event(id);continue;}
+            if(id>=KB_OPEN && id<=Q_LAST) {flow_event(id);continue;}
             switch (id)
             {
             case WINDOW_DEPTH:
@@ -1624,7 +1698,7 @@ int main(int argc, char **argv)
                 break;
             case QUIT:
             case MUIV_Application_ReturnID_Quit:
-                if (save_current())
+                if (save_current() && pad_save())
                 {
                     done = 1;
                 }
@@ -1891,6 +1965,8 @@ int main(int argc, char **argv)
                 }
                 break;
             }
+            if(id==NEWTASK || id==NEWPROJECT || id==MARKDONE || id==RENAMETASK ||
+               id==RENAMEPROJECT || id==IMPORTPROJECT)flow_changed();
             if (done)
                 break;
         }
@@ -1899,10 +1975,10 @@ int main(int argc, char **argv)
         if (signals)
         {
             received = Wait(signals | SIGBREAKF_CTRL_C | SIGBREAKF_CTRL_D | (1UL << timer_port->mp_SigBit));
-            if (received & SIGBREAKF_CTRL_D) refresh_mcp_tasks();
+            if (received & SIGBREAKF_CTRL_D) {refresh_mcp_tasks();flow_changed();flow_tick();}
             if (received & SIGBREAKF_CTRL_C)
             {
-                if (save_current())
+                if (save_current() && pad_save())
                     done = 1;
             }
             if (timer_pending && CheckIO((struct IORequest *)timer_io))

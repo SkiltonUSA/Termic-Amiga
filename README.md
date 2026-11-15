@@ -11,13 +11,16 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 ## Features
 
 - Projects and independent source-copy task workspaces.
-- Embedded editor with a black background and C/header syntax colours on load.
+- Embedded editor with a black background and live C/header, Python and ARexx syntax colours.
 - Resolution-scaled blue title bar with close, depth and zoom icons, drag support and a black Files list.
 - Source backups, undo/redo, clipboard and search.
 - Native VBCC build/run and explicit AmigaDOS commands with captured output.
 - Persistent CLI panel below Files, with a resizable half-height split, command entry and job output.
-- Native Git initialization, status, diffs and source commits.
-- Agent tools for C/header and ARexx files, native builds, ARexx/program execution and live hardware queries.
+- Native Git initialization, status, diffs, source commits and branch controls.
+- Kanban lifecycle board and a persistent serial task queue with failure recovery.
+- Agent edit review with accept/revert and task scratchpad notes.
+- Clickable compiler diagnostics; host Git worktrees and GitHub PR controls.
+- Agent tools for C/header, Python, ARexx and text files, native builds, ARexx/MicroPython/program execution and live hardware queries.
 - Codex, Claude and Cursor host profiles, with model selection and live response/tool feedback on the Amiga.
 - One black Agent activity pane with cyan responses, amber worker logs and a narrower instruction field beside the controls.
 - Standalone Termic AI Proxy desktop app for macOS and Windows 11.
@@ -74,13 +77,17 @@ and differences from desktop Termic.
 [Amiga interface conventions](docs/amiga-interface.md) describes the menu,
 preferences and clipboard behavior and its remaining limitations.
 
+See [Task workflow](docs/task-workflow.md) for the Kanban board, queue, edit review,
+notes, compiler locations and Git worktree controls.
+
 ## Requirements and installation
 
-AmigaOS 3.2, 68020 or newer, Fast RAM, MUI 3.8+ and TextEditor.mcc 15.56.
-The application is also tested with MUI 5.0 and uses its native Title tabs.
+AmigaOS 3.2, 68020 or newer, Fast RAM, MUI 5.0 and TextEditor.mcc 15.56.
+The application uses native MUI Title tabs.
 Development uses VBCC and NDK3.2. Native Git requires long filenames and was
-verified with AmiSSL 5.27. Cloud access additionally needs a compatible TCP/IP
-stack, CA certificates, an accurate clock and your own OpenAI API key.
+verified with AmiSSL 5.27. Direct OpenAI HTTPS access additionally needs a
+compatible TCP/IP stack, CA certificates, an accurate clock and your own API key.
+Host CLI profiles use their existing Mac/Windows login through the AI Proxy.
 
 Press **Help** for the [AmigaGuide manual](amiga/native/Termic.guide), with linked
 chapters, an index and optional ToolsDaemon Workbench launcher instructions.
@@ -92,14 +99,16 @@ Install `Termic.guide` beside `TermicNative`; it opens in MultiView.
 See the [native installation guide](amiga/native/ReadMe) for installation layout,
 SDK setup, builds, project storage, shortcuts and limits. Dependency archives
 are pinned by SHA-256 in [sdk-lock.json](amiga/native/sdk-lock.json).
-The source is backed up here; an AmiPkg release has not yet been published.
+See [AmiPkg release building and validation](docs/amipkg-release.md) for the
+installation recipe, dependency checks and fresh-install safeguards.
+The entry is not yet part of the public AmiPkg catalog.
 
 ## Build and verification
 
-`amiga/native/BuildNative` builds TermicNative, TermicAgent, TermicStorage and TermicMCP
+`amiga/native/BuildNative` builds TermicNative, TermicAgent, TermicStorage, TermicMCP and TermicCheck
 on the Amiga in the installation layout described in the guide. Their shared
 version is defined in [version.h](amiga/native/version.h), independently of the
-desktop version. All four support `--version` and AmigaDOS `Version FILE FULL`.
+desktop version. All five support `--version` and AmigaDOS `Version FILE FULL`.
 
 Run portable tests on a host with a C compiler and AddressSanitizer:
 
@@ -145,7 +154,8 @@ behavior from functionality still awaiting hardware or authenticated checks.
 
 Tasks are independent source snapshots, not Git worktrees. The shell captures
 commands; it is not an interactive PTY. Desktop agent CLIs run on the host through the proxy.
-Queue/broadcast/race modes and integrated remote PR controls are not implemented.
+The serial queue and host worktree/PR controls are described above.
+Broadcast/race modes are not implemented.
 ZZ9000 supplies the existing RTG display; ARM compute offload is not implemented.
 
 ## Credits and licence

@@ -1,6 +1,6 @@
 ---
 name: termic
-description: Develop native Amiga programs in Termic Amiga using its C/H and ARexx agent tools, native builds, CLI scripts and adapted MCP task routines. Use for work in an Amiga project, not for the desktop React/Tauri application.
+description: Develop native Amiga programs in Termic Amiga using its C/H, Python, ARexx and text agent tools, native builds, CLI scripts and adapted MCP task routines. Use for work in an Amiga project, not for the desktop React/Tauri application.
 ---
 
 # Termic Amiga
@@ -13,15 +13,16 @@ For external task orchestration, read [Amiga MCP](references/mcp.md).
 
 The direct API worker loads this file and AGENTS.md at the start of a request.
 Its read_file tool can read these instruction files and the linked references.
-Its write tools accept C/H and ARexx (.rexx/.rx) sources. Read-only profiles
+Its write tools accept C/H, Python, ARexx (.rexx/.rx) and text/Markdown sources. Read-only profiles
 reject writing, builds and execution. Use list_sources and read before editing.
-Use build then run_program for C, or run_arexx for a saved script when requested.
+Use build then run_program for C, run_arexx for ARexx, or run_python for a
+saved .py script when requested.
 Execution tools return output and exit codes; check them before claiming success.
 Use system_info for detected hardware rather than project defaults.
 Report what was verified and what still needs a user or hardware check.
 
 The native app provides CLI, ARexx and MicroPython execution for user commands.
-Agent run tools execute saved ARexx and the freshly built Program; they do not
+Agent run tools execute saved ARexx/Python and the freshly built Program; they do not
 provide an arbitrary shell-command tool or interactive input.
 The host MCP connector runs in host CPython. Native MicroPython is a separate
 runtime on the 68k processor. No automatic peer pairing or subagent routing
@@ -30,3 +31,7 @@ is implemented by this Amiga port.
 These are real project-local files. There are no links to external desktop
 profile folders. Editing them changes guidance for the next agent request;
 it does not install another agent executable or change its credentials.
+
+Agent file writes are journaled for user accept/revert review. Do not overwrite
+a conflict after a later user edit. The task board and persistent queue track
+progress; completing a response does not mark the task Done for the user.

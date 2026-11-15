@@ -196,6 +196,18 @@ char *project_execute(const char *action, const char *path)
                 rc = run_binary("SYS:Rexxc/RX", args);
             }
         }
+    } else if(!strcmp(action,"python")) {
+        const char *ext=path?strrchr(path,'.'):NULL;
+        if(!ext || strcmp(ext,".py") || !project_source_allowed(path))error="Invalid MicroPython path.";
+        else {
+            script=read_text(path,SOURCE_LIMIT);
+            if(!script)error="Script missing, binary or larger than 32 KiB.";
+            free(script);
+            if(!error) {
+                snprintf(args,sizeof(args),"%s\n",path);
+                rc=run_binary("Termic:Tools/MicroPython/micropython",args);
+            }
+        }
     } else if (!strcmp(action, "program")) {
         unsigned char header[4];
         file = project_inside("Program") ? fopen("Program", "rb") : NULL;
@@ -367,14 +379,15 @@ int main(int argc, char **argv)
     else if (argc > 2)
     {
         puts("Usage: TermicAgent "
-             "--agent|--build|--run|--probe|--status|--diff|--init|--commit|--shell|--rexx|--python|--instructions [--project "
+             "--agent|--build|--run|--probe|--status|--diff|--init|--commit|--shell|--rexx|--python|--instructions|--branches|--branch|--checkout|--host-git [--project "
              "drawer]");
         return 20;
     }
     if (strcmp(action, "--agent") && strcmp(action, "--build") && strcmp(action, "--run") &&
         strcmp(action, "--probe") && strcmp(action, "--status") && strcmp(action, "--diff") &&
         strcmp(action, "--init") && strcmp(action, "--commit") && strcmp(action, "--shell") &&
-        strcmp(action, "--rexx") && strcmp(action, "--python") && strcmp(action,"--instructions"))
+        strcmp(action, "--rexx") && strcmp(action, "--python") && strcmp(action,"--instructions") && strcmp(action,"--host-git") &&
+        strcmp(action,"--branches") && strcmp(action,"--branch") && strcmp(action,"--checkout"))
         return 20;
     lock = Lock((STRPTR)path, ACCESS_READ);
     if (!lock)
@@ -411,6 +424,7 @@ int main(int argc, char **argv)
         printf("Verified HTTPS probe: HTTP %d (401 expected without a key).\n", status);
         result = status == 401 ? 0 : 20;
     }
+    else if(!strcmp(action,"--host-git"))result=run_git_relay();
     else if (!strcmp(action, "--build"))
         result = build_project() ? 0 : 20;
     else if (!strcmp(action, "--run"))
@@ -434,6 +448,19 @@ int main(int argc, char **argv)
             }
         }
         free(command);
+    }
+    else if(!strcmp(action,"--branches"))result=run_command("Termic:Tools/amiga-git/git branch -a");
+    else if(!strcmp(action,"--branch") || !strcmp(action,"--checkout")) {
+        char *branch=read_text("branch.txt",80),cmd[256];int valid=branch && *branch;
+        const char *p=branch;
+        if(valid && (!isalnum((unsigned char)*branch) || strstr(branch,"..") || strstr(branch,"//") || strstr(branch,"/.")))valid=0;
+        while(valid && *p) {if(!isalnum((unsigned char)*p) && !strchr("_-/.",*p))valid=0;p++;}
+        if(valid && (branch[strlen(branch)-1]=='/' || branch[strlen(branch)-1]=='.' || strstr(branch,".lock")))valid=0;
+        if(valid) {
+            snprintf(cmd,sizeof(cmd),"Termic:Tools/amiga-git/git checkout %s%s",!strcmp(action,"--branch")?"-b ":"",branch);
+            result=run_command(cmd);
+        }else puts("Invalid branch name. Use letters, digits, _, -, / and single dots.");
+        free(branch);
     }
     else if (!strcmp(action, "--status"))
         result = run_command("Termic:Tools/amiga-git/git status");

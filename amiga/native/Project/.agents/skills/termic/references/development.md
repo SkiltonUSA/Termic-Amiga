@@ -15,9 +15,9 @@ Build / CLI is the user's command runner. Its selector accepts:
 
 Commands run in the selected workspace. Interactive input uses a separate
 Amiga CLI console. The editor supports C/H, Python, ARexx, text and Markdown.
-Agent tools can list/read/write C/H and ARexx files and invoke native builds.
-Use run_arexx for a saved script, or build then run_program for native code.
-Both return captured output and the actual exit code. Use the CLI panel or
+Agent tools can list/read/write C/H, Python, ARexx and text/Markdown files and invoke native builds.
+Use run_arexx for ARexx, run_python for .py, or build then run_program for native code.
+Execution tools return captured output and the actual exit code. Use the CLI panel or
 a separate Shell for interactive execution.
 
 BuildProject compiles main.c unless build-command.txt supplies a command that

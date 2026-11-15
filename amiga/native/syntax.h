@@ -1,6 +1,7 @@
 #ifndef TERMIC_SYNTAX_H
 #define TERMIC_SYNTAX_H
 /* Allocated TextEditor RGB import text; caller frees. NULL on failure. */
+int syntax_language(const char *path);
 char *syntax_colours(const char *text, int csyntax);
 /* One display, two plain-text sources. Storage files are never styled. */
 struct ActivityView { char *agent, *log; int kind; unsigned long bytes; };

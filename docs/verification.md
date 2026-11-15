@@ -675,3 +675,39 @@ confirmed the installed app matches the tested build, the proxy is running,
 the native binaries retain their previous checksums and the relay is idle.
 Downloads are updated in [AI Proxy setup](ai-proxy.md). A physical Windows
 to Amiga connection remains untested.
+
+## Task workflow and development services
+
+The portable suite passes 66 tests, including ASan/UBSan checks for persistent
+queue serialization/recovery, allocation failures, review conflicts and interrupted
+reverts, compiler locations, syntax modes and protected file names. The proxy
+suite passes 46 tests. The rebuilt macOS bundle passes its GUI/MCP smoke, both
+mailbox protocols and reconnect/Start/Stop/window-close acceptance.
+
+On the physical 68060, the written execution suite passes ARexx, MicroPython,
+native build/run, actual nonzero exit codes, stale-run rejection, failed-build
+preservation and cooperative cancellation. Native Git branch creation/list/switch
+passes on the long-filename project volume. A native host-Git request reads its
+Amiga task sources through the relay and commits them into an isolated host
+worktree without changing the host's original checkout. That acceptance uses a
+local synthetic repository; it does not push or open a GitHub PR.
+
+The dependency checker detects the installed CPU, AmigaOS, MUI 5, TextEditor,
+SDK, MicroPython, Git, ARexx and AmiSSL requirements. Editor recolouring preserves
+text, cursor, dirty state and Undo on the installed TextEditor class. Written MUI
+checks cover accepting/reverting agent changes and creating/saving a scratchpad.
+
+[Workflow proxy build 43664728871](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/43664728871)
+passed the 46-test suite, packaging, bundled MCP smoke, both mailbox modes and
+desktop lifecycle checks on macOS and Windows. The tested macOS bundle was
+installed with an independent rollback copy. A physical Windows-to-Amiga
+connection remains outside that CI acceptance.
+
+A fresh isolated installation on the Amiga passed original SDK archive checks,
+SDK/UI extraction, compilation of all five native programs and `TermicCheck`.
+The written Kanban acceptance covers startup pause, ordered execution, failure
+pause, explicit resume without replaying a failed entry, Done/Archive/Restore,
+queue reorder/removal and clearing completed history. Review accept/revert and
+scratchpad creation/save also passed in that installation. A second GUI launch
+is rejected before changing the running installation's assign or preferences;
+the hardware regression checks both the assign and original window identity.

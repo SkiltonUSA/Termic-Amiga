@@ -1,3 +1,4 @@
+/* Languages: 0 plain text, 1 C, 2 Python, 3 ARexx. */
 #include "syntax.h"
 #include <ctype.h>
 #include <stdlib.h>
@@ -6,7 +7,7 @@ static int word(int c)
 {
     return isalnum((unsigned char)c) || c == '_';
 }
-static int keyword(const char *s, size_t n)
+static int keyword(const char *s, size_t n, int language)
 {
     static const char *words[] = {
         "auto",     "break",  "case",   "char",     "const",    "continue", "default",  "do",
@@ -14,10 +15,24 @@ static int keyword(const char *s, size_t n)
         "inline",   "int",    "long",   "register", "restrict", "return",   "short",    "signed",
         "sizeof",   "static", "struct", "switch",   "typedef",  "union",    "unsigned", "void",
         "volatile", "while",  "_Bool",  NULL};
+    static const char *python[]={"False","None","True","and","as","assert","async","await","break","class","continue","def","del","elif","else","except","finally","for","from","global","if","import","in","is","lambda","nonlocal","not","or","pass","raise","return","try","while","with","yield",NULL};
+    static const char *rexx[]={"address","arg","call","do","drop","else","end","exit","if","interpret","iterate","leave","nop","numeric","options","otherwise","parse","procedure","pull","push","queue","return","say","select","signal","then","trace","when",NULL};
+    const char **table=language==2?python:language==3?rexx:words;
     int i;
-    for (i = 0; words[i]; i++)
-        if (strlen(words[i]) == n && !strncmp(s, words[i], n))
-            return 1;
+    for (i = 0; table[i]; i++)
+        if(strlen(table[i])==n) {
+            size_t j;for(j=0;j<n;j++)if((language==3?tolower((unsigned char)s[j]):s[j])!=table[i][j])break;
+            if(j==n)return 1;
+        }
+    return 0;
+}
+int syntax_language(const char *path)
+{
+    const char *ext=path?strrchr(path,'.'):NULL;
+    if(!ext)return 0;
+    if(!strcmp(ext,".c") || !strcmp(ext,".h"))return 1;
+    if(!strcmp(ext,".py"))return 2;
+    if(!strcmp(ext,".rexx") || !strcmp(ext,".rx"))return 3;
     return 0;
 }
 char *syntax_colours(const char *text, int csyntax)
@@ -60,19 +75,19 @@ char *syntax_colours(const char *text, int csyntax)
             while (*end && *end != '\n')
                 end++;
         }
-        else if (first && *p == '#')
+        else if ((csyntax==1 && first && *p=='#') || (csyntax==2 && *p=='#'))
         {
-            kind = 6;
+            kind = csyntax==2?5:6;
             while (*end && *end != '\n')
                 end++;
         }
-        else if (p[0] == '/' && p[1] == '/')
+        else if (csyntax==1 && p[0] == '/' && p[1] == '/')
         {
             kind = 5;
             while (*end && *end != '\n')
                 end++;
         }
-        else if (p[0] == '/' && p[1] == '*')
+        else if (csyntax!=2 && p[0] == '/' && p[1] == '*')
         {
             kind = 5;
             end = p + 2;
@@ -84,7 +99,14 @@ char *syntax_colours(const char *text, int csyntax)
         else if (*p == '"' || *p == '\'')
         {
             kind = 4;
-            while (*end)
+            if(csyntax==2 && p[1]==*p && p[2]==*p) {
+                end=p+3;
+                while(*end && !(end[0]==*p && end[1]==*p && end[2]==*p)) {
+                    if(*end=='\\' && end[1])end++;
+                    end++;
+                }
+                if(*end)end+=3;
+            } else while (*end)
             {
                 if (*end == '\\' && end[1])
                     end += 2;
@@ -96,7 +118,7 @@ char *syntax_colours(const char *text, int csyntax)
         {
             while (word(*end))
                 end++;
-            if (keyword(p, end - p))
+            if (keyword(p, end - p, csyntax))
                 kind = 1;
             else
             {

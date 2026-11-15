@@ -26,7 +26,7 @@ async def main(args):
                 with (out/'evidence.log').open('a') as f:f.write(n+' '+t+'\n')
                 assert not r.isError and 'ERROR:' not in t and '[ERROR]' not in t and '[STILL RUNNING]' not in t and 'Cannot read remote file' not in t,t
                 await asyncio.sleep(.2);return t
-            async def shell(script):return await call('amiga_run_script',{'script':'FailAt 10\nStack 262144\n'+script,'timeout':15})
+            async def shell(script,timeout=15):return await call('amiga_run_script',{'script':'FailAt 10\nStack 262144\n'+script,'timeout':timeout})
             async def push(local,remote):await call('amiga_push_file',{'local_path':str(Path(local).resolve()),'amiga_path':remote})
             async def state(title='',front=False):
                 t=await shell(PROD+'/ChromeProbe '+('front' if front else 'query')+(' "'+title+'"' if title else ''))
@@ -49,6 +49,16 @@ async def main(args):
                 finally:
                     await call('amiga_input_key',{'rawkey':rawkey,'direction':'up'})
                     await call('amiga_input_key',{'rawkey':'67','direction':'up'})
+                title={'15':'Termic: Kanban board','26':'Termic: Task queue',
+                       '16':'Termic: Review agent changes','28':'Termic: Scratchpads',
+                       '24':'Termic: Git branches and worktrees'}.get(rawkey)
+                if title:
+                    # Native disk-backed dialogs may need several seconds to
+                    # populate. Wait for the window, not a host-speed delay.
+                    for _ in range(30):
+                        if (await state(title))['address']:break
+                        await asyncio.sleep(1)
+                    else:raise AssertionError('Menu did not open '+title)
                 await asyncio.sleep(.5)
             async def capture(title,name):
                 if args.skip_screenshots:return
@@ -70,7 +80,7 @@ async def main(args):
                 raise AssertionError('Main window did not open')
             async def stop_candidate():
                 # Exercise normal MUI cleanup rather than an external break signal.
-                for title in ['Termic: Commands','Termic: Keyboard shortcuts','Termic: Prompts','Termic: Agents, CLI and Scripts','Termic: Agent access']:
+                for title in ['Termic: Review agent changes','Termic: Scratchpads','Termic: Git branches and worktrees','Termic: Kanban board','Termic: Task queue','Termic: Commands','Termic: Keyboard shortcuts','Termic: Prompts','Termic: Agents, CLI and Scripts','Termic: Agent access']:
                     p=await state(title)
                     if p['address']:
                         await state(title,front=True)
@@ -111,12 +121,40 @@ async def main(args):
                 await push(ROOT/'amiga/native/Examples/hello.py',fixture+'/Examples/hello.py')
                 await push(ROOT/'amiga/native/Examples/hello.rexx',fixture+'/Examples/hello.rexx')
                 await shell('Protect '+fixture+'/Tools/MicroPython/micropython +e')
-                await accept_workflow.stage(ROOT,out,fixture,shell,push,call)
+                if args.install_kit:
+                    import accept_install
+                    await accept_install.stage(ROOT,out,fixture,args.install_kit,shell,push,call)
+                if not (args.kanban_only or args.features_only):
+                    await accept_workflow.stage(ROOT,out,fixture,shell,push,call)
+                if args.kanban_only or args.features_only:
+                    import accept_kanban
+                    if not args.features_only:
+                        await accept_kanban.stage(ROOT,out,fixture,shell,push,call)
+                    if args.features:
+                        import accept_features
+                        await accept_features.stage(ROOT,out,fixture,shell,push,call)
+                if args.monitor_task:
+                    import accept_monitor_task
+                    await accept_monitor_task.stage(ROOT,out,fixture,shell,push,call)
                 await shell('Protect '+fixture+'/TermicProfilesTest +e\nProtect '+fixture+'/TermicAgent +e\nProtect '+fixture+'/TermicMCP +e\nRun >NIL: <NIL: '+fixture+'/TermicProfilesTest')
                 launched=True;p=await wait_main()
                 await call('amiga_window_move',{'window':format(p['address'],'08x'),'x':260,'y':75})
                 await call('amiga_window_resize',{'window':format(p['address'],'08x'),'width':1400,'height':650})
                 await state(front=True);p=await state()
+                if args.kanban_only or args.features_only:
+                    import accept_singleton
+                    await accept_singleton.exercise(ROOT,out,fixture,shell,push,call,state,args.gui)
+                if args.kanban_only or args.features_only:
+                    import accept_kanban
+                    if not args.features_only:
+                        await accept_kanban.exercise(ROOT,out,fixture,shell,push,call,state,click,capture,menu)
+                    if args.features:
+                        import accept_features
+                        await accept_features.exercise(ROOT,out,fixture,shell,push,call,state,click,capture,menu)
+                    if args.monitor_task:
+                        import accept_monitor_task
+                        await accept_monitor_task.exercise(ROOT,out,fixture,shell,push,call,state,click,capture,menu,args)
+                    return
                 if args.live_feedback_only:
                     import accept_live_feedback
                     await accept_live_feedback.exercise(ROOT,out,fixture,shell,push,call,state,click,capture,menu)
@@ -257,10 +295,23 @@ async def main(args):
                     await accept_codex.exercise(ROOT,out,fixture,shell,push,call,state,click,capture,menu,args)
                 (out/'passed.json').write_text(json.dumps({'fixture':fixture,'profiles_saved':3,'native_mcp':True,'native_build':True,'failed_build_preserves_program':True,'stdio_bridge':True,'arexx':True,'micropython':True,'workflow':True},indent=2))
             finally:
-                if launched:await stop_candidate()
+                if args.install_kit:
+                    pending=await shell('If EXISTS '+fixture+'/install-started\n If NOT EXISTS '+fixture+'/install.result\n  Echo INSTALL_ACTIVE\n EndIf\nEndIf')
+                    if 'INSTALL_ACTIVE' in pending:
+                        raise RuntimeError('Installation may still be active; retain fixture assignments until inspected')
+                if launched:
+                    await stop_candidate()
+                    # Closing the GUI does not kill an active native worker.
+                    # Keep its installation assigned until all test jobs exit.
+                    for _ in range(900):
+                        if 'TermicJob.' not in await call('amiga_list_ports',{}):break
+                        await asyncio.sleep(1)
+                    else:raise RuntimeError('Test worker remains active; retain fixture assignments')
                 if prepared:
                     await shell('If EXISTS ENV:Termic\n Delete ENV:Termic ALL\nEndIf')
                     if env:await shell('Copy '+fixture+'/EnvBackup ENV:Termic ALL\nDelete '+fixture+'/EnvBackup ALL')
+                if args.install_kit:
+                    await shell('Assign Termic: '+PROD+'\nIf EXISTS '+fixture+'/env-vbcc-saved\n Execute Termic:Setup\n If EXISTS '+fixture+'/env-vbcc\n  Copy '+fixture+'/env-vbcc ENV:VBCC\n Else\n  Delete ENV:VBCC\n EndIf\nEndIf')
                 await shell('Assign Termic: '+PROD+'\nRun >NIL: <NIL: '+PROD+'/TermicNative')
                 p=await wait_main()
                 await call('amiga_window_move',{'window':format(p['address'],'08x'),'x':original['x'],'y':original['y']})
@@ -276,5 +327,10 @@ if __name__=='__main__':
     p.add_argument('--live-feedback-only',action='store_true',help='Exercise live transcript, selection and tool feedback without cloud inference')
     p.add_argument('--cli-panel-only', action='store_true', help='Exercise the Files/CLI split, commands, output, focus and resizing only')
     p.add_argument('--codex-relay',action='store_true',help='Run an authenticated synthetic Codex read/write/build and resume test')
+    p.add_argument('--monitor-task',action='store_true',help='Run authenticated process-monitor development through Kanban, then wait for local source audit')
+    p.add_argument('--install-kit',type=Path,help='Optional fixture-only LHA without SDK archives, to validate fresh extraction and native builds')
+    p.add_argument('--features-only',action='store_true',help='Stage the fixture but skip the already-tested queue execution')
+    p.add_argument('--features',action='store_true',help='Also exercise native editor colouring, change review and scratchpads')
+    p.add_argument('--kanban-only',action='store_true',help='Exercise queue persistence, failure recovery and the Kanban board without cloud inference')
     p.add_argument('--skip-screenshots',action='store_true')
     asyncio.run(main(p.parse_args()))

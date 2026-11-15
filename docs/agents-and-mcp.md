@@ -180,10 +180,10 @@ Existing profile IDs and credentials are retained; the original built-in
 Amiga Shell display name becomes Amiga CLI, unless it was customized.
 
 The editor and project/task source copies accept `.py`, `.rexx` and `.rx`.
-These files use plain text; syntax colouring remains specific to C/H.
+C/H, Python and ARexx receive live syntax colours.
 The cloud agent and MCP can also read the six named project guidance files.
-Agent writes support C/H and ARexx; the separate task-orchestration MCP file
-interface remains C/H-only.
+Agent and MCP source writes support C/H, Python, ARexx and text/Markdown,
+while reserved metadata and project guidance remain protected.
 This adds script execution, not custom Termic ARexx automation commands.
 ARexx uses the system RX command and requires a running RexxMast.
 

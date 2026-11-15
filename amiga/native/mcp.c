@@ -31,7 +31,7 @@ static const struct Tool tools[] = {
     {"project_list", "List Amiga source projects.", "", 1},
     {"task_list", "List a project's independent source-copy tasks.", "project", 1},
     {"task_new",
-     "Create an isolated task by copying project C/H sources. Does not start an agent.",
+     "Create an isolated task by copying project C/H, Python, ARexx, text and Markdown sources. Does not start an agent.",
      "project name agent?", 0},
     {"task_status", "Read native worker state and exit result.", "project task", 1},
     {"task_send", "Start the task's direct API profile with a prompt. Refuses busy tasks.",
@@ -41,9 +41,9 @@ static const struct Tool tools[] = {
     {"task_log", "Read native build/worker output.", "project task", 1},
     {"task_build", "Build an MCP-created task with its native build command.", "project task",
      0},
-    {"file_read", "Read C/H source or named project guidance in a task. Paths are task-relative.",
+    {"file_read", "Read C/H, Python, ARexx, text and Markdown source or named project guidance in a task. Paths are task-relative.",
      "project task path", 1},
-    {"file_write", "Save C/H source in an idle MCP-created task, retaining a backup.",
+    {"file_write", "Save C/H, Python, ARexx, text and Markdown source in an idle MCP-created task, retaining a backup.",
      "project task path content", 0},
     {"scratchpad_write", "Write a task note in its .scratchpads drawer, outside source files.",
      "project task pad content", 0},
@@ -207,12 +207,10 @@ static int task_path(cJSON *args, char *out)
 }
 static int source_path(const char *base, const char *name, char *out)
 {
-    const char *ext;
     char part[184], walk[512], *s, *next;
     if (!name || strlen(name) >= sizeof(part) || !source_name(name))
         return 0;
-    ext = strrchr(name, '.');
-    if (!ext || (strcmp(ext, ".c") && strcmp(ext, ".h")))
+    if (!agent_source_name(name))
         return 0;
     strcpy(part, name);
     strcpy(walk, base);
@@ -341,7 +339,9 @@ static int busy_task(const char *task)
     if (kind(p) != 0)
         return 1;
     pathjoin(p, sizeof(p), task, ".launch");
-    return kind(p) != 0;
+    if(kind(p)!=0)return 1;
+    pathjoin(p,sizeof(p),task,".queued");
+    return kind(p)!=0;
 }
 static int mutable_task(const char *task)
 {
@@ -590,7 +590,7 @@ static cJSON *run_tool(const struct Tool *tool, cJSON *args)
         if (!( !strcmp(name,"file_read") && guidance_name(str(args,"path")) &&
                pathjoin(path,sizeof(path),task,str(args,"path")) && kind(path)==1 && within(task,path)) &&
             !source_path(task, str(args, "path"), path))
-            return content("Only relative C/H files inside this task are accessible.", 1);
+            return content("Only relative source, Python, ARexx, text or Markdown files inside this task are accessible.", 1);
         if (!strcmp(name, "file_write"))
         {
             int ok = mcp_save(path, str(args, "content"), SOURCE_LIMIT);
