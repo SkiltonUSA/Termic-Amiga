@@ -45,7 +45,7 @@ if len(sys.argv)>1 and sys.argv[1]=='--server':
             checksum_error[0]=False
             return 'Error: T:fixture-unrelated-reader'
         raw=files[path]
-        return f'CRC32: {zlib.crc32(raw):08X}\nSize: {len(raw)} bytes'
+        return f'File: {path}\nCRC32: {zlib.crc32(raw):08X}\nSize: {len(raw)} bytes'
     @mcp.tool()
     def amiga_run_script(script:str,timeout:int=10)->str:
         assert script.startswith('FailAt 10\nDelete '+root+'/')

@@ -889,3 +889,61 @@ programs and standalone monitor reported 0.1.2 Beta; TermicCheck reported zero
 missing dependencies. The normal workspace reopened at its original size, and
 Tools > Process Monitor opened and closed successfully. User projects and
 configuration were preserved. This was an upgrade, not a fresh target install.
+
+## Proxy reliability and real agent workflow (15 November 2026)
+
+All 83 portable tests passed, including 20 mailbox transport tests. The
+proxy-focused subset passed all 56 checks. Added faults cover same-sized wrong
+file bytes, file replacement between chunks, timeouts, incomplete uploads and
+lost write/delete/rename acknowledgements. Assertions require single mutation
+attempts, exact checksum verification and ID/sequence-matched replies. Four
+recovery tests fail against the preceding relay implementation and pass with
+this change. This demonstrates the tested recovery paths, not a diagnosis of
+every earlier live bridge failure.
+
+The rebuilt macOS desktop bundle passed its startup/stdio smoke test, legacy
+and alternating-slot mailbox acceptance, and desktop start/stop/reconnect/close
+checks. It was installed with a rollback copy of the previous app. No native
+production executable changed; the installed Amiga version remains 0.1.2 Beta.
+
+`accept_agent_workflow.py` and `tests/test_agent_workflow.c` exercised the real
+production queue, worker, review and board functions in an isolated Acceptance
+drawer through the installed desktop proxy. Codex authenticated with the Mac's
+existing ChatGPT sign-in; no credential was copied to the Amiga. A saved Codex
+profile was added while retaining the existing OpenAI/CLI defaults.
+
+The agent read the fixture requirements, replaced the deliberately incomplete
+`main.c`, compiled a native System Summary program with VBCC on the Amiga and
+executed it exactly once. Both build and execution returned zero; the captured
+output ended in `SYSTEM_SUMMARY_OK`. The generated source uses public Exec
+interfaces to report library version and available Chip/Fast memory. It makes
+no process, service or ARM hardware changes. Its source and native tool log were
+inspected before accepting the file through the real review handler. The task
+then reached persisted Done state, and the harness exited successfully. Ready,
+coloured review and Done screenshots were inspected; these contain synthetic
+task data and source, not the target's memory readings.
+
+The harness invokes the real queue and review handlers through a control file;
+this is not a manual mouse/keyboard test of the entire main window. The normal
+workspace was reopened after the fixture, with no active worker or pending
+request. Physical Windows-to-Amiga acceptance and authenticated direct API
+requests remain outstanding. Host AI tasks remain serial.
+
+To repeat the authenticated acceptance, compile `test_agent_workflow.c` with
+the same GUI dependencies and embedded monitor used by `test_workflow_window.c`.
+Compile `tests/inspect_chrome.c` as ChromeProbe. Keep the desktop proxy running,
+use an editable native profile with ID `codex`, and supply a VBCC driver config
+whose compiler, assembler, linker, headers and libraries use absolute target
+paths:
+
+```sh
+python scripts/amiga/accept_agent_workflow.py \
+  --binary /path/to/AgentWorkflowCheck --probe /path/to/ChromeProbe \
+  --compiler-config /path/to/native-build.config \
+  --output .context/agent-workflow-new
+```
+
+The output directory must be new. At Review, inspect the generated `main.c` and
+`job.log`; put the source SHA256 from `review-ready.json` into `approve-review`
+in that directory to continue. Approval is bound to the exact generated source.
+Each run creates a separate target drawer and retains its generated program.

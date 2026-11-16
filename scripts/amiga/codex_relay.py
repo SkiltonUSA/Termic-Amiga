@@ -87,11 +87,26 @@ def decode_hex_dump(text, offset):
         match = re.fullmatch(r'([0-9a-fA-F]{8})  ([0-9a-fA-F ]{47})   .*', line)
         if not match or int(match[1], 16) != offset + len(data):
             raise ConnectionError('Invalid bridge file data')
-        block = bytes.fromhex(match[2])
+        try:
+            block = bytes.fromhex(match[2])
+        except ValueError:
+            raise ConnectionError('Invalid bridge file bytes') from None
         if not 1 <= len(block) <= 16: raise ConnectionError('Invalid bridge file block')
         data.extend(block)
     if not data: raise ConnectionError('Empty bridge file reply')
     return bytes(data)
+
+
+def decode_checksum(text, path):
+    match = re.fullmatch(r'File: ' + re.escape(path) +
+                         r'\nCRC32: ([0-9a-fA-F]{8})\nSize: ([0-9]+) bytes', text)
+    if not match:
+        raise ConnectionError('Invalid bridge checksum reply')
+    return int(match[1], 16), int(match[2])
+
+
+class PublicationUncertain(ConnectionError):
+    """Rename was attempted once; only a matching worker reply proves delivery."""
 
 
 def default_state():
@@ -174,7 +189,7 @@ class Bridge:
                 try:
                     entries = await self.entries_once()
                     return {name: await self.read_file(name, entries) for name in names}
-                except ConnectionError:
+                except (ConnectionError, TimeoutError):
                     if attempt == 2: raise
                     await asyncio.sleep(.25)
 
@@ -182,7 +197,7 @@ class Bridge:
         for attempt in range(3):
             try:
                 return await self.entries_once()
-            except ConnectionError:
+            except (ConnectionError, TimeoutError):
                 if attempt == 2: raise
                 await asyncio.sleep(.25)
 
@@ -219,13 +234,36 @@ class Bridge:
             if len(chunk) != count:
                 raise ConnectionError('Incomplete relay file reply')
             raw.extend(chunk)
+        # READFILE's formatted reply carries offsets but no filename. Verify
+        # the assembled bytes against a checksum explicitly naming this file.
+        # A replaced file or a misrouted same-offset chunk must be read again.
+        await self.verify_file(name, raw)
         return raw.decode('utf-8')
+
+    async def verify_file(self, name, raw):
+        remote = self.path(name)
+        expected = zlib.crc32(raw), len(raw)
+        for attempt in range(3):
+            try:
+                check = await self.call('amiga_checksum', {'path': remote})
+                actual = decode_checksum(check, remote)
+                break
+            except (ConnectionError, TimeoutError):
+                if attempt == 2: raise
+                await asyncio.sleep(.25)
+        if actual != expected:
+            raise ConnectionError('Relay file checksum mismatch')
 
     async def remove_locked(self, name, entries):
         remote = self.path(name)
         if name.casefold() not in entries:
             return entries
-        await self.shell(f'Delete {remote}')
+        try:
+            await self.shell(f'Delete {remote}')
+        except (ConnectionError, TimeoutError):
+            # Do not repeat a mutation after a missing acknowledgement.
+            # A fresh, validated directory listing can prove it completed.
+            pass
         entries = await self.entries()
         if name.casefold() in entries:
             raise ConnectionError('Relay file removal was not confirmed')
@@ -248,27 +286,28 @@ class Bridge:
                 entries = await self.remove_locked(previous, entries)
             await self.remove_locked(name + '.tmp', entries)
             for offset in range(0, len(raw), 1024):
-                await self.call('amiga_write_file', {'path': remote + '.tmp', 'offset': offset,
-                                                    'hex_data': raw[offset:offset+1024].hex()})
+                chunk = raw[offset:offset+1024]
+                try:
+                    await self.call('amiga_write_file', {'path': remote + '.tmp', 'offset': offset,
+                                                        'hex_data': chunk.hex()})
+                except (ConnectionError, TimeoutError):
+                    # Confirm exactly the prefix sent so far, without sending
+                    # that chunk again or publishing an incomplete request.
+                    await self.verify_file(name + '.tmp', raw[:offset+len(chunk)])
             # WRITEFILE is sent once. A concurrent reader's unrelated ERR can
             # interrupt CHECKSUM, so repeat only this read-only verification.
-            for attempt in range(3):
-                try:
-                    check = await self.call('amiga_checksum', {'path': remote + '.tmp'})
-                    if f'{zlib.crc32(raw):08X}' not in check or f'{len(raw)} bytes' not in check:
-                        raise ConnectionError('Relay upload checksum mismatch')
-                    break
-                except ConnectionError:
-                    if attempt == 2: raise
-                    await asyncio.sleep(.25)
+            await self.verify_file(name + '.tmp', raw)
             entries = await self.entries()
             if stopped and stopped.casefold() in entries:
                 raise ConnectionError('Amiga task stopped')
             if name.casefold() in entries:
                 raise ConnectionError('Previous relay request has not been consumed')
-            renamed = await self.call('amiga_rename', {'old_path':remote+'.tmp', 'new_path':remote})
+            try:
+                renamed = await self.call('amiga_rename', {'old_path':remote+'.tmp', 'new_path':remote})
+            except (ConnectionError, TimeoutError) as error:
+                raise PublicationUncertain('Relay publication acknowledgement was lost') from error
             if renamed != f'Renamed: {remote}.tmp -> {remote}':
-                raise ConnectionError('Relay publication was not acknowledged')
+                raise PublicationUncertain('Relay publication was not acknowledged')
 
     async def remove(self, *names):
         for name in names: self.path(name)
@@ -309,8 +348,13 @@ class Mailbox:
         else:
             response_name = ident + '.out'
         stopped_name = ident + '.stopped'
-        await self.bridge.write(ident + '.in', frame, stopped=stopped_name,
-                                previous=None if self.job.get('reply_slots', False) else response_name)
+        try:
+            await self.bridge.write(ident + '.in', frame, stopped=stopped_name,
+                                    previous=None if self.job.get('reply_slots', False) else response_name)
+        except PublicationUncertain:
+            # The worker may already have consumed the input and started a
+            # build. Poll its ID/sequence-matched reply; never rename/resend.
+            pass
         # A native compiler can take several minutes on a 68k machine. Keep
         # ordinary calls bounded, but do not abandon a healthy larger build.
         timeout = 900 if kind == 'tool' and fields.get('name') == 'build' else 180 if kind == 'tool' else 45

@@ -16,6 +16,7 @@ class Session:
     def __init__(self):
         self.files = {}; self.calls = []; self.list_replies = []
         self.on_checksum = None; self.check_replies = []; self.read_reply = None; self.delete = True; self.bad_crc = False; self.bad_rename = False
+        self.after = {}
     async def call_tool(self, name, args):
         self.calls.append((name, dict(args)))
         if name == 'amiga_list_dir':
@@ -36,7 +37,7 @@ class Session:
         elif name == 'amiga_checksum':
             if self.on_checksum: self.on_checksum()
             raw = self.files[args['path']]; crc = 0 if self.bad_crc else zlib.crc32(raw)
-            text = self.check_replies.pop(0) if self.check_replies else f'CRC32: {crc:08X}\nSize: {len(raw)} bytes'
+            text = self.check_replies.pop(0) if self.check_replies else f'File: {args["path"]}\nCRC32: {crc:08X}\nSize: {len(raw)} bytes'
         elif name == 'amiga_rename':
             if self.bad_rename: text = 'Error: fixture rename failed'
             else:
@@ -46,6 +47,10 @@ class Session:
             self.assert_delete(args['script'])
             text = '[OK] T:fixture-capture'
         else: raise AssertionError(name)
+        if self.after.get(name):
+            fault = self.after[name].pop(0)
+            if isinstance(fault, Exception): raise fault
+            text = fault
         return SimpleNamespace(isError=False,content=[SimpleNamespace(text=text)])
     def assert_delete(self, script):
         assert script.startswith('FailAt 10\nDelete '), script
@@ -65,7 +70,7 @@ class BridgeMailboxTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.bridge.read('request.json'),raw.decode())
         self.assertEqual(await self.bridge.read('empty.out'),'')
         self.assertIsNone(await self.bridge.read('missing.out'))
-        self.assertEqual({n for n,a in self.session.calls},{'amiga_list_dir','amiga_read_file'})
+        self.assertEqual({n for n,a in self.session.calls},{'amiga_list_dir','amiga_read_file','amiga_checksum'})
         offsets = [a['offset'] for n,a in self.session.calls if n=='amiga_read_file']
         self.assertEqual(offsets,[0,1024,2048])
         with self.assertRaises(ValueError): await self.bridge.read('../outside')
@@ -139,6 +144,117 @@ class BridgeMailboxTests(unittest.IsolatedAsyncioTestCase):
         raw = b'Error: fixture\nERROR: fixture\n[ERROR] fixture'
         self.session.files[self.path('job.out')] = raw
         self.assertEqual(await self.bridge.read('job.out'), raw.decode())
+
+    async def test_same_size_wrong_bytes_and_transient_timeout_are_reread(self):
+        self.session.files[self.path('job.out')] = b'correct'
+        self.session.after['amiga_read_file'] = [dump(b'incorrc', 0), TimeoutError()]
+        async def pause(seconds): pass
+        with patch.object(relay.asyncio, 'sleep', pause):
+            self.assertEqual(await self.bridge.read('job.out'), 'correct')
+        self.assertEqual(sum(n=='amiga_read_file' for n,a in self.session.calls), 3)
+        self.assertFalse(any(n in ('amiga_write_file','amiga_rename','amiga_run_script') for n,a in self.session.calls))
+
+    async def test_checksum_must_name_requested_file_and_match_entire_reply(self):
+        raw = b'fixture'; self.session.files[self.path('job.out')] = raw
+        expected = f'CRC32: {zlib.crc32(raw):08X}\nSize: {len(raw)} bytes'
+        async def pause(seconds): pass
+        for bad in (expected, 'File: DH0:Other/job.out\n'+expected,
+                    'File: '+self.path('job.out')+'\n'+expected+'\nextra'):
+            self.session.check_replies = [bad]*9
+            with patch.object(relay.asyncio, 'sleep', pause), self.assertRaises(ConnectionError):
+                await self.bridge.read('job.out')
+
+    async def test_malformed_hex_is_transport_failure(self):
+        # Correct display width, but an unmatched hex digit cannot form a byte.
+        with self.assertRaises(ConnectionError):
+            relay.decode_hex_dump('00000000  '+'a'.ljust(47)+'   fixture', 0)
+
+    async def test_lost_write_ack_checks_prefix_without_resending_chunks(self):
+        self.session.after['amiga_write_file'] = [TimeoutError()]
+        value = {'fixture': 'x'*2500}
+        await self.bridge.write('job.in', value)
+        self.assertEqual(json.loads(self.session.files[self.path('job.in')]), value)
+        offsets=[a['offset'] for n,a in self.session.calls if n=='amiga_write_file']
+        self.assertEqual(offsets, [0,1024,2048])
+        self.assertEqual(sum(n=='amiga_rename' for n,a in self.session.calls),1)
+
+    async def test_lost_delete_ack_requires_absence_and_never_repeats_delete(self):
+        self.session.files[self.path('job.out')] = b'fixture'
+        self.session.after['amiga_run_script'] = [TimeoutError()]
+        await self.bridge.remove('job.out')
+        self.assertNotIn(self.path('job.out'), self.session.files)
+        self.assertEqual(sum(n=='amiga_run_script' for n,a in self.session.calls), 1)
+        self.session.files[self.path('job.out')] = b'fixture'
+        self.session.delete = False
+        self.session.after['amiga_run_script'] = [ConnectionError()]
+        with self.assertRaises(ConnectionError): await self.bridge.remove('job.out')
+        self.assertEqual(sum(n=='amiga_run_script' for n,a in self.session.calls), 2)
+
+    async def test_lost_rename_ack_recovers_only_with_matching_reply(self):
+        from test_codex_relay import job
+        for slots in (False, True):
+            self.setUp(); data=job();data['reply_slots']=slots
+            original=self.session.call_tool
+            async def respond(name,args):
+                reply=await original(name,args)
+                if name=='amiga_rename':
+                    frame=json.loads(self.session.files.pop(args['new_path']))
+                    suffix='.r1' if slots else '.out'
+                    self.session.files[self.path(data['id']+suffix)] = json.dumps(
+                        {'id':data['id'],'seq':frame['seq'],'ok':True,'text':'built once'}).encode()
+                    raise TimeoutError()
+                return reply
+            self.session.call_tool=respond
+            self.assertEqual(await relay.Mailbox(self.bridge,data).send('tool',name='build',arguments={}), 'built once')
+            self.assertEqual(sum(n=='amiga_write_file' for n,a in self.session.calls),1)
+            self.assertEqual(sum(n=='amiga_rename' for n,a in self.session.calls),1)
+
+    async def test_replacement_during_multichunk_read_cannot_mix_versions(self):
+        path=self.path('job.out');self.session.files[path]=b'a'*2500
+        original=self.session.call_tool
+        async def replace(name,args):
+            reply=await original(name,args)
+            if name=='amiga_read_file' and args['offset']==0:
+                self.session.files[path]=b'b'*2500
+            return reply
+        self.session.call_tool=replace
+        async def pause(seconds): pass
+        with patch.object(relay.asyncio,'sleep',pause):
+            self.assertEqual(await self.bridge.read('job.out'),'b'*2500)
+        self.assertEqual(sum(n=='amiga_read_file' for n,a in self.session.calls),6)
+
+    async def test_unconfirmed_write_is_never_published_or_replayed(self):
+        original=self.session.call_tool
+        async def lose(name,args):
+            reply=await original(name,args)
+            if name=='amiga_write_file':
+                self.session.files[args['path']]=b'partial'
+                raise TimeoutError()
+            return reply
+        self.session.call_tool=lose
+        with self.assertRaises(ConnectionError): await self.bridge.write('job.in',{'text':'fixture'})
+        self.assertEqual(sum(n=='amiga_write_file' for n,a in self.session.calls),1)
+        self.assertFalse(any(n=='amiga_rename' for n,a in self.session.calls))
+
+    async def test_uncertain_publication_does_not_accept_stale_reply_or_ignore_stop(self):
+        from test_codex_relay import job
+        data=job();data['reply_slots']=True
+        original=self.session.call_tool
+        async def stop(name,args):
+            reply=await original(name,args)
+            if name=='amiga_rename':
+                self.session.files.pop(args['new_path'])
+                self.session.files[self.path(data['id']+'.r1')]=json.dumps(
+                    {'id':data['id'],'seq':0,'ok':True,'text':'stale'}).encode()
+                self.session.files[self.path(data['id']+'.stopped')]=b'stopped'
+                raise ConnectionError()
+            return reply
+        self.session.call_tool=stop
+        box=relay.Mailbox(self.bridge,data)
+        with self.assertRaises(ConnectionError): await box.send('tool',name='build',arguments={})
+        with self.assertRaises(ConnectionError): await box.send('tool',name='build',arguments={})
+        self.assertTrue(box.broken)
+        self.assertEqual(sum(n=='amiga_rename' for n,a in self.session.calls),1)
 
     async def test_reply_and_stop_share_one_fresh_snapshot_per_poll(self):
         self.session.files[self.path('job.r1')] = b'fixture reply'

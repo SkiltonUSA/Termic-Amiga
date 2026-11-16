@@ -182,6 +182,15 @@ and follows new output automatically. Selecting text temporarily holds
 updates for copying; releasing selection catches up to the bottom. The existing 256 KiB transcript
 limit still applies. A disconnect never replays an uncertain text delivery.
 
+Mailbox reads verify the complete file against its named CRC32 and byte count.
+Transient read failures, incomplete chunks and replaced files are retried up to
+three times. A missing write acknowledgement is recovered only when a checksum
+proves that the exact uploaded prefix arrived. Deletes require a fresh directory
+listing proving absence. If publication loses its acknowledgement, the proxy
+waits for the worker's matching task ID and sequence reply without publishing
+again. These checks reduce false failures without risking duplicate builds or
+program executions; persistent failures still interrupt the task.
+
 Claude uses its documented
 [partial message events](https://code.claude.com/docs/en/agent-sdk/streaming-output).
 Cursor uses its documented

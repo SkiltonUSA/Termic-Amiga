@@ -75,6 +75,15 @@ using direct file operations, with bounded retries for read-only bridge
 errors. Updated proxy/worker pairs use alternating reply files to reduce
 per-message bridge traffic and follow streamed output sooner. See [transport details](docs/codex-relay.md#mailbox-transport).
 
+The latest source also verifies mailbox reads by filename, CRC32 and length,
+and recovers lost acknowledgements without repeating builds or executions.
+A real Codex task passed native generation, compilation, execution, review and
+Kanban completion on the A4000TX. These proxy changes are available in the
+[desktop build workflow](https://github.com/SkiltonUSA/Termic-Amiga/actions/workflows/ai-proxy.yml);
+the published 0.1.0 proxy download above predates them. See
+[verification](docs/verification.md#proxy-reliability-and-real-agent-workflow-15-november-2026)
+for the tested scope.
+
 Start with [Termic AI Proxy for macOS and Windows 11](docs/ai-proxy.md) for
 Codex, Claude and Cursor setup, downloads and model selection.
 [Codex relay details](docs/codex-relay.md) describe the ChatGPT integration.
