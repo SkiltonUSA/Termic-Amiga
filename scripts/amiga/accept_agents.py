@@ -4,7 +4,8 @@
 Closes production normally, saves its window geometry, keeps ENV backup on the
 Amiga only, and restores ENV/assign/application in finally. Never enters a key.
 """
-import argparse, asyncio, json, re, subprocess, sys, time, urllib.parse, urllib.request, zlib
+import argparse, asyncio, json, re, shutil, subprocess, sys, time, zlib
+from codex_relay import Bridge, decode_checksum
 from pathlib import Path
 import accept_workflow
 from mcp import ClientSession
@@ -15,8 +16,9 @@ async def main(args):
     for name in ('gui', 'worker', 'mcp', 'probe', 'micropython'):
         if not getattr(args, name).is_file():
             raise FileNotFoundError('Missing acceptance input: ' + str(getattr(args, name)))
-    out=ROOT/'.context/agents-acceptance';out.mkdir(parents=True,exist_ok=True)
-    (out/'passed.json').unlink(missing_ok=True)
+    out=args.output.resolve();out.mkdir(parents=True,exist_ok=True)
+    for name in ('passed.json','editor-workflow-passed.json','restored.json'):
+        (out/name).unlink(missing_ok=True)
     fixture=PROD+'/Acceptance/agents-'+str(int(time.time()))
     async with streamablehttp_client('http://127.0.0.1:55010/mcp') as (r,w,_):
         async with ClientSession(r,w) as s:
@@ -27,7 +29,11 @@ async def main(args):
                 assert not r.isError and 'ERROR:' not in t and '[ERROR]' not in t and '[STILL RUNNING]' not in t and 'Cannot read remote file' not in t,t
                 await asyncio.sleep(.2);return t
             async def shell(script,timeout=15):return await call('amiga_run_script',{'script':'FailAt 10\nStack 262144\n'+script,'timeout':timeout})
-            async def push(local,remote):await call('amiga_push_file',{'local_path':str(Path(local).resolve()),'amiga_path':remote})
+            async def push(local,remote):
+                await call('amiga_push_file',{'local_path':str(Path(local).resolve()),'amiga_path':remote})
+                data=Path(local).read_bytes()
+                actual=decode_checksum(await call('amiga_checksum',{'path':remote}),remote)
+                assert actual==(zlib.crc32(data),len(data)),'Upload checksum mismatch: '+remote
             async def state(title='',front=False):
                 t=await shell(PROD+'/ChromeProbe '+('front' if front else 'query')+(' "'+title+'"' if title else ''))
                 p=dict(re.findall(r'(\w+)=([0-9a-f]+)',t));assert 'address' in p,t
@@ -62,16 +68,27 @@ async def main(args):
                 await asyncio.sleep(.5)
             async def capture(title,name):
                 if args.skip_screenshots:return
-                query='?'+urllib.parse.urlencode({'window':title}) if title else ''
-                for attempt in range(2):
-                    try:
-                        with urllib.request.urlopen('http://127.0.0.1:55010/api/screenshot'+query,timeout=60) as r:d=json.load(r)
-                        break
-                    except TimeoutError:
-                        if attempt:raise
-                        await asyncio.sleep(2)
-                assert 'path' in d,d
-                subprocess.run(['sips','-s','format','png',d['path'],'--out',str(out/name)],check=True,capture_output=True)
+                for _ in range(3):
+                    await state(title,front=True)
+                    if not (await state(title))['front']:continue
+                    text=await call('amiga_screenshot',{'window':title} if title else {})
+                    match=re.search(r'Screenshot saved: (.+) \((\d+)x(\d+), (RLE|truecolor), (\d+) rows received\)',text)
+                    if match and match[3]==match[5] and (await state(title))['front']:
+                        source=Path(match[1]);target=out/name
+                        if source.suffix=='.png':shutil.copyfile(source,target)
+                        else:subprocess.run(['sips','-s','format','png',str(source),'--out',str(target)],check=True,capture_output=True)
+                        return
+                raise AssertionError('Incomplete or obscured screenshot: '+name)
+            async def close_main():
+                p=await state(front=True)
+                if p['address']:
+                    if p['border']>0:await click(p['x']+8,p['y']+p['border']//2)
+                    else:await click(p['x']+p['width']-26,p['y']+57)
+                for _ in range(45):
+                    p=await state()
+                    if not p['address'] and not p['control']:return
+                    await asyncio.sleep(1)
+                raise AssertionError('Workspace did not finish saving and closing')
             async def wait_main():
                 for _ in range(20):
                     p=await state()
@@ -85,22 +102,16 @@ async def main(args):
                     if p['address']:
                         await state(title,front=True)
                         await click(p['x']+10,p['y']+8,title)
-                p=await state(front=True)
-                # Toolbar Quit avoids both X's tooltip at the probe point and
-                # string gadgets consuming Right Amiga Q as their own Undo.
-                if p['address']:await click(p['x']+p['width']-26,p['y']+57)
-                for _ in range(15):
-                    p=await state()
-                    if not p['address'] and not p['control']:return
-                    await asyncio.sleep(1)
-                raise AssertionError('Candidate did not close; retain fixture assign')
+                await close_main()
+            assert 'TermicJob.' not in await call('amiga_list_ports',{}),'Worker active'
+            relay=Bridge('',PROD+'/Relay');relay.session=s
+            assert await relay.read('request.json') is None,'Relay busy'
             await push(args.probe,PROD+'/ChromeProbe');await shell('Protect '+PROD+'/ChromeProbe +e')
             await state(front=True);original=await state();assert original['address'] and original['active'],original
             (out/'original.json').write_text(json.dumps(original))
-            await click(original['x']+original['width']-26,original['y']+57)
-            assert not (await state())['address'],'Production did not close normally'
             env=False;prepared=False;launched=False
             try:
+                await close_main()
                 await shell('If NOT EXISTS '+PROD+'/Acceptance\n MakeDir '+PROD+'/Acceptance\nEndIf\nMakeDir '+fixture+'\nMakeDir '+fixture+'/Config\nMakeDir '+fixture+'/Projects\nMakeDir '+fixture+'/Projects/fixture')
                 await shell('MakeDir '+fixture+'/Project')
                 env='ENV_EXISTS' in await shell('If EXISTS ENV:Termic\n Echo ENV_EXISTS\n Copy ENV:Termic '+fixture+'/EnvBackup ALL\nEndIf')
@@ -124,7 +135,7 @@ async def main(args):
                 if args.install_kit:
                     import accept_install
                     await accept_install.stage(ROOT,out,fixture,args.install_kit,shell,push,call)
-                if not (args.kanban_only or args.features_only):
+                if not (args.kanban_only or args.features_only or args.editor_workflow_only):
                     await accept_workflow.stage(ROOT,out,fixture,shell,push,call)
                 if args.kanban_only or args.features_only:
                     import accept_kanban
@@ -136,8 +147,12 @@ async def main(args):
                 if args.monitor_task:
                     import accept_monitor_task
                     await accept_monitor_task.stage(ROOT,out,fixture,shell,push,call)
+                if args.editor_workflow_only:
+                    import accept_editor_workflow
+                    await accept_editor_workflow.stage(ROOT,out,fixture,shell,push,call)
+                launched=True
                 await shell('Protect '+fixture+'/TermicProfilesTest +e\nProtect '+fixture+'/TermicAgent +e\nProtect '+fixture+'/TermicMCP +e\nRun >NIL: <NIL: '+fixture+'/TermicProfilesTest')
-                launched=True;p=await wait_main()
+                p=await wait_main()
                 await call('amiga_window_move',{'window':format(p['address'],'08x'),'x':260,'y':75})
                 await call('amiga_window_resize',{'window':format(p['address'],'08x'),'width':1400,'height':650})
                 await state(front=True);p=await state()
@@ -154,6 +169,9 @@ async def main(args):
                     if args.monitor_task:
                         import accept_monitor_task
                         await accept_monitor_task.exercise(ROOT,out,fixture,shell,push,call,state,click,capture,menu,args)
+                    return
+                if args.editor_workflow_only:
+                    await accept_editor_workflow.exercise(ROOT,out,fixture,shell,push,call,state,click,capture)
                     return
                 if args.live_feedback_only:
                     import accept_live_feedback
@@ -322,6 +340,8 @@ async def main(args):
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
     for name in ['gui','worker','mcp','probe','micropython']:p.add_argument('--'+name,type=Path,required=True)
+    p.add_argument('--output',type=Path,default=ROOT/'.context/agents-acceptance')
+    p.add_argument('--editor-workflow-only',action='store_true',help='Exercise native MUI editing, save/build/run, failure recovery and compact shortcuts')
     p.add_argument('--host-agent', action='append', choices=['claude','cursor'], default=[], help='Run an authenticated host agent read/write/build and resume test')
     p.add_argument('--providers', action='store_true', help='Exercise Claude/Cursor native profiles with synthetic MCP clients')
     p.add_argument('--live-feedback-only',action='store_true',help='Exercise live transcript, selection and tool feedback without cloud inference')

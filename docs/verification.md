@@ -1030,3 +1030,60 @@ reopened, and TermicCheck reported zero missing dependencies. Testing resized
 windows on the existing RTG screen; it did not change Workbench display modes.
 The native version remains 0.1.2 Beta, and the published release archive has
 not been replaced by this development build.
+
+
+## Live MUI development workflow (16 November 2026)
+
+The real application exposed a gap in the earlier size fixture: requesting
+340x280 after a wide view left the live window at 347x280. The fixture called
+`workspace_layout()` itself between input passes, whereas the production loop
+only did so for returned action IDs. The production loop now reconciles layout
+after draining MUI input and before waiting. It adds no timer or idle polling.
+
+`accept_agents.py --editor-workflow-only` runs the actual workspace binary in
+an isolated installation. It uses native mouse and keyboard input rather than
+calling layout or build functions directly. The hardware run passed:
+
+- Exact source replacement and Save from the focused editor.
+- Native header Build and Run icons, producing and executing a 68k program.
+- Compiler failure with the previous Program retained byte for byte and the
+  build-success marker removed, followed by successful repair/build/run.
+- Actual 1024x800 and 340x280 window dimensions; the compact Save icon and
+  F6/F7 shortcuts work after live resizing.
+- F2 returns from both CLI and Files to the already selected Editor tab.
+  These shortcuts passed without a production change.
+- Shift-F3, CLI Return execution, displayed output and clipboard copy.
+
+The host runner now closes native windows normally, waits for the application
+port to disappear, verifies uploaded checksums, and requires complete streamed
+screenshots with foreground checks. Test evidence can use a separate output
+directory. Native screenshots of successful execution, compiler failure, the
+compact CLI and source editor were inspected. The normal workspace's ENV
+preferences, clipboard, assign and window geometry were restored, and the
+previously running AI Proxy was restarted. No model request was made.
+
+The workspace and native fixtures cross-built without warnings, and all 83
+portable tests passed. The final workspace binary matched the hardware-tested
+fixture executable by CRC32 and size. This supplements the previous geometry
+matrix with coverage of the production input loop; it is not a human test.
+
+To repeat on an idle Amiga with a screen of at least 1024x800, stop the AI Proxy
+and leave input devices idle. Supply the current cross-built applications,
+`inspect_chrome.c` probe and MicroPython runtime. Compile `inspect_ui.c` to
+`.context/inspect-ui` for clipboard preservation, then run:
+
+```sh
+python scripts/amiga/accept_agents.py --editor-workflow-only \
+  --gui /path/to/TermicNative --worker /path/to/TermicAgent \
+  --mcp /path/to/TermicMCP --probe /path/to/ChromeProbe \
+  --micropython /path/to/micropython --output .context/editor-workflow-new
+```
+
+The successful run writes `editor-workflow-passed.json` and `restored.json`.
+The test requires the installed VBCC SDK and uses absolute compiler paths to
+avoid changing system toolchain assignments.
+
+The deployed executable and GUI source matched their staged checksums, with a
+verified rollback copy retained. Termic reopened with its native title bar and
+TermicCheck reported zero missing dependencies. The version remains 0.1.2 Beta;
+the published release archive is unchanged.

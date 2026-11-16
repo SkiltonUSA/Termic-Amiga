@@ -185,6 +185,13 @@ Compile `tests/test_responsive_window.c` with the GUI dependencies and the
 The normal workspace can remain open. The older `accept_chrome.py` targets the
 retired custom title bar and is not a test of the current layout.
 
+`accept_agents.py --editor-workflow-only` exercises the actual workspace
+through native mouse and keyboard input: save, build, run, compiler failure
+recovery and CLI output at 1024x800 and 340x280. It temporarily closes the
+normal workspace and restores its preferences, clipboard and geometry. Stop
+the AI Proxy and leave the mouse/keyboard idle during the test. See
+[verification instructions](docs/verification.md#live-mui-development-workflow-16-november-2026).
+
 `accept_agents.py --cli-panel-only`, with its required binary arguments, checks
 CLI command entry, success/failure output, editor focus, copy, save/undo and
 window resizing in an isolated Amiga installation. It restores the production

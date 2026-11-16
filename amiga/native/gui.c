@@ -1996,6 +1996,9 @@ int main(int argc, char **argv)
         }
         if (done)
             break;
+        /* Reconcile geometry after MUI processes input, including resize
+         * events that return no action ID, before sleeping again. */
+        workspace_layout();
         termic_monitor_poll();
         if (signals)
         {
