@@ -2,6 +2,8 @@ enum { UI_LAYOUT=6101,UI_VIEW,UI_PAGE };
 static Object *workspace_body,*workspace_row,*workspace_view,*workspace_left,*workspace_files;
 static Object *project_pane,*task_pane,*file_pane,*cli_pane,*workspace_center;
 static Object *workspace_balance_a,*workspace_balance_b,*files_balance;
+static Object *workspace_tabs,*workspace_brand,*workspace_extra,*workspace_small_actions;
+static Object *agent_compose,*activity_caption,*instruction_caption,*profile_caption,*files_hint;
 static int layout_compact=-1,layout_view=-1;
 static const char *workspace_views[]={"Agent","Editor","Build log","Changes","Settings",
     "Projects","Tasks","Files","CLI",NULL};
@@ -38,6 +40,15 @@ static void workspace_layout(void)
     /* Keep the same widgets, buffers, cursor and selection when changing
      * layouts. Nothing is rebuilt or saved as a consequence of a resize. */
     DoMethod(workspace_body,MUIM_Group_InitChange);
+    set(workspace_view,MUIA_ShowMe,compact);
+    set(workspace_brand,MUIA_ShowMe,!compact);
+    set(workspace_extra,MUIA_ShowMe,!compact);
+    set(workspace_small_actions,MUIA_ShowMe,compact);
+    set(activity_caption,MUIA_ShowMe,!compact);
+    set(instruction_caption,MUIA_ShowMe,!compact);
+    set(profile_caption,MUIA_ShowMe,!compact);
+    set(files_hint,MUIA_ShowMe,!compact);
+    set(agent_compose,MUIA_Group_Columns,compact?1:2);
     set(workspace_balance_a,MUIA_ShowMe,!compact);
     set(workspace_balance_b,MUIA_ShowMe,!compact);
     set(files_balance,MUIA_ShowMe,!compact);

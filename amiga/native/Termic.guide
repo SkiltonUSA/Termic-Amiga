@@ -27,8 +27,9 @@ This manual does not execute commands. Type examples in an Amiga Shell.
 Termic uses MUI 5 native window controls. Drag the title to move it;
 use the lower-right sizing gadget to resize, and the native zoom gadget
 to enlarge or restore it. Closing saves the workspace first.
-The top selector chooses Agent, Editor, Build log, Changes, Settings,
-Projects, Tasks, Files or CLI. Hover over an icon for its action name.
+Native MUI tabs choose Agent, Editor, Build / CLI, Changes and Settings.
+A compact selector also offers Projects, Tasks, Files and CLI panes.
+Hover over an icon for its action name.
 The source editor and Files retain light text on black.
 
 1. Start TermicNative from its Workbench icon or the Shell.
@@ -41,7 +42,10 @@ The source editor and Files retain light text on black.
 
 New task makes an independent copy of the selected workspace's source.
 At small sizes, including 340x280, the selector shows one workspace pane.
-At 800x500 and above, Projects/Tasks and Files/CLI sit beside the work page.
+At 800x500 and above, Projects/Tasks sit left, the tabbed work page sits
+in the centre, and Files above CLI sit right. Instructions and agent
+controls sit side by side below the activity log. The header shows the
+version and Build, Run, Settings, About and Quit icons.
 Files remains above CLI; drag its divider to change the height split.
 Column dividers adjust widths. F1-F5 select the five work pages.
 Long forms and tables have native scrollbars when needed. Resizing keeps
@@ -266,7 +270,8 @@ check storage and retry if Termic reports a preference write failure.
 
 Build commands have their own Save build command button because they are
 workspace data. Settings > MUI Settings... opens MUI's appearance editor.
-MUI font preferences control the UI and fixed-width editor font. Framed
+Helvetica 13 controls and Courier 13 source text match the reference UI.
+Missing disk fonts fall back to the corresponding MUI font roles. Framed
 groups and labelled fields organize preferences. MUI supplies colours,
 window controls and gadget styling. Source text retains the black background
 and readable syntax palette. System preferences are not changed.

@@ -9,10 +9,11 @@ Edit actions follow the focused TextEditor gadget, including task instructions
 and selectable log output. Single-line fields keep their MUI editing behavior;
 Tab to a button before using application keys that a field consumes.
 Save is available in the compact icon row and Project menu; Undo, Redo,
-Cut, Copy and Paste remain in Edit. MUI's normal, button, list and fixed-width
-font roles now control the UI and editor. Choose Settings > MUI Settings to
-adjust the application's fonts and gadget appearance. Termic no longer opens
-fixed Helvetica/Courier fonts or draws a separate blue title bar.
+Cut, Copy and Paste remain in Edit. The reference layout uses Helvetica 13
+for workspace controls and Courier 13 for source text. If either disk font is
+unavailable, the corresponding MUI font role is used. Settings > MUI Settings
+controls gadget appearance; the native title bar follows system preferences.
+Termic does not draw a separate blue title bar.
 
 The FinalWriter reference supplied by the user guides presentation: crisp text,
 framed groups, aligned form labels and consistent spacing. Projects, Tasks and
@@ -37,10 +38,10 @@ a contents node, linked chapters and alphabetical index, and does not execute
 commands from links. Shift-Help and Project > About show version and credits.
 The local installation-kit builder includes the guide automatically.
 
-The top MUI cycle selector chooses Agent, Editor, Build log, Changes,
-Settings, Projects, Tasks, Files or CLI. F1-F5 and existing menu shortcuts
-continue to select the corresponding work pages. This keeps navigation usable
-at 340x280 without a row of clipped tab labels.
+Native MUI Title tabs select Agent, Editor, Build / CLI, Changes and Settings.
+At compact sizes, a top cycle selector also provides Projects, Tasks, Files
+and CLI as full-width panes. F1-F5 and existing menu shortcuts continue to
+select the corresponding work pages.
 
 MUI owns menu creation, layout and disposal on 68k AmigaOS. The OS4 interface
 pointers in the current GadTools example are not used by this AmigaOS 3.x build.
@@ -68,9 +69,12 @@ opens within the current public screen's usable area; no system font or screen
 mode is changed. Source and Files retain their black backgrounds.
 
 Below 800 pixels wide or 500 pixels high, only the selected workspace pane is
-shown. At larger sizes, Projects/Tasks and Files/CLI appear beside the work
-page. Files stays above CLI, with a native balance divider; the column widths
-can also be adjusted. Resizing changes visibility of existing widgets rather
+shown. At larger sizes, Projects/Tasks sit on the left, the tabbed work page
+in the centre, and Files above CLI on the right. The Agent page places task
+instructions beside the profile selector and action icons, below the activity
+log. The header shows the version and Build, Run, Settings, About and Quit
+icons. Files and CLI have a native balance divider; column widths can also
+be adjusted. Resizing changes visibility of existing widgets rather
 than replacing their buffers, so unsaved text and editor position survive.
 
 Settings and large auxiliary dialogs use MUI virtual groups and automatic
@@ -81,6 +85,7 @@ metrics, not bitmap scaling or automatic physical-DPI detection.
 
 References consulted:
 
+- [MUI Title tabs](https://github.com/amiga-mui/muidev/wiki/MUI_Title)
 - [MUI Group layout](https://github.com/amiga-mui/muidev/wiki/MUI_Group)
 - [MUI scrolling and automatic scrollbars](https://github.com/amiga-mui/muidev/wiki/MUI_Scrollgroup)
 - [Native MUI windows](https://github.com/amiga-mui/muidev/wiki/MUI_Window)

@@ -57,13 +57,17 @@ The traditional Amiga tag uses major.minor; FULL also shows the complete
 native version and its Beta designation.
 
 WORKSPACE
-The top MUI selector chooses Agent, Editor, Build log, Changes, Settings,
-Projects, Tasks, Files or CLI. At 340x280 a single pane fills the window.
-At 800x500 and above, Projects/Tasks and Files/CLI sit beside the work page.
-Files stays above CLI with a balance divider; column widths are adjustable.
-F1-F5 still select the work pages. Forms and tables scroll when necessary.
-MUI preferences select UI and fixed-width fonts. Resizing preserves unsaved
-text and cursor position. The source editor keeps its black syntax colours.
+Native MUI tabs select Agent, Editor, Build / CLI, Changes and Settings.
+At 340x280 a top selector also offers Projects, Tasks, Files and CLI as
+full-width panes. At 800x500 and above, Projects/Tasks sit on the left,
+the tabbed work page in the centre, and Files above CLI on the right.
+Task instructions sit beside agent controls below the activity log. The
+header shows the version and Build, Run, Settings, About and Quit icons.
+Native balance dividers adjust column widths and the Files/CLI split.
+F1-F5 select the work pages. Forms and tables scroll when necessary.
+Helvetica 13 controls and Courier 13 source text match the reference UI,
+with MUI font fallbacks if unavailable. Resizing preserves unsaved text
+and cursor position. The source editor keeps its black syntax colours.
 
 New project uses the clean Template drawer. Import source drawer copies
 regular editable files into a managed project. New task copies the selected
@@ -200,7 +204,8 @@ Main window controls
 Termic uses native MUI/Intuition window controls for dragging, sizing,
 depth, zoom and closing. The layout adapts to the current window size.
 No separate custom title bar or system font change is applied. Use
-Settings > MUI Settings to choose application fonts and gadget appearance.
+Settings > MUI Settings to adjust gadget appearance. Workspace fonts use
+Helvetica/Courier when installed, otherwise the corresponding MUI roles.
 
 AGENTS / CLI / SCRIPTS
 Settings opens a profile manager for OpenAI API, CLI, ARexx and MicroPython

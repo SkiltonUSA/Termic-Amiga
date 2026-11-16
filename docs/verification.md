@@ -996,3 +996,37 @@ python scripts/amiga/accept_responsive_ui.py \
 
 The output directory must be new. The fixture uses its own application identity
 and Acceptance drawer; the normal workspace can remain open.
+
+## Original workspace arrangement on MUI 5 (15 November 2026)
+
+The screenshot reference is restored as Projects/Tasks on the left, the five
+native MUI Title tabs in the centre, and Files above CLI on the right. The
+header includes the version and Build, Run, Settings, About and Quit icons.
+Task instructions sit beside the profile/YOLO/action controls below the
+coloured activity log. Helvetica 13 and Courier 13 restore the earlier text
+presentation, with MUI role fallbacks if those disk fonts are unavailable.
+This supersedes the font choice and column order in the preceding update.
+Native title, close, depth, size and zoom controls remain in use.
+
+At compact sizes the cycle selector exposes all nine workspace panes; the
+five work pages retain labelled native tabs. Hiding Title.mui directly left
+empty tab outlines in the first hardware capture, so the tabs remain visible.
+The final wide arrangement gives the agent controls enough room to display
+the profile and YOLO values. Forms can still scroll on small windows.
+
+The 83 portable tests passed. The native workspace, standalone monitor and
+resize fixture cross-built without warnings. Hardware acceptance exercises
+all nine panes from 320x240 through 1024x800, including repeated compact/wide
+transitions and preservation of unsaved source, instructions and cursor.
+The fixture also checks column order, tab notification/selector synchronization
+and the visible right edge of the agent controls at 1024x800. Captures use
+synthetic data; the normal workspace is not the screenshot fixture.
+
+The complete hardware run passed, including 340x280 auxiliary windows and
+the integrated monitor. Final 340x280 and 1024x800 captures were inspected.
+The installed executable and four source/manual files matched staged CRC32
+checksums. A verified rollback copy was retained, the native-title application
+reopened, and TermicCheck reported zero missing dependencies. Testing resized
+windows on the existing RTG screen; it did not change Workbench display modes.
+The native version remains 0.1.2 Beta, and the published release archive has
+not been replaced by this development build.

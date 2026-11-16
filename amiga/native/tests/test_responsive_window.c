@@ -34,7 +34,7 @@ static int geometry(Object *window,int width,int height)
  if(!w)return 0;
  ChangeWindowBox(w,0,w->WScreen->BarHeight+1,width,height);pump();
  if(w->Width!=width || w->Height!=height){ChangeWindowBox(w,0,w->WScreen->BarHeight+1,width,height);pump();}
- {char p[PATH_SIZE],s[512];snprintf(s,sizeof(s),"wanted=%dx%d actual=%dx%d min=%dx%d max=%dx%d border=%d flags=%08lx mode=%d",width,height,w->Width,w->Height,w->MinWidth,w->MinHeight,w->MaxWidth,w->MaxHeight,w->BorderTop,(unsigned long)w->Flags,layout_compact);join(p,project_root,"geometry.txt");save_text(p,s,512);}
+ {char p[PATH_SIZE],s[512];snprintf(s,sizeof(s),"wanted=%dx%d actual=%dx%d min=%dx%d max=%dx%d border=%d flags=%08lx mode=%d",width,height,(int)w->Width,(int)w->Height,(int)w->MinWidth,(int)w->MinHeight,(int)w->MaxWidth,(int)w->MaxHeight,(int)w->BorderTop,(unsigned long)w->Flags,layout_compact);join(p,project_root,"geometry.txt");save_text(p,s,512);}
  return w->Width==width && w->Height==height && w->BorderTop>0 && (w->Flags&WFLG_SIZEGADGET);
 }
 int main(int argc,char **argv)
@@ -71,6 +71,23 @@ int main(int argc,char **argv)
    {struct Window *w=(struct Window *)value(win,MUIA_Window_Window);
     if(j==1)CHECK(_mtop(findtext)+_mheight(findtext)<w->Height-w->BorderBottom);
     if(j==8)CHECK(_mtop(command)+_mheight(command)<w->Height-w->BorderBottom);
+   }
+   if(j<5) {
+    /* Exercise the notification used by native tab clicks, not just the
+     * cycle/shortcut path. Both navigation controls must stay in sync. */
+    set(pages,MUIA_Group_ActivePage,(j+1)%5);pump();
+    CHECK(value(workspace_view,MUIA_Cycle_Active)==(j+1)%5);CHECK(same_source());
+    workspace_select(j);pump();
+   }
+   CHECK(value(workspace_tabs,MUIA_ShowMe));
+   CHECK(value(workspace_view,MUIA_ShowMe)==layout_compact);
+   if(!layout_compact) {
+    CHECK(_mleft(workspace_left)<_mleft(workspace_center) && _mleft(workspace_center)<_mleft(workspace_files));
+    if(j==0) {
+     CHECK(_mleft(prompt)<_mleft(profile_picker));
+     if(sizes[i][0]>=1024)
+      CHECK(_mleft(profile_fast)+_mwidth(profile_fast)<=_mleft(workspace_center)+_mwidth(workspace_center));
+    }
    }
    CHECK(value(workspace_center,MUIA_ShowMe)==(!layout_compact || j<5));
    CHECK(value(workspace_files,MUIA_ShowMe)==(!layout_compact || j==7 || j==8));
@@ -124,6 +141,7 @@ done:
  if(workspace_class)__termic_mui_unclass(MUIMasterBase,workspace_class);
  if(board_list_class)__termic_mui_unclass(MUIMasterBase,board_list_class);
  if(action_icon_class)__termic_mui_unclass(MUIMasterBase,action_icon_class);
+ if(bodyfont)CloseFont(bodyfont);if(codefont)CloseFont(codefont);
  if(DiskfontBase)CloseLibrary(DiskfontBase);if(GfxBase)CloseLibrary((struct Library *)GfxBase);
  if(IntuitionBase)CloseLibrary((struct Library *)IntuitionBase);if(MUIMasterBase)CloseLibrary(MUIMasterBase);
  snprintf(report,sizeof(report),"%s line %d",failed?"SCALING_FAIL":"SCALING_PASS",failed);

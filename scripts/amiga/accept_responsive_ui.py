@@ -60,6 +60,7 @@ async def main(args):
     ('main',340,280,1,'editor-340x280.png'),('main',340,280,0,'agent-340x280.png'),
     ('main',340,280,7,''),('main',340,280,8,'cli-340x280.png'),('main',340,280,4,'settings-340x280.png'),
     ('main',640,480,1,''),('main',1024,800,1,'workspace-1024x800.png'),
+    ('main',1024,800,0,'agent-1024x800.png'),
     *[(p,340,280,1,'') for p in ('agents','access','board','queue','review','scratchpad','git','monitor')]]:
     frame=dict(panel=panel,width=width,height=height,view=view)
     await control(frame)

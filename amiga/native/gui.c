@@ -1315,6 +1315,14 @@ static Object *build_menus(void)
 #ifndef TERMIC_APP_TITLE
 #define TERMIC_APP_TITLE "Termic"
 #endif
+static void workspace_fonts(void)
+{
+    struct TextAttr ui={"helvetica.font",13,0,FPF_DISKFONT},code={"courier.font",13,0,FPF_DISKFONT};
+    if(DiskfontBase) {
+        if(!bodyfont)bodyfont=OpenDiskFont(&ui);
+        if(!codefont)codefont=OpenDiskFont(&code);
+    }
+}
 static int build_ui(void)
 {
     Object *body,*agent,*editpage,*buildpage,*changes,*settings,*toolbar;
@@ -1322,6 +1330,7 @@ static int build_ui(void)
     LONG initial_width=1000,initial_height=700;
     workspace_class=__termic_mui_class(MUIMasterBase,NULL,MUIC_Group,NULL,sizeof(struct WorkspaceData),(APTR)workspace_dispatch);
     if(!workspace_class)return 0;
+    workspace_fonts();
     profiles_load(&profile_live);
     app = ApplicationObject, MUIA_Application_Title, TERMIC_APP_TITLE, MUIA_Application_Base, TERMIC_APP_BASE,
     MUIA_Application_Version, version_tag + 1, MUIA_Application_SingleTask, TRUE,
@@ -1331,31 +1340,35 @@ static int build_ui(void)
     project_pane=VGroup,GroupFrame,InnerSpacing(2,2),MUIA_Group_Spacing,2,
         Child,label("Projects"),Child,list(&projects),Child,projectname=entry(120),
         Child,HGroup,Child,button("New project",NEWPROJECT),Child,button("Rename",RENAMEPROJECT),
-        Child,button("Import source drawer...",IMPORTPROJECT),Child,HVSpace,End,End;
+        Child,HVSpace,End,Child,HGroup,Child,button("Import source drawer...",IMPORTPROJECT),Child,HVSpace,End,End;
     task_pane=VGroup,GroupFrame,InnerSpacing(2,2),MUIA_Group_Spacing,2,
         Child,label("Tasks"),Child,list(&tasks),Child,taskname=entry(120),
         Child,HGroup,Child,button("New task",NEWTASK),Child,button("Rename",RENAMETASK),
-        Child,button("Mark done",MARKDONE),Child,HVSpace,End,
-        Child,HGroup,Child,button("Kanban",KB_OPEN),Child,button("Queue",Q_OPEN),End,End;
+        Child,HVSpace,End,
+        Child,HGroup,Child,button("Kanban",KB_OPEN),Child,button("Queue",Q_OPEN),Child,button("Mark done",MARKDONE),Child,HVSpace,End,End;
     workspace_left=mui_viewport(VGroup,Child,project_pane,Child,task_pane,End);
-    set(workspace_left,MUIA_Weight,18);
+    set(workspace_left,MUIA_Weight,22);
     file_pane=VGroup,GroupFrame,InnerSpacing(2,2),MUIA_Group_Spacing,2,
         Child,label("Files"),Child,list(&files),Child,newname=entry(180),Child,HGroup,
-        Child,button("Create file",NEWFILE),Child,button("Refresh files",REFRESH),Child,HVSpace,End,End;
+        Child,button("Create file",NEWFILE),Child,button("Refresh files",REFRESH),Child,HVSpace,End,
+        Child,files_hint=label("C/H, Python, ARexx,\ntext and Markdown.\nSaves keep .bak copies."),End;
     cli_pane=VGroup,GroupFrame,InnerSpacing(2,2),MUIA_Group_Spacing,2,
-        Child,command_mode=cycle(command_modes),Child,editor(&cli_output,1),Child,command=entry(1024),
+        Child,HGroup,Child,label("CLI"),Child,HVSpace,Child,command_mode=cycle(command_modes),End,Child,editor(&cli_output,1),Child,command=entry(1024),
         Child,HGroup,Child,button("Execute",SHELL),Child,button("Cancel job",CANCEL),Child,HVSpace,End,End;
     workspace_files=mui_viewport(VGroup,Child,file_pane,Child,files_balance=BalanceObject,End,Child,cli_pane,End);
-    set(workspace_files,MUIA_Weight,22);
+    set(workspace_files,MUIA_Weight,23);
     set(command,MUIA_ShortHelp,"Command or script arguments in the selected workspace. Return executes; Shift F10 stops.");
-    agent=VGroup,MUIA_Group_Spacing,2,
-        Child,editor(&transcript,1),Child,HGroup,Child,history_find=entry(120),
-        Child,button("Find history",HISTORYNEXT),Child,button("Prompts",PL_OPEN),Child,button("Shortcuts",SHORTCUTS),End,
-        Child,editor(&prompt,0),Child,HGroup,Child,profile_picker=cycle(kinds),
-        Child,label("YOLO"),Child,profile_fast=cycle(yesno),End,
+    agent=VGroup,MUIA_Group_Spacing,3,
+        Child,VGroup,MUIA_Weight,80,Child,activity_caption=elastic_label("Activity: Agent (cyan) / Log (amber)"),
+        Child,editor(&transcript,1),End,
+        Child,HGroup,Child,history_find=entry(120),Child,button("Find history",HISTORYNEXT),
+        Child,button("Prompts",PL_OPEN),Child,button("Shortcuts",SHORTCUTS),End,
+        Child,agent_compose=ColGroup(1),MUIA_Weight,20,
+        Child,VGroup,MUIA_HorizWeight,35,MUIA_VertWeight,60,Child,instruction_caption=label("Task instructions"),Child,editor(&prompt,0),End,
+        Child,VGroup,MUIA_HorizWeight,65,MUIA_VertWeight,40,Child,profile_caption=label("Agent profile"),Child,profile_picker=cycle(kinds),
+        Child,HGroup,Child,label("YOLO"),Child,profile_fast=cycle(yesno),End,
         Child,HGroup,Child,button("Save task",SAVETASK),Child,button("Start agent",AGENT),
-        Child,button("Cancel",CANCEL),Child,button("New conversation",NEWSESSION),Child,HVSpace,End,End;
-    set(transcript,MUIA_Weight,75);set(prompt,MUIA_Weight,25);
+        Child,button("Cancel",CANCEL),Child,button("New conversation",NEWSESSION),Child,HVSpace,End,Child,HVSpace,End,End,End;
     set(prompt,MUIA_ShortHelp,"Task instructions. Agent responses are cyan; worker logs are amber.");
     set(profile_fast,MUIA_ShortHelp,"YOLO mode for the selected agent profile");
     editpage=VGroup,MUIA_Group_Spacing,2,Child,filename=elastic_label("main.c"),Child,editor(&source,0),
@@ -1373,12 +1386,18 @@ static int build_ui(void)
         Child,button("Test verified HTTPS",PROBE),Child,label("Project drawer (restart to apply)"),Child,projectdrawer=entry(180),
         Child,label("Build command (must produce Program.new)"),Child,buildcommand=entry(512),Child,HGroup,Child,button("Save build command",SAVEBUILD),Child,HVSpace,End,
         Child,HGroup,Child,button("Save",SAVECONFIG),Child,button("Use",USECONFIG),Child,button("Cancel",CANCELCONFIG),Child,HVSpace,End,Child,HVSpace,End;
-    pages=PageGroup,Child,mui_viewport(agent),Child,mui_viewport(editpage),Child,mui_viewport(buildpage),
+    workspace_tabs=MUI_NewObject("Title.mui",Child,label("Agent"),Child,label("Editor"),
+        Child,label("Build / CLI"),Child,label("Changes"),Child,label("Settings"),TAG_DONE);
+    if(!workspace_tabs)return 0;
+    pages=PageGroup,Child,workspace_tabs,Child,mui_viewport(agent),Child,mui_viewport(editpage),Child,mui_viewport(buildpage),
         Child,mui_viewport(changes),Child,mui_viewport(settings),End;
-    workspace_center=VGroup,MUIA_Weight,60,MUIA_Group_Spacing,2,Child,heading=elastic_label("Termic workspace"),Child,pages,End;
-    toolbar=HGroup,MUIA_Group_Spacing,2,Child,workspace_view=cycle(workspace_views),
-        Child,button("Save",SAVE),Child,button("Build",BUILD),Child,button("Run",RUN),Child,button("Cancel",CANCEL),Child,HVSpace,End;
-    workspace_row=HGroup,MUIA_Group_Spacing,3,Child,workspace_left,Child,workspace_balance_a=BalanceObject,End,Child,workspace_files,Child,workspace_balance_b=BalanceObject,End,Child,workspace_center,End;
+    workspace_center=VGroup,MUIA_Weight,65,MUIA_Group_Spacing,2,Child,heading=elastic_label("Termic workspace"),Child,pages,End;
+    toolbar=HGroup,MUIA_Group_Spacing,2,Child,workspace_brand=label("TERMIC / AMIGA " TERMIC_VERSION),
+        Child,workspace_view=cycle(workspace_views),Child,HVSpace,Child,button("Build",BUILD),Child,button("Run",RUN),
+        Child,workspace_extra=HGroup,Child,button("Settings",SETTINGS),Child,button("About",ABOUT),Child,button("Quit",QUIT),End,
+        Child,workspace_small_actions=HGroup,Child,button("Save",SAVE),Child,button("Cancel",CANCEL),End,End;
+    workspace_row=HGroup,MUIA_Group_Spacing,3,Child,workspace_left,Child,workspace_balance_a=BalanceObject,End,
+        Child,workspace_center,Child,workspace_balance_b=BalanceObject,End,Child,workspace_files,End;
     workspace_body=NewObject(workspace_class->mcc_Class,NULL,MUIA_Group_Spacing,2,
         MUIA_InnerLeft,2,MUIA_InnerRight,2,MUIA_InnerTop,2,MUIA_InnerBottom,2,
         Child,toolbar,Child,workspace_row,Child,status=elastic_label("Ready"),TAG_DONE);
@@ -1391,6 +1410,8 @@ static int build_ui(void)
     }
     /* Start compact so a small screen can open the window before its first
      * layout pass. Native MUI/Intuition controls handle drag, zoom and sizing. */
+    set(workspace_brand,MUIA_ShowMe,FALSE);set(workspace_extra,MUIA_ShowMe,FALSE);
+    set(activity_caption,MUIA_ShowMe,FALSE);set(instruction_caption,MUIA_ShowMe,FALSE);set(profile_caption,MUIA_ShowMe,FALSE);set(files_hint,MUIA_ShowMe,FALSE);
     set(workspace_left,MUIA_ShowMe,FALSE);set(workspace_files,MUIA_ShowMe,FALSE);
     set(workspace_balance_a,MUIA_ShowMe,FALSE);set(workspace_balance_b,MUIA_ShowMe,FALSE);
     win=MUI_NewObject(MUIC_Window,MUIA_Window_Title,"Termic Amiga " TERMIC_VERSION,
@@ -1507,7 +1528,7 @@ int main(int argc, char **argv)
     GfxBase = (struct GfxBase *)OpenLibrary((STRPTR) "graphics.library", 37);
     AslBase = OpenLibrary((STRPTR) "asl.library", 37);
     DiskfontBase = OpenLibrary((STRPTR) "diskfont.library", 37);
-    /* MUI preferences select UI and fixed-width editor fonts. */
+    /* Workspace fonts retain the reference layout, with MUI role fallbacks. */
     {
         char *configured = read_preference("projects-drawer", 180);
         if (configured)
