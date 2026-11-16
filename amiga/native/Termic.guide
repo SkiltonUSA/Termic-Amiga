@@ -1,7 +1,7 @@
 @DATABASE Termic.guide
 @INDEX Index
 @NODE MAIN "Termic Amiga - User Guide"
-@{b}Termic Amiga 0.1.0 Beta@{ub}
+@{b}Termic Amiga 0.1.1 Beta@{ub}
 Native MUI development workspace for AmigaOS 3.2 / 68020+.
 
   @{"Getting started" LINK Start}       @{"Installation" LINK Install}
@@ -58,7 +58,7 @@ MultiView and the AmigaGuide datatype display this manual.
 
 A complete local installation kit contains the executables, Source,
 Template, SDK archives and installation scripts. The GitHub repository
-contains source; no AmiPkg release is published at present.
+contains source; GitHub releases include kits and pinned AmiPkg entries.
 
 Unpack a kit into a new drawer. In an Amiga Shell, for example:
 
@@ -286,7 +286,9 @@ Project: New, Open... (import source drawer), Save, About..., Quit.
 Edit: Cut, Copy, Paste, Erase, Select All, Undo, Redo.
 Workspace: New Task, Mark Done, Build, Run, Start Agent, Cancel Job,
            Git Status, Git Diff.
-View: Agent, Editor, Build / CLI, Changes.
+View: Agent, Editor, Build / CLI, Changes, Activity / processes...
+Tools: Process Monitor... (also available from View > Activity / processes...).
+Right Amiga I opens Activity. See @{"Process monitor" LINK activitymonitor}.
 Settings: Preferences, MUI Settings..., Save Settings, Use Settings,
           Cancel Edits (the last three apply while Settings is open).
 Help: Contents... opens this AmigaGuide manual in MultiView.
@@ -295,9 +297,10 @@ Help: Contents... opens this AmigaGuide manual in MultiView.
 @{"Prompt library and project instructions" LINK Prompts}
 Right Amiga P opens Prompts; Right Amiga K opens keyboard shortcuts.
 Right Amiga E opens Agents / CLI / Scripts; Right Amiga M opens MCP settings.
+Right Amiga I opens Tools > Process Monitor from any workspace page.
 In the prompt, Tab sends and Shift Tab changes agent profile. Ctrl J adds
-a newline, Ctrl G opens the editor, Ctrl R searches history and F4 shows
-activity. Two Esc presses recall the last sent message. In an empty prompt,
+a newline, Ctrl G opens the editor, Ctrl R searches history and F4 opens
+the Activity process monitor. Two Esc presses recall the last sent message. In an empty prompt,
 / opens commands, @ mentions the open file, ! opens CLI, ? shows shortcuts.
 Ctrl T focuses transcript. F3 then finds text, PgUp/PgDn scroll, and
 Ctrl Home/End or Shift Alt comma/period go to top/latest. Ctrl Space starts
@@ -463,7 +466,7 @@ Classic AmigaOS has no process isolation: review code before running it.
 @ENDNODE
 
 @NODE About "Version, support and credits"
-Termic Amiga 0.1.0 Beta. Native version source: Source/version.h.
+Termic Amiga 0.1.1 Beta. Native version source: Source/version.h.
 Project > About... and the About toolbar button show version and credits.
 AmigaDOS can inspect all three executable version tags:
 
@@ -726,4 +729,37 @@ not use AI. Stop cancels host processes. Failed work is not reset/retried.
 Native amiga-git itself does not support worktrees.
 
 @{"Git review" LINK Git}  @{"Task board" LINK TaskFlow}
+@ENDNODE
+
+@NODE activitymonitor "Activity / Process Monitor"
+@{b}Activity / Process Monitor@{ub}
+
+Open Tools > Process Monitor... or press Right Amiga I.
+F4 also opens Activity when the agent prompt has focus.
+ZZ9000... shows optional board/ARM information; Hide ZZ9000 closes that panel.
+It starts hidden and does not query the board while hidden. This button does
+not enable ARM compute offload. Unsupported metrics remain unavailable.
+The resizable monitor is part of Termic; agent jobs and editing continue.
+Opening it again activates the existing window. Closing it stops sampling.
+
+CPU is a statistical VBlank estimate, refreshed every second. Memory shows
+partial tracked allocations, not total heap or RSS. The summary shows global
+Chip/Fast free and total memory. Task address identifies an Exec task; it is
+not a Unix PID. OS3 uptime and output counters are unavailable.
+
+Sort by Address for stable rows, CPU or Memory descending, or Name ascending.
+Selection follows the same task across sorting and refreshes. Pause freezes
+updates and stops CPU sampling; Resume starts a new sample interval.
+A confirmed service restart continues while the display is paused.
+
+Stop selected asks for confirmation and sends cooperative CTRL-C. Protected
+system/Termic tasks and stale identities are refused. There is no forced kill.
+Restart service uses optional services.txt beside TermicNative. Definitions
+are never executed on load. See the bundled process-monitor README for syntax.
+Closing Activity cancels pending restart supervision.
+
+ZZ9000 AutoConfig boards and the optional ARM owner port are reported.
+ARM process/load/memory/dependency metrics remain unavailable through the
+current monitor interface. Shared RAM size does not measure ARM heap usage.
+No firmware is changed and an absent owner port does not establish ARM idle.
 @ENDNODE

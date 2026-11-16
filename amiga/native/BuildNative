@@ -10,7 +10,7 @@ vc +aos68k -cpu=68020 -O1 worker.c hardware.c relay.c profiles.c agent.c change_
 If WARN
   Quit 20
 EndIf
-vc +aos68k -cpu=68020 -O1 -ITermic:SDK/MUI/Developer/C/Include -ITermic:SDK/MCC_TextEditor/Developer/C/include gui.c diagnostics.c change_review.c taskflow.c prompts.c profiles.c vendor/cJSON.c files.c workspace.c syntax.c -o Termic:TermicNative.new -lamiga -lmieee
+vc +aos68k -cpu=68020 -O1 -ITermic:SDK/MUI/Developer/C/Include -ITermic:SDK/MCC_TextEditor/Developer/C/include -ITermic:apps/process-monitor -DTERMIC_EMBEDDED gui.c Termic:apps/process-monitor/main.c diagnostics.c change_review.c taskflow.c prompts.c profiles.c vendor/cJSON.c files.c workspace.c syntax.c -o Termic:TermicNative.new -lamiga -lmieee
 If WARN
   Quit 20
 EndIf

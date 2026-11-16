@@ -84,6 +84,7 @@ def main():
             if path.suffix in (".c", ".h"):
                 shutil.copyfile(path, stage / "Source" / path.name)
         shutil.copytree(SOURCE / "vendor", stage / "Source/vendor")
+        shutil.copytree(ROOT / "amiga/apps/process-monitor", stage / "apps/process-monitor")
         shutil.copytree(SOURCE / "Project", stage / "Project")
         shutil.copytree(SOURCE / "Project", stage / "Template")
         shutil.copytree(SOURCE / "Project", stage / "Source/Template")

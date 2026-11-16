@@ -1,6 +1,6 @@
 # Termic Amiga
 
-**Native MUI development workspace for AmigaOS. Version 0.1.0 Beta.**
+**Native MUI development workspace for AmigaOS. Version 0.1.1 Beta.**
 
 This repository contains the Amiga implementation, separated from the desktop
 [Termic project](https://github.com/simion/termic). It runs on the Amiga using
@@ -10,15 +10,15 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 
 ## Downloads
 
-- [Native Amiga application and SDK kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-Amiga-0.1.0-beta.lha)
-  and [pinned AmiPkg entry](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/termic-amiga.json).
-- [Standalone Process Monitor](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-Process-Monitor-0.1.0-beta.lha),
+- [Native Amiga application and SDK kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.1-beta/Termic-Amiga-0.1.1-beta.lha)
+  and [pinned AmiPkg entry](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.1-beta/termic-amiga.json).
+- [Standalone Process Monitor](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.1-beta/Termic-Process-Monitor-0.1.1-beta.lha),
   including source and a Workbench icon.
 - AI Proxy for [Apple Silicon macOS](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-AI-Proxy-macOS.zip)
   or [Windows 11 x64](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-AI-Proxy-Windows11.zip).
 
 Read the installation requirements below before upgrading an existing drawer.
-[Release notes and checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.1.0-beta)
+[Release notes and checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.1.1-beta)
 include verification details.
 
 ## Features
@@ -30,6 +30,8 @@ include verification details.
 - Native VBCC build/run and explicit AmigaDOS commands with captured output.
 - Persistent CLI panel below Files, with a resizable half-height split, command entry and job output.
 - Native Git initialization, status, diffs, source commits and branch controls.
+- Integrated Process Monitor with native column dividers, CPU/memory sorting and pause/resume.
+- Optional ZZ9000 information button, hidden by default; no ARM compute offload is enabled.
 - Kanban lifecycle board and a persistent serial task queue with failure recovery.
 - Agent edit review with accept/revert and task scratchpad notes.
 - Clickable compiler diagnostics; host Git worktrees and GitHub PR controls.
@@ -60,7 +62,7 @@ for the prompt library, project guidance and screenshot-style key bindings.
 
 ![Termic prompt library with black editor and action icons](docs/screenshots/prompts.png)
 
-![Compose, Session and Transcript shortcuts](docs/screenshots/keyboard-shortcuts.png)
+![Compose, Session and Transcript shortcuts](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.1-beta/keyboard-shortcuts.png)
 
 See [Agent execution on the Amiga](docs/agent-execution.md) for the shared
 tools, execution results and hardware detection. Cursor collects slow operations
@@ -95,20 +97,28 @@ notes, compiler locations and Git worktree controls.
 
 ![Kanban task completed after native build, tests and review](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/kanban-monitor-done.png)
 
-## Process Monitor example application
+## Integrated Process Monitor
 
-[Termic Process Monitor](amiga/apps/process-monitor/README.md) is a full native
-MUI application developed through the Kanban workflow. It lists Exec tasks,
+[Termic Process Monitor](amiga/apps/process-monitor/README.md) opens inside Termic
+from **Tools > Process Monitor...** or **Right Amiga I**. **F4** opens it while
+the agent prompt has focus. It is also available as a standalone MUI application,
+developed through the Kanban workflow. It lists Exec tasks,
 priority, stack capacity, partial tracked allocation and statistical CPU load.
 It includes cooperative Stop and opt-in service restart with declared port
 dependencies, confirmation, identity checks and bounded waits.
+
+The process table has native column separators and aligned headings. CPU and
+Memory sort descending; Name sorts alphabetically. Pause stops sampling.
+The **ZZ9000...** button shows optional board/ARM information; **Hide ZZ9000**
+returns that space to the process list. Board queries stop while the panel is
+hidden. This button does not enable ARM compute offload.
 
 The TF4060 target is detected as a 68060 through Exec. ZZ9000 graphics/shared
 RAM boards and an optional ARM debug owner are reported. The installed legacy
 firmware does not expose ARM processes or per-process telemetry; the app labels
 those values unavailable. It does not reset or replace ARM firmware.
 
-![Process Monitor with synthetic tasks and disabled process controls](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/process-monitor.png)
+![Process Monitor with synthetic tasks and disabled process controls](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.1-beta/process-monitor.png)
 
 ## Requirements and installation
 

@@ -36,7 +36,7 @@ static void show_shortcuts(void)
                 "\33bSession\33n\n"
                 "Tab        Send message\n"
                 "Shift Tab  Change agent profile\n"
-                "F4         Inspect activity\n"
+                "F4         Process Monitor\n"
                 "Ctrl C     Quit (saves edits)\n\n"
                 "Prompt shortcuts apply only\n"
                 "while the prompt has focus."),
@@ -50,7 +50,8 @@ static void show_shortcuts(void)
                 "Ctrl Home / End Top / latest\n"
                 "Shift Alt , / . Top / latest"), End,
             Child, shortcut_column(
-                "/keymap  Show this reference       Right Amiga K  Open from any page\n\n"
+                "/keymap  Show this reference       Right Amiga K  Open from any page\n"
+                "Right Amiga I  Tools > Process Monitor (from any workspace page)\n\n"
                 "Not available: image paste, reasoning adjustment, subagents, custom keymaps.\n"
                 "Use Right Amiga V for text paste. Symbols use US keyboard positions.\n"
                 "Selection: Ctrl Space to finish, Right Amiga C to copy. Esc returns to prompt."),
@@ -168,7 +169,7 @@ static ULONG termic_key_event(struct IntuiMessage *im)
     case KEY_HISTORY: queue_action(HISTORYFIND);break;
     case KEY_TRANSCRIPT: queue_action(HISTORY);break;
     case KEY_QUIT: queue_action(QUIT);break;
-    case KEY_ACTIVITY: queue_action(PAGE_OUTPUT);break;
+    case KEY_ACTIVITY: queue_action(TM_ACTIVITY_OPEN);break;
     case KEY_COMMANDS: queue_action(im->Qualifier&(IEQUALIFIER_LSHIFT|IEQUALIFIER_RSHIFT) ? SHORTCUTS : COMMANDS);break;
     case KEY_MENTION: queue_action(MENTION);break;
     case KEY_CLI: set(command_mode,MUIA_Cycle_Active,0);queue_action(FOCUSCOMMAND);break;

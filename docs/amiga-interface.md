@@ -127,3 +127,33 @@ pressed and disabled states; the menu strip retains descriptive names.
 The icons are drawn locally with the current MUI text pen, without an icon
 font, image files or another class dependency. Agent-type selectors and
 command-palette entries keep their descriptive labels.
+
+## Activity window
+
+Tools > Process Monitor... (Right Amiga I) opens the integrated native
+process monitor. View > Activity / processes remains an alternative entry.
+F4 opens it from the agent prompt. It is a child window of
+Termic's MUI application, with its own asynchronous timer, so the workspace
+and job queue continue servicing events. Reopening activates the same window.
+
+The inventory lists all Exec tasks, executable names, task addresses, states,
+priorities, stack sizes, partial tracked memory and sampled CPU. Native MUI
+column separators and aligned headings distinguish each field; numeric columns
+align right and the name column expands with the window. Address order
+is stable; CPU and memory sort descending, name ascending. Selection follows
+task identity. Pause stops sampling and freezes the display while confirmed
+service restart supervision continues. Closing removes the interrupt sampler,
+timer, fonts and window; closing Termic performs the same cleanup.
+
+The existing cooperative stop and opt-in service restart protections apply.
+Service definitions are read from `services.txt` beside `TermicNative`.
+OS3 uptime, output counters and full private memory usage are unavailable.
+The optional ZZ9000 button shows/hides the board information panel; it starts
+hidden and makes no board queries until opened. It does not enable compute
+offload. There is no inferred project hierarchy or ARM process inventory. ARM telemetry
+is explicitly unavailable; firmware and board ownership are never changed.
+
+`TermicNative --activity-fixture` opens Activity with synthetic data and disabled
+process controls for screenshots. It does not replace normal workspace data.
+The monitor sources ship under `apps/process-monitor` in the native kit and
+are linked directly by `BuildNative`; no extra executable is needed.

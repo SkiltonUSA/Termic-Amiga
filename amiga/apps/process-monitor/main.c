@@ -21,20 +21,35 @@
 #include <string.h>
 #include <ctype.h>
 #include "mui_compat.h"
+#ifdef TERMIC_EMBEDDED
+extern struct Library *MUIMasterBase, *DiskfontBase;
+extern struct IntuitionBase *IntuitionBase;
+extern struct GfxBase *GfxBase;
+#else
 struct Library *MUIMasterBase;
 struct IntuitionBase *IntuitionBase;
-struct ExpansionBase *ExpansionBase;
 struct GfxBase *GfxBase;
 struct Library *DiskfontBase;
+#endif
+struct ExpansionBase *ExpansionBase;
 static struct TextFont *bodyfont,*codefont;
 #include "model.h"
 #include "monitor.h"
 #include "services.h"
-static Object *app,*win,*list,*detail,*summary,*status,*servlist;
+static Object *app,*win,*list,*detail,*summary,*status,*servlist,*arminfo,*zzbutton;
+static BOOL zzvisible;
 static char summarytext[512],detailtext[1024],armtext[768],statustext[256];
-static char entries[MAXROWS][160],serviceentries[NSERVICES][384];
-static const char version[]="$VER: Termic Process Monitor 0.1.0 Beta (13.11.2026)";
-static BOOL synthetic;
+typedef struct {
+ char name[80],address[9],state[8],priority[6],stack[11],tracked[12],cpu[16];
+} ProcessEntry;
+static ProcessEntry entries[MAXROWS];
+static char serviceentries[NSERVICES][384];
+/* Native list columns keep headings and separators aligned during resizing. */
+static const char process_format[]=
+ "BAR MIW=15 MAW=100 W=200,BAR,BAR,BAR P=\33r,BAR P=\33r,BAR P=\33r,P=\33r";
+static const char version[]="$VER: Termic Process Monitor 0.1.1 Beta (15.11.2026)";
+static BOOL synthetic, paused, reorder_only;
+static int displayed_rows, displayed_services, sort_order;
 static struct MsgPort *timerport;
 static struct timerequest *timerio;
 static BOOL timeropen,timerpending;
@@ -71,7 +86,7 @@ static void makereport(void)
 {
  int i; char cpu[16];
  snapshot();
- printf("Termic Process Monitor 0.1.0 Beta: statistical VBlank estimate\n");
+ printf("Termic Process Monitor 0.1.1 Beta: statistical VBlank estimate\n");
  printf("CPU: %s detected. TF4060 is the configured board, not independently detected.\n",
   SysBase->AttnFlags & AFF_68060 ? "68060" : "not identified as 68060");
  printf("Window %lu seconds; samples %lu; idle %lu; unassigned %lu\n",ticks,totalhits,idlehits,losthits);
@@ -109,7 +124,9 @@ static void closetimer(void)
  if(timeropen) CloseDevice((struct IORequest *)timerio);
  if(timerio) DeleteIORequest((struct IORequest *)timerio);
  if(timerport) DeleteMsgPort(timerport);
+ timerport=NULL;timerio=NULL;timerpending=timeropen=FALSE;
 }
+#ifndef TERMIC_EMBEDDED
 /* Fixture is the only process exercised by unattended control tests. */
 static int fixture(const char *token)
 {
@@ -208,6 +225,7 @@ done:
  puts(ok ? "PROCESS_MONITOR_SELFTEST_PASS" : "PROCESS_MONITOR_SELFTEST_FAIL");
  return ok ? 0 : 20;
 }
+#endif
 static Object *textobject(char *s)
 {
  return MUI_NewObject(MUIC_Text,MUIA_Text_Contents,s,MUIA_Text_PreParse,"\33l",MUIA_Text_SetMin,FALSE,TAG_DONE);
@@ -218,41 +236,92 @@ static Object *button(char *s)
  MUIA_Background,MUII_ButtonBack,MUIA_InputMode,MUIV_InputMode_RelVerify,
  MUIA_Text_Contents,s,MUIA_Text_PreParse,"\33c",TAG_DONE);
 }
+static void toggle_zz9000(void)
+{
+ if(!arminfo || !zzbutton)return;
+ zzvisible=!zzvisible;
+ if(zzvisible) {
+  if(!synthetic)armreport();
+  SetAttrs(arminfo,MUIA_Text_Contents,armtext,TAG_DONE);
+ }
+ SetAttrs(arminfo,MUIA_ShowMe,zzvisible,TAG_DONE);
+ SetAttrs(zzbutton,MUIA_Text_Contents,zzvisible ? "Hide ZZ9000" : "ZZ9000...",TAG_DONE);
+}
+static Object *zz9000_info(void)
+{
+ zzvisible=FALSE;
+ return MUI_NewObject(MUIC_Text,MUIA_Text_Contents,"\n\n",
+  MUIA_Text_SetMin,FALSE,MUIA_ShowMe,FALSE,TAG_DONE);
+}
+static Object *zz9000_button(void)
+{
+ Object *b=button("ZZ9000...");
+ if(b)SetAttrs(b,MUIA_ShortHelp,
+  "Show or hide optional board/ARM information. This does not enable compute offload.",TAG_DONE);
+ return b;
+}
 static const char *statename(UBYTE state)
 {
  switch(state){case TS_RUN:return "Run";case TS_READY:return "Ready";
  case TS_WAIT:return "Wait";case TS_ADDED:return "Added";case TS_REMOVED:return "Exit";default:return "Other";}
 }
+static ULONG process_display(__reg("a2") char **columns,__reg("a1") ProcessEntry *entry)
+{
+ static char *titles[]={"Executable / task","Address","State","Pri","Stack","Tracked*","CPU"};
+ int i;
+ if(!entry) {for(i=0;i<7;++i)columns[i]=titles[i];return 0;}
+ columns[0]=entry->name;columns[1]=entry->address;columns[2]=entry->state;
+ columns[3]=entry->priority;columns[4]=entry->stack;
+ columns[5]=entry->tracked;columns[6]=entry->cpu;
+ return 0;
+}
+static struct Hook process_display_hook={{NULL,NULL},(HOOKFUNC)process_display,NULL,NULL};
+static Object *process_list(void)
+{
+ return MUI_NewObject(MUIC_List,MUIA_Font,codefont ? (ULONG)codefont : MUIV_Font_Fixed,
+  MUIA_List_Format,process_format,MUIA_List_Title,TRUE,
+  MUIA_List_DisplayHook,&process_display_hook,
+  MUIA_ShortHelp,"CPU is sampled; tracked memory is partial. Columns have native separators.",TAG_DONE);
+}
 static void servicedisplay(void)
 {
- int i;static int displayed;char *state;
+ int i;char *state;
  SetAttrs(servlist,MUIA_List_Quiet,TRUE,TAG_DONE);
  for(i=0;i<nservices;++i) {
   state=synthetic ? "Example" : (portexists(services[i].port) ? "Running" : "Absent");
   sprintf(serviceentries[i],"%-24.24s %-8s  Requires: %.110s",services[i].name,state,
           *services[i].deps ? services[i].deps : "none declared");
-  if(i>=displayed)DoMethod(servlist,MUIM_List_InsertSingle,serviceentries[i],MUIV_List_Insert_Bottom);
+  if(i>=displayed_services)DoMethod(servlist,MUIM_List_InsertSingle,serviceentries[i],MUIV_List_Insert_Bottom);
  }
- while(displayed>nservices){DoMethod(servlist,MUIM_List_Remove,MUIV_List_Remove_Last);--displayed;}
- displayed=nservices;
+ while(displayed_services>nservices){DoMethod(servlist,MUIM_List_Remove,MUIV_List_Remove_Last);--displayed_services;}
+ displayed_services=nservices;
  SetAttrs(servlist,MUIA_List_Quiet,FALSE,TAG_DONE);
  DoMethod(servlist,MUIM_List_Redraw,MUIV_List_Redraw_All);
 }
-static const char *displayname(Row *r)
+static const char *displayname(const Row *r)
 {
  const char *p,*base=r->command;
  if(!*base)return r->name;
  for(p=base;*p;++p)if(*p=='/' || *p==':')base=p+1;
  return *base ? base : r->name;
 }
+/* Sort captured data only, never access task pointers from the comparator. */
+static int activity_order(const void *a,const void *b)
+{
+ const Row *x=a,*y=b;int c=0;
+ if(sort_order==1)c=x->hits>y->hits ? -1 : x->hits<y->hits;
+ if(sort_order==2)c=x->tracked>y->tracked ? -1 : x->tracked<y->tracked;
+ if(sort_order==3)c=strcmp(displayname(x),displayname(y));
+ return c ? c : address_order(a,b);
+}
 static void refresh(void)
 {
- LONG active=-1;static int displayed;Row selected;BOOL have=FALSE;int i,newactive=-1;char cpu[16];
+ LONG active=-1;Row selected;BOOL have=FALSE;int i,newactive=-1;char cpu[16];
  ULONG chip,ctotal,fast,ftotal,rate;char duration[40];
  GetAttr(MUIA_List_Active,list,(ULONG *)&active);
  if(active>=0 && active<rowcount){selected=rows[active];have=TRUE;}
- if(!synthetic)snapshot();
- else {
+ if(!synthetic && !paused && !reorder_only)snapshot();
+ else if(synthetic) {
   rowcount=3;memset(rows,0,sizeof(rows));
   for(i=0;i<3;++i) {
    sprintf(rows[i].name,"Example process %d",i+1);sprintf(rows[i].command,"Example:Programs/Demo%d",i+1);
@@ -262,18 +331,23 @@ static void refresh(void)
   }
   totalhits=100;idlehits=40;
  }
+ qsort(rows,rowcount,sizeof(*rows),activity_order);
  SetAttrs(list,MUIA_List_Quiet,TRUE,TAG_DONE);
  for(i=0;i<rowcount;++i) {
   if(totalhits)sprintf(cpu,"%lu%%",percent(rows[i].hits,totalhits));else strcpy(cpu,"N/A");
-  sprintf(entries[i],"%-24.24s %08lx %-5s %4d %8lu %9lu%s %4s",displayname(&rows[i]),
-   (ULONG)rows[i].task,statename(rows[i].state),rows[i].pri,rows[i].stack,
-   rows[i].tracked,rows[i].clipped ? "+" : " ",cpu);
-  if(i>=displayed)DoMethod(list,MUIM_List_InsertSingle,entries[i],MUIV_List_Insert_Bottom);
+  copystr(entries[i].name,displayname(&rows[i]),sizeof(entries[i].name));
+  sprintf(entries[i].address,"%08lx",(ULONG)rows[i].task);
+  copystr(entries[i].state,statename(rows[i].state),sizeof(entries[i].state));
+  sprintf(entries[i].priority,"%d",rows[i].pri);
+  sprintf(entries[i].stack,"%lu",rows[i].stack);
+  sprintf(entries[i].tracked,"%lu%s",rows[i].tracked,rows[i].clipped ? "+" : "");
+  copystr(entries[i].cpu,cpu,sizeof(entries[i].cpu));
+  if(i>=displayed_rows)DoMethod(list,MUIM_List_InsertSingle,&entries[i],MUIV_List_Insert_Bottom);
   if(have && same(&selected,&rows[i]))newactive=i;
  }
- if(synthetic && !displayed)newactive=0;
- while(displayed>rowcount){DoMethod(list,MUIM_List_Remove,MUIV_List_Remove_Last);--displayed;}
- displayed=rowcount;
+ if(synthetic && !displayed_rows)newactive=0;
+ while(displayed_rows>rowcount){DoMethod(list,MUIM_List_Remove,MUIV_List_Remove_Last);--displayed_rows;}
+ displayed_rows=rowcount;
  if(newactive!=active)SetAttrs(list,MUIA_NoNotify,TRUE,MUIA_List_Active,newactive,TAG_DONE);
  SetAttrs(list,MUIA_List_Quiet,FALSE,TAG_DONE);
  DoMethod(list,MUIM_List_Redraw,MUIV_List_Redraw_All);
@@ -339,9 +413,10 @@ static BOOL child(Object *group,Object *object)
 {
  if(!object)return FALSE;DoMethod(group,OM_ADDMEMBER,object);return TRUE;
 }
+#ifndef TERMIC_EMBEDDED
 static int gui(void)
 {
- Object *root=NULL,*buttons,*lv,*slv,*label,*b[5];ULONG sigs,id,got;int i,res=20,poll;
+ Object *root=NULL,*buttons,*lv,*slv,*b[5];ULONG sigs,id,got;int i,res=20,poll;
  static char *labels[]={"Refresh","Stop selected","Restart service","About","Quit"};
  MUIMasterBase=OpenLibrary("muimaster.library",21);
  IntuitionBase=(struct IntuitionBase *)OpenLibrary("intuition.library",37);
@@ -354,16 +429,12 @@ static int gui(void)
  }
  root=MUI_NewObject(MUIC_Group,MUIA_Font,bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal,TAG_DONE);if(!root)goto done;
  summary=textobject("");if(!child(root,summary))goto done;
- label=MUI_NewObject(MUIC_Text,MUIA_Text_Contents,"Executable / task        Address  State  Pri    Stack  Tracked*   CPU",
- MUIA_Text_SetMin,FALSE,MUIA_Font,codefont ? (ULONG)codefont : MUIV_Font_Fixed,TAG_DONE);
- if(!child(root,label))goto done;
- list=MUI_NewObject(MUIC_List,MUIA_Font,codefont ? (ULONG)codefont : MUIV_Font_Fixed,
- MUIA_ShortHelp,"Tracked bytes are partial tc_MemEntry accounting. CPU is statistical, per refresh interval.",TAG_DONE);
+ list=process_list();
  if(!list)goto done;
  lv=MUI_NewObject(MUIC_Listview,MUIA_Listview_List,list,TAG_DONE);
  if(!lv){MUI_DisposeObject(list);list=NULL;goto done;}child(root,lv);
  detail=textobject("Select a process.\nTracked allocation is partial.\nDependencies may be unknown.");if(!child(root,detail))goto done;
- if(!child(root,textobject(armtext)))goto done;
+ arminfo=zz9000_info();if(!child(root,arminfo))goto done;
  if(!child(root,textobject("Opt-in services: select a running service to restart. Commands are never started automatically.")))goto done;
  servlist=MUI_NewObject(MUIC_List,MUIA_Font,codefont ? (ULONG)codefont : MUIV_Font_Fixed,TAG_DONE);if(!servlist)goto done;
  slv=MUI_NewObject(MUIC_Listview,MUIA_Listview_List,servlist,MUIA_Weight,20,TAG_DONE);
@@ -371,6 +442,7 @@ static int gui(void)
  status=textobject("Ready. No service is started automatically.");if(!child(root,status))goto done;
  buttons=MUI_NewObject(MUIC_Group,MUIA_Group_Horiz,TRUE,TAG_DONE);if(!child(root,buttons))goto done;
  for(i=0;i<5;++i){b[i]=button(labels[i]);if(!child(buttons,b[i]))goto done;}
+ zzbutton=zz9000_button();if(!child(buttons,zzbutton))goto done;
  win=MUI_NewObject(MUIC_Window,MUIA_Window_Title,"Termic Process Monitor",MUIA_Window_ID,0x54504d4e,
  MUIA_Window_Width,1000,MUIA_Window_Height,580,MUIA_Window_RootObject,root,TAG_DONE);
  if(!win)goto done;root=NULL;
@@ -380,6 +452,7 @@ static int gui(void)
  DoMethod(win,MUIM_Notify,MUIA_Window_CloseRequest,TRUE,app,2,MUIM_Application_ReturnID,100);
  for(i=0;i<5;++i)DoMethod(b[i],MUIM_Notify,MUIA_Pressed,FALSE,app,2,MUIM_Application_ReturnID,i+1);
  DoMethod(list,MUIM_Notify,MUIA_List_Active,MUIV_EveryTime,app,2,MUIM_Application_ReturnID,6);
+ DoMethod(zzbutton,MUIM_Notify,MUIA_Pressed,FALSE,app,2,MUIM_Application_ReturnID,7);
  if(synthetic){SetAttrs(b[1],MUIA_Disabled,TRUE,TAG_DONE);SetAttrs(b[2],MUIA_Disabled,TRUE,TAG_DONE);}
  if(badservices){sprintf(statustext,"Ignored %d invalid/duplicate service definitions.",badservices);statusmsg(statustext);}
  refresh();details();SetAttrs(win,MUIA_Window_Open,TRUE,TAG_DONE);
@@ -392,12 +465,14 @@ static int gui(void)
   if(id==2)control(FALSE);
   if(id==3)control(TRUE);
   if(id==4)__termic_mui_request(MUIMasterBase,app,win,0,"About","_OK",
-   "Termic Process Monitor 0.1.0 Beta\nNative AmigaOS 3.2 / MUI 5\nStatistical CPU estimates and partial memory accounting.\nLegacy ZZ9000 ARM telemetry is unavailable.\nSkiltonUSA / Termic-Amiga contributors, AGPL-3.0-or-later\ngithub.com/SkiltonUSA/Termic-Amiga",NULL);
+   "Termic Process Monitor 0.1.1 Beta\nNative AmigaOS 3.2 / MUI 5\nStatistical CPU estimates and partial memory accounting.\nLegacy ZZ9000 ARM telemetry is unavailable.\nSkiltonUSA / Termic-Amiga contributors, AGPL-3.0-or-later\ngithub.com/SkiltonUSA/Termic-Amiga",NULL);
   if(id==6)details();
+  if(id==7)toggle_zz9000();
   if(CheckIO((struct IORequest *)timerio)) {
    WaitIO((struct IORequest *)timerio);timerpending=FALSE;++ticks;
    poll=pollrestart();
    if(poll)statusmsg(poll>0 ? "Service port returned after restart." : "Restart failed or timed out. No automatic retry.");
+   if(zzvisible && !synthetic){armreport();SetAttrs(arminfo,MUIA_Text_Contents,armtext,TAG_DONE);}
    refresh();details();arm_timer();
   }
   if(sigs){got=Wait(sigs|(1UL<<timerport->mp_SigBit)|SIGBREAKF_CTRL_C);if(got&SIGBREAKF_CTRL_C)break;}
@@ -416,7 +491,7 @@ done:
 int main(int argc,char **argv)
 {
  int result=20;
- if(argc==2 && !strcmp(argv[1],"--version")){puts(version+7);return 0;}
+ if(argc==2 && !strcmp(argv[1],"--version")){puts(version+6);return 0;}
  if(argc==2 && !strcmp(argv[1],"--help")){puts("Program [--report | --self-test | --fixture-ui | --version]\nRun without arguments for MUI. See ReadMe for service setup.");return 0;}
  if(((struct Library *)DOSBase)->lib_Version<47){puts("Requires AmigaOS 3.2 (dos.library 47).");return 20;}
  if(argc>1 && !strcmp(argv[1],"--fixture-service")) return argc==3 ? fixture(argv[2]) : 20;
@@ -426,7 +501,10 @@ int main(int argc,char **argv)
  if(synthetic) {
   strcpy(armtext,"SYNTHETIC ZZ9000: graphics and shared RAM boards\nARM telemetry unavailable on legacy firmware. Owner: example payload\nShared board RAM is not a measurement of ARM private heap.");
   nservices=1;strcpy(services[0].name,"Example service");strcpy(services[0].port,"EXAMPLE.SERVICE");strcpy(services[0].deps,"EXAMPLE.REQUIRED");
- } else { armreport();loadservices(); }
+ } else {
+  if(argc>1 && !strcmp(argv[1],"--report"))armreport();
+  loadservices();
+ }
  if(!synthetic) sampling_start();
  if(argc>1 && !strcmp(argv[1],"--report")) { Delay(150); ticks=3; makereport(); result=0; }
  else if(argc>1 && !strcmp(argv[1],"--self-test")) result=selftest();
@@ -434,3 +512,7 @@ int main(int argc,char **argv)
  sampling_stop();
  return result;
 }
+
+#else
+#include "embedded.h"
+#endif

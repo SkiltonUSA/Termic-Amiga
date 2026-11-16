@@ -83,6 +83,7 @@ opens the black reference window, grouped like the supplied screenshot.
 
 | Context | Keys | Action |
 | --- | --- | --- |
+| Any workspace page | Right Amiga I | Tools > Process Monitor... |
 | Prompt | Tab | Send current message through the selected profile |
 | Prompt | Shift Tab | Cycle agent profiles |
 | Prompt | Ctrl J | Insert newline |
@@ -92,7 +93,7 @@ opens the black reference window, grouped like the supplied screenshot.
 | Empty prompt | `/` | Commands palette |
 | Empty prompt | `@` | Mention the file currently open in the editor |
 | Empty prompt | `!` | Focus CLI command field; does not execute |
-| Prompt | F4 | Inspect activity in Build / CLI |
+| Prompt | F4 | Open Process Monitor |
 | Prompt or transcript | Ctrl T | Focus transcript |
 | Prompt or transcript | Ctrl C | Quit through normal save handling |
 | Transcript | F3 | Focus history search; Return finds next with wraparound |

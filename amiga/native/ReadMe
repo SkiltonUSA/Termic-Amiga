@@ -270,8 +270,11 @@ its next request. Named guidance is readable but not writable through agent
 file tools. The Files list lets you edit it yourself with backup saves.
 
 Right Amiga K or Help > Keyboard shortcuts opens the black reference window.
+Right Amiga I opens Tools > Process Monitor from any workspace page.
+Its optional ZZ9000 button shows/hides board information; it is off initially.
+This display option does not enable ARM compute offload.
 In the prompt: Tab sends, Shift Tab cycles profiles, Ctrl J adds a newline,
-Ctrl G opens the editor, Ctrl R searches history, F4 inspects activity,
+Ctrl G opens the editor, Ctrl R searches history, F4 opens Process Monitor,
 and two Esc presses recall the last sent message. In an empty prompt,
 / opens commands, @ mentions the open file, ! focuses the CLI, and ? shows
 shortcuts. Ctrl T focuses the transcript. There, F3 finds, PgUp/PgDn scroll,

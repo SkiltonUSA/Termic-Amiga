@@ -767,3 +767,81 @@ The expected validator notice concerns the explicitly reviewed AmigaDOS pre/post
 scripts. Those SDK/UI scripts and dependency checks also passed the earlier
 fresh installation on the actual Amiga. The standalone monitor LHA passed its
 archive integrity check and includes the tested binary, Workbench icon and source.
+
+## Activity integration candidate (15 November 2026)
+
+The native process monitor is now linked into TermicNative as View >
+Activity / processes (Right Amiga I). The integration candidate cross-builds
+without diagnostics for the workspace, standalone monitor and native
+`tests/test_activity.c` harness. All 73 host tests pass, including CPU/memory
+ordering, overflow boundaries, existing service-control guards and guide links.
+
+The native lifecycle harness passed on the A4000TX: singleton opening,
+selected-task retention through sorting, pause/resume, close/reopen,
+timer/sampler cleanup and parent application survival. The full workspace
+passed View-menu opening, resizing, closing and reopening Activity with real
+Exec data. Synthetic normal, paused and resized screenshots were inspected.
+The candidate adds no firmware changes or new runtime dependencies.
+Native VBCC compilation also passed on the A4000TX. The resulting workspace
+executable (181040 bytes, CRC32 `74230737`) was installed after backing up the
+previous executable, source and guide. The installed version passed menu
+opening, closing and reopening Activity without closing the workspace; its
+live screenshot was inspected. TermicCheck reported zero missing dependencies.
+The rebuilt local candidate LHA passed AmiPkg schema, parser/resolver, CPU
+constraints and fresh host copy-plan validation, with the expected notice to
+review the package's AmigaDOS installation scripts. This was an upgrade of the
+existing installation, not a fresh target installation of that archive.
+The published 0.1.0 Beta release has not been replaced by this candidate.
+
+### Process column separators (15 November 2026)
+
+Both the integrated Activity window and standalone Process Monitor now use
+MUI's native multi-column list, title row and vertical bars. Numeric columns
+align right; the process name column takes the remaining width. Both VBCC
+cross-builds and the native lifecycle harness passed, as did all 73 host tests.
+Synthetic screenshots confirm the separators and heading alignment at 1000
+and 900 pixels wide.
+The checked cross-built workspace (177624 bytes, CRC32 `DE846AB6`) and standalone
+monitor (35304 bytes, CRC32 `BE523469`) were installed with rollback copies.
+The installed Activity window passed opening, closing and reopening, and its
+live screenshot was inspected. The Amiga-native compiler was not rerun for
+this presentation change.
+
+### Process Monitor menu and shortcut reference (15 November 2026)
+
+Tools > Process Monitor now owns Right Amiga I; View > Activity / processes
+remains an alternative entry without a duplicate shortcut. The in-app keyboard
+reference, AmigaGuide, ReadMe and keyboard table document Right Amiga I and the
+prompt-only F4 alternative. All 73 host tests and the VBCC cross-build passed.
+The installed workspace (CRC32 `8DB7CB8E`) passed shortcut opening/closing.
+Native menu and shortcut-reference screenshots were inspected. Automated mouse
+menu selection did not open the window; mouse selection remains a manual check.
+The prior executable and changed source/help files were backed up on target.
+
+## 0.1.1 Beta monitor release (15 November 2026)
+
+The optional ZZ9000 panel starts hidden in the integrated and standalone
+monitors. The button shows/hides it and hidden panels do not query board/ARM
+state. The native lifecycle harness verifies default visibility, show/hide,
+reopening, sorting, pause/resume and sampler/timer cleanup. Synthetic screenshots
+of both panel states, pause and resizing were inspected.
+
+The earlier mouse-menu check is now superseded: a native input sequence from
+`amiga/native/tests/click_menu.c` selected Tools > Process Monitor on the actual
+Amiga, and the installed window opened, closed and reopened successfully.
+This required no change to the menu event handler.
+
+All 73 portable tests passed. The five native programs and standalone monitor
+were cross-built with VBCC, installed with rollback copies, and their 0.1.1 Beta
+version output checked on the Amiga. TermicCheck reported zero missing
+dependencies. The existing TLS source emits an NDK timeval pointer-type warning
+in this cross-build; authenticated direct-API execution remains unverified.
+The standalone version output also now retains the initial T in Termic.
+
+The native LHA and AmiPkg entry passed schema, resolver, CPU-floor, dependency
+minima and fresh host copy-plan validation, with the expected installation-script
+review notice. This was an upgrade on the target; a fresh Amiga installation of
+this exact archive was not repeated. Physical Windows-to-Amiga testing remains
+outstanding. The native direct-API credential file is empty, so no authenticated
+API request was attempted. ZZ9000 telemetry/offload is not implemented by the
+display toggle.

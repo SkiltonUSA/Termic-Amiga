@@ -1,8 +1,8 @@
-# Termic Process Monitor 0.1.0 Beta
+# Termic Process Monitor 0.1.1 Beta
 
 Native MUI 5 application for AmigaOS 3.2, built through Termic's Kanban queue.
 The task inventory covers the Amiga Exec CPU (68060 on the configured TF4060).
-The ZZ9000 panel identifies its AutoConfig graphics/shared-memory boards and
+The optional ZZ9000 panel identifies its AutoConfig graphics/shared-memory boards and
 checks the optional Sixies ARM debug-owner port without touching registers.
 
 Build from this drawer with the Termic SDK installed:
@@ -19,7 +19,28 @@ an already-running fixture and never signals other processes. `--fixture-ui`
 uses entirely synthetic data and disables controls, for public screenshots.
 Use a 262144-byte stack, including the Workbench icon's Stack setting.
 
+## Integrated Termic window
+
+The same monitor is linked into TermicNative. Open Tools > Process Monitor...
+(Right Amiga I), or F4 from the agent prompt. The child MUI window shares the
+workspace event loop; jobs and editing continue. CPU/Memory sorts descend,
+Name ascends, and Address restores stable ordering. Pause stops sampling;
+confirmed service restarts continue. Closing releases the sampler and timer.
+`services.txt` is beside TermicNative for this mode. No separate Program is
+required. OS3 uptime and output counters are explicitly unavailable.
+
+## Optional ZZ9000 information
+
+The **ZZ9000...** button shows board and ARM information. **Hide ZZ9000**
+returns that space to the process list. The panel starts hidden each time the
+window opens, and hidden panels do not query ZZ9000 state. This is a display
+option, not an ARM compute-offload switch. Unsupported telemetry remains
+explicitly unavailable. The CLI `--report` still includes board information.
+
 ## Reading the display
+
+The process table uses native MUI column dividers with aligned headings and
+right-aligned numbers. The name column expands when the window is widened.
 
 The resizable window lists executable/task name, address, Exec state, signed priority,
 stack capacity, partial tracked allocation and sampled CPU percentage. Select

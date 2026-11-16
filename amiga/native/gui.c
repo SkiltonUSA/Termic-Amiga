@@ -10,6 +10,7 @@
 #include "job_watch.h"
 #include "change_review.h"
 #include "diagnostics.h"
+#include "activity_monitor.h"
 #include <ctype.h>
 #include <devices/timer.h>
 #include <dos/dosextens.h>
@@ -1265,10 +1266,13 @@ static Object *build_menus(void)
     menu_item(menu, "Scratchpads...", "L", SP_OPEN);
     menu_item(menu, "Review agent edits...", "U", CR_OPEN);
     menu_item(menu, "Git branches and worktrees...", "G", GT_OPEN);
+    menu_item(menu, "Activity / processes...", NULL, TM_ACTIVITY_OPEN);
     menu_item(menu, "Agent", "1", PAGE_AGENT);
     menu_item(menu, "Editor", "2", PAGE_EDITOR);
     menu_item(menu, "Build / CLI", "3", PAGE_OUTPUT);
     menu_item(menu, "Changes", "4", PAGE_CHANGES);
+    menu = new_menu(strip, "Tools");
+    menu_item(menu, "Process Monitor...", "I", TM_ACTIVITY_OPEN);
     menu = new_menu(strip, "Settings");
     menu_item(menu, "Preferences", ",", SETTINGS);
     menu_item(menu, "Prompts...", "P", PL_OPEN);
@@ -1597,6 +1601,7 @@ int main(int argc, char **argv)
         goto cleanup;
     activity_scroll_bottom(transcript);
     flow_startup();
+    if(argc==2 && !strcmp(argv[1],"--activity-fixture"))termic_monitor_open(app,1);
     while (!done)
     {
         update_menus();
@@ -1605,6 +1610,11 @@ int main(int argc, char **argv)
         {
             int n;
             char *name;
+            if(id==TM_ACTIVITY_OPEN) {
+                if(!termic_monitor_open(app,0))message("Cannot open Activity monitor.");
+                continue;
+            }
+            if(termic_monitor_event(id))continue;
             if(id>=AC_OPEN && id<=AC_CANCEL) {access_event(id);continue;}
             if(id>=PF_OPEN && id<=PF_ADDCURSOR) {profile_event(id);continue;}
             if (shortcut_event(id)) continue;
@@ -1975,9 +1985,11 @@ int main(int argc, char **argv)
         }
         if (done)
             break;
+        termic_monitor_poll();
         if (signals)
         {
-            received = Wait(signals | SIGBREAKF_CTRL_C | SIGBREAKF_CTRL_D | (1UL << timer_port->mp_SigBit));
+            received = Wait(signals | termic_monitor_signals() | SIGBREAKF_CTRL_C | SIGBREAKF_CTRL_D | (1UL << timer_port->mp_SigBit));
+            termic_monitor_poll();
             if (received & SIGBREAKF_CTRL_D) {refresh_mcp_tasks();flow_changed();flow_tick();}
             if (received & SIGBREAKF_CTRL_C)
             {
@@ -2006,6 +2018,7 @@ cleanup:
         DeleteIORequest((struct IORequest *)timer_io);
     if (timer_port)
         DeleteMsgPort(timer_port);
+    termic_monitor_close();
     activity_clear(&activity);
     if (app)
         MUI_DisposeObject(app);
