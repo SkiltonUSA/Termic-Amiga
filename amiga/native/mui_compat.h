@@ -11,6 +11,12 @@ void __termic_mui_dispose(__reg("a6") struct Library *, __reg("a0") Object *) = 
 LONG __termic_mui_request(__reg("a6") struct Library *, __reg("d0") APTR, __reg("d1") APTR,
                           __reg("d2") LONG, __reg("a0") char *, __reg("a1") char *,
                           __reg("a2") char *, __reg("a3") APTR) = "\tjsr\t-42(a6)";
+struct MUI_CustomClass *__termic_mui_class(__reg("a6") struct Library *,
+                                           __reg("a0") struct Library *, __reg("a1") char *,
+                                           __reg("a2") struct MUI_CustomClass *, __reg("d0") ULONG,
+                                           __reg("a3") APTR) = "\tjsr\t-108(a6)";
+void __termic_mui_unclass(__reg("a6") struct Library *,
+                          __reg("a0") struct MUI_CustomClass *) = "\tjsr\t-114(a6)";
 static Object *MUI_NewObject(char *name, ULONG first, ...)
 {
     return __termic_mui_new(MUIMasterBase, name, (struct TagItem *)&first);

@@ -83,7 +83,7 @@ static void prompts_open(void)
     prompts_items=prompts_resolve(prompts_defaults,stored);cJSON_Delete(stored);stored=NULL;
     if(!prompts_items) {message("Install valid Termic:Prompts/defaults.json and check prompts.json.");goto fail;}
     if(!prompts_window) {
-        prompts_window=WindowObject,MUIA_Window_Title,"Termic: Prompts",MUIA_Window_NoMenus,TRUE,
+        prompts_window=ResponsiveWindowObject,MUIA_Window_Title,"Termic: Prompts",MUIA_Window_NoMenus,TRUE,
             MUIA_Window_Width,1100,MUIA_Window_Height,620,
             MUIA_Window_LeftEdge,MUIV_Window_LeftEdge_Centered,MUIA_Window_TopEdge,MUIV_Window_TopEdge_Centered,
             WindowContents,VGroup,InnerSpacing(12,10),MUIA_Group_Spacing,8,

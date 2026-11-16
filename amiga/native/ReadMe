@@ -47,7 +47,7 @@ Copy Projects.hdf, then run Termic:TermicStorage to mount it again.
 VERSION AND ABOUT
 The native Amiga version is defined in Source/version.h, independently of
 the desktop Termic version. The workspace header shows the native version.
-Choose Project > About..., About in the toolbar or press Shift-Help for the version, build date,
+Choose Project > About... or press Shift-Help for the version, build date,
 credits, licence and source/support links. Escape, Return or Close dismiss
 that window. About can be reopened without restarting the workspace.
 All three executables support --version and AmigaDOS Version FILE FULL:
@@ -57,16 +57,13 @@ The traditional Amiga tag uses major.minor; FULL also shows the complete
 native version and its Beta designation.
 
 WORKSPACE
-Left: projects, project naming/import, tasks and task status.
-Centre: Agent, Editor, Build / CLI, Changes and Settings tabs.
-Right: editable C, header, text and Markdown files, plus new-file controls.
-The CLI panel sits directly below Files, sharing the sidebar approximately
-equally. Drag their horizontal divider to change the split. CLI commands
-leave the selected centre tab visible. Build / CLI retains the full log view.
-Drag the dividers to resize panes. Controls use Helvetica 13 and code uses
-Courier 13 when installed, with MUI fonts as fallback. Framed sections and
-aligned preference fields keep related controls together. MUI supplies colours
-and gadget styling. The source editor retains its black syntax-colour background.
+The top MUI selector chooses Agent, Editor, Build log, Changes, Settings,
+Projects, Tasks, Files or CLI. At 340x280 a single pane fills the window.
+At 800x500 and above, Projects/Tasks and Files/CLI sit beside the work page.
+Files stays above CLI with a balance divider; column widths are adjustable.
+F1-F5 still select the work pages. Forms and tables scroll when necessary.
+MUI preferences select UI and fixed-width fonts. Resizing preserves unsaved
+text and cursor position. The source editor keeps its black syntax colours.
 
 New project uses the clean Template drawer. Import source drawer copies
 regular editable files into a managed project. New task copies the selected
@@ -200,17 +197,10 @@ MagicMenu is optional; no system menu patch is installed by Termic.
 
 Main window controls
 --------------------
-Termic draws a taller blue title bar within its own Workbench window.
-Drag the title text to move; drag the lower-right blue grip to resize.
-The cross saves and closes; overlapping squares send the window backwards;
-the single square fits the screen or restores its previous size. Hover over
-an icon for its tooltip. Workbench font preferences are not changed.
-The Files list has light filenames on black, matching the source editor.
-
-Title-bar sizing follows the default public screen height at launch. On the
-1920x800 desktop it is slightly smaller than before; higher resolutions get
-larger controls. Restart after changing screen resolution. The editor font
-is unchanged. This is resolution scaling, not automatic monitor-DPI detection.
+Termic uses native MUI/Intuition window controls for dragging, sizing,
+depth, zoom and closing. The layout adapts to the current window size.
+No separate custom title bar or system font change is applied. Use
+Settings > MUI Settings to choose application fonts and gadget appearance.
 
 AGENTS / CLI / SCRIPTS
 Settings opens a profile manager for OpenAI API, CLI, ARexx and MicroPython

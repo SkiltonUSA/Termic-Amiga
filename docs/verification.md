@@ -947,3 +947,52 @@ The output directory must be new. At Review, inspect the generated `main.c` and
 `job.log`; put the source SHA256 from `review-ready.json` into `approve-review`
 in that directory to continue. Approval is bound to the exact generated source.
 Each run creates a separate target drawer and retains its generated program.
+
+## Responsive native MUI workspace (15 November 2026)
+
+The custom borderless title bar was replaced with native MUI/Intuition window
+controls. The workspace uses a compact page selector below 800x500 and shows
+Projects/Tasks plus Files/CLI beside the work page at larger sizes. Fonts now
+follow MUI preferences. Large forms and auxiliary windows have native virtual
+groups with automatic scrollbars. This is layout adaptation, not bitmap or
+automatic DPI scaling.
+
+`test_responsive_window.c` builds the actual workspace UI in a separate MUI
+application with synthetic data. Its size/page matrix passed at 320x240,
+340x280, 480x320, 640x480, 800x600 and 1024x800, including repeated transitions
+between compact and wide layouts. All nine workspace choices were exercised;
+unsaved source and instructions, dirty flags and the source cursor survived.
+The editor Find field and CLI command field were checked inside the visible
+window. Native borders and sizing gadgets were present. Agents, MCP access,
+Kanban, queue, review, scratchpad, Git and the synthetic integrated monitor
+also resized to 340x280. Large tables/forms use scrolling at this size.
+
+The written host acceptance captured and inspected the compact editor, agent,
+CLI and settings pages plus the 1024x800 workspace. A capture obscured by another
+application was discarded; the final capture routine verifies foreground state
+before and after transfer and requires all pixel rows. Screenshots contain
+synthetic task text, model names and project paths. The tests resize windows
+on the existing RTG screen; they do not switch Workbench display modes or
+constitute a human test of native drag/zoom gestures.
+
+All 83 portable tests passed. The workspace, standalone monitor and native
+acceptance program cross-built. The installed workspace and 19 accompanying
+source/manual files matched their staged CRC32 values, with a verified rollback
+copy made before replacement. The new native-title workspace reopened, and
+TermicCheck reported zero missing dependencies. Projects, credentials and
+application configuration were retained. The standalone monitor was cross-built;
+its separately installed project executable was not replaced in this update.
+The native version remains 0.1.2 Beta; the published archive predates this UI.
+
+To repeat the UI acceptance, compile `tests/test_responsive_window.c` with the
+GUI dependencies, `TERMIC_EMBEDDED` and the process-monitor include directory.
+Compile `tests/inspect_chrome.c` as the window probe, then run:
+
+```sh
+python scripts/amiga/accept_responsive_ui.py \
+  --binary /path/to/ScalingCheck --probe /path/to/ChromeProbe \
+  --output .context/responsive-ui-new
+```
+
+The output directory must be new. The fixture uses its own application identity
+and Acceptance drawer; the normal workspace can remain open.

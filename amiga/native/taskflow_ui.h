@@ -337,7 +337,7 @@ static int flow_build_windows(void)
         Child,button("Mark done",KB_DONE),Child,button("Archive",KB_ARCHIVE),
         Child,button("Restore",KB_RESTORE),Child,button("Queue...",Q_OPEN),
         Child,button("Close",KB_CLOSE),End,End;
-    board_window=WindowObject,MUIA_Window_Title,"Termic: Kanban board",
+    board_window=ResponsiveWindowObject,MUIA_Window_Title,"Termic: Kanban board",
         MUIA_Window_ID,MAKE_ID('T','B','R','D'),MUIA_Window_Width,1100,
         MUIA_Window_Height,440,WindowContents,body,End;
     if(!board_window)return 0;
@@ -345,7 +345,7 @@ static int flow_build_windows(void)
     notify(board_window,MUIA_Window_CloseRequest,TRUE,KB_CLOSE);
     notify(board_search,MUIA_String_Acknowledge,MUIV_EveryTime,KB_FILTER);
     notify(board_project,MUIA_Cycle_Active,MUIV_EveryTime,KB_FILTER);
-    queue_window=WindowObject,MUIA_Window_Title,"Termic: Task queue",
+    queue_window=ResponsiveWindowObject,MUIA_Window_Title,"Termic: Task queue",
         MUIA_Window_ID,MAKE_ID('T','Q','U','E'),MUIA_Window_Width,740,
         MUIA_Window_Height,360,WindowContents,VGroup,
         Child,queue_detail=label("Paused"),Child,HGroup,Child,label("Parallel work"),

@@ -17,6 +17,8 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 - AI Proxy for [Apple Silicon macOS](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-AI-Proxy-macOS.zip)
   or [Windows 11 x64](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-AI-Proxy-Windows11.zip).
 
+The latest source uses the responsive native MUI layout. The published 0.1.2
+archive predates this UI update; see [interface details](docs/amiga-interface.md).
 Read the installation requirements below before upgrading an existing drawer.
 [Release notes and checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.1.2-beta)
 include verification details.
@@ -25,7 +27,7 @@ include verification details.
 
 - Projects and independent source-copy task workspaces.
 - Embedded editor with a black background and live C/header, Python and ARexx syntax colours.
-- Resolution-scaled blue title bar with close, depth and zoom icons, drag support and a black Files list.
+- Native MUI 5 window controls and responsive compact/wide layouts, with a black Files list.
 - Source backups, undo/redo, clipboard and search.
 - Native VBCC build/run and explicit AmigaDOS commands with captured output.
 - Persistent CLI panel below Files, with a resizable half-height split, command entry and job output.
@@ -48,7 +50,7 @@ include verification details.
 - Configurable prompt/transcript shortcuts with conflict checks, Defaults and Save/Use/Cancel.
 - Persistent workspace selection, task status, model settings and an About window.
 - Compact action icons with tooltips, native menus and Right-Amiga shortcuts.
-- Editor commands in the menu strip, crisp Helvetica/Courier fonts and framed MUI panels.
+- Editor commands in the menu strip, MUI-configured fonts and framed panels.
 - Save/Use/Cancel preferences and shared Amiga IFF text clipboard.
 - Linked AmigaGuide manual available with Help or Help > Contents... .
 
@@ -172,18 +174,13 @@ Run portable tests on a host with a C compiler and AddressSanitizer:
 python3 -m unittest discover -s scripts/amiga -p 'test_*.py'
 ```
 
-The opt-in `accept_chrome.py` checks the current custom window controls through
-an already-running DevBench MCP server. Compile `amiga/native/tests/inspect_chrome.c`
-with the Amiga compiler and `-lamiga`, then supply that helper with `--probe`.
-It expects the 1920x800 acceptance desktop and a 1400x650 Termic candidate.
-Keep the bridge window beneath Termic's upper-left corner for the depth check.
-Use `--close-at-end` to include the close-button check. It uses injected mouse
-input; do not run it while someone is using the Amiga.
-
-The earlier `accept_mui.py`, `accept_colours.py`, `accept_about.py` and
-`accept_style.py` preserve the native-title acceptance workflows. Their window
-name guards target the earlier native title bar and require adaptation before
-use with the current borderless window; do not bypass those guards.
+`accept_responsive_ui.py` checks the native MUI size/page matrix, unsaved
+buffer and cursor preservation, small auxiliary windows and synthetic captures.
+Compile `tests/test_responsive_window.c` with the GUI dependencies and the
+`amiga/apps/process-monitor` include directory; pass it with `--binary`,
+`inspect_chrome.c` with `--probe`, and a fresh `--output` directory.
+The normal workspace can remain open. The older `accept_chrome.py` targets the
+retired custom title bar and is not a test of the current layout.
 
 `accept_agents.py --cli-panel-only`, with its required binary arguments, checks
 CLI command entry, success/failure output, editor focus, copy, save/undo and

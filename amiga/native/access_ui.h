@@ -9,7 +9,7 @@ enum
 static Object *build_access_window(void)
 {
     Object
-        *o = WindowObject,
+        *o = ResponsiveWindowObject,
         MUIA_Window_Title, "Termic: Agent access", MUIA_Window_ID, MAKE_ID('T', 'M', 'C', 'P'),
         MUIA_Window_Width, 900, MUIA_Window_Height, 480, WindowContents, VGroup,
         InnerSpacing(12, 12), MUIA_Group_Spacing, 10, Child,

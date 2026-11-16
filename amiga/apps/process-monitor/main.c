@@ -31,6 +31,7 @@ struct IntuitionBase *IntuitionBase;
 struct GfxBase *GfxBase;
 struct Library *DiskfontBase;
 #endif
+#include "mui_viewport.h"
 struct ExpansionBase *ExpansionBase;
 static struct TextFont *bodyfont,*codefont;
 #include "model.h"
@@ -423,10 +424,6 @@ static int gui(void)
  if(!MUIMasterBase || !IntuitionBase || !timerstart())goto done;
  GfxBase=(struct GfxBase *)OpenLibrary("graphics.library",37);
  DiskfontBase=OpenLibrary("diskfont.library",37);
- if(GfxBase && DiskfontBase) {
-  struct TextAttr body={"helvetica.font",13,0,FPF_DISKFONT},code={"courier.font",13,0,FPF_DISKFONT};
-  bodyfont=OpenDiskFont(&body);codefont=OpenDiskFont(&code);
- }
  root=MUI_NewObject(MUIC_Group,MUIA_Font,bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal,TAG_DONE);if(!root)goto done;
  summary=textobject("");if(!child(root,summary))goto done;
  list=process_list();
@@ -443,7 +440,7 @@ static int gui(void)
  buttons=MUI_NewObject(MUIC_Group,MUIA_Group_Horiz,TRUE,TAG_DONE);if(!child(root,buttons))goto done;
  for(i=0;i<5;++i){b[i]=button(labels[i]);if(!child(buttons,b[i]))goto done;}
  zzbutton=zz9000_button();if(!child(buttons,zzbutton))goto done;
- win=MUI_NewObject(MUIC_Window,MUIA_Window_Title,"Termic Process Monitor",MUIA_Window_ID,0x54504d4e,
+ win=mui_scroll_window(MUIA_Window_Title,"Termic Process Monitor",MUIA_Window_ID,0x54504d4e,
  MUIA_Window_Width,1000,MUIA_Window_Height,580,MUIA_Window_RootObject,root,TAG_DONE);
  if(!win)goto done;root=NULL;
  app=MUI_NewObject(MUIC_Application,MUIA_Application_Title,"Termic Process Monitor",

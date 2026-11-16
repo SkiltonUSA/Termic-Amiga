@@ -47,7 +47,7 @@ static void keymap_open(void)
  int i;
  if(!keymap_window) {
   for(i=0;i<(int)SHORTCUT_KEYS;i++)keymap_key_names[i]=shortcut_keys[i].name;
-  keymap_window=WindowObject,MUIA_Window_Title,"Termic: Configure shortcuts",
+  keymap_window=ResponsiveWindowObject,MUIA_Window_Title,"Termic: Configure shortcuts",
    MUIA_Window_ID,MAKE_ID('T','K','E','Y'),MUIA_Window_Width,700,MUIA_Window_Height,480,
    WindowContents,VGroup,Child,label("Prompt and transcript actions. Workbench/menu shortcuts stay available."),
    Child,keymap_rows=ListObject,InputListFrame,

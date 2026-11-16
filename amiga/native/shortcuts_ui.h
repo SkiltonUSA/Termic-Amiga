@@ -38,7 +38,7 @@ static void shortcut_reference_refresh(void)
 static void show_shortcuts(void)
 {
     if (!shortcut_window) {
-        shortcut_window = WindowObject, MUIA_Window_Title, "Termic: Keyboard shortcuts",
+        shortcut_window = ResponsiveWindowObject, MUIA_Window_Title, "Termic: Keyboard shortcuts",
             MUIA_Window_NoMenus, TRUE, MUIA_Window_LeftEdge, MUIV_Window_LeftEdge_Centered,
             MUIA_Window_TopEdge, MUIV_Window_TopEdge_Centered,
             WindowContents, VGroup, InnerSpacing(20,16), MUIA_Group_Spacing, 18,
@@ -71,7 +71,7 @@ static void show_shortcuts(void)
 static void show_commands(void)
 {
     if (!commands_window) {
-        commands_window = WindowObject, MUIA_Window_Title, "Termic: Commands",
+        commands_window = ResponsiveWindowObject, MUIA_Window_Title, "Termic: Commands",
             MUIA_Window_NoMenus, TRUE, MUIA_Window_LeftEdge, MUIV_Window_LeftEdge_Centered,
             MUIA_Window_TopEdge, MUIV_Window_TopEdge_Centered,
             WindowContents, VGroup, InnerSpacing(18,14), MUIA_Group_Spacing, 10,

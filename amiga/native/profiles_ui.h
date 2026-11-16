@@ -359,7 +359,7 @@ static Object *build_profiles_window(void)
         if (!titles)
             return NULL;
     }
-    o=WindowObject,MUIA_Window_Title,"Termic: Agents, CLI and Scripts",MUIA_Window_ID,MAKE_ID('T','A','G','T'),
+    o=ResponsiveWindowObject,MUIA_Window_Title,"Termic: Agents, CLI and Scripts",MUIA_Window_ID,MAKE_ID('T','A','G','T'),
     MUIA_Window_Width,1060,MUIA_Window_Height,600,WindowContents,VGroup,InnerSpacing(10,10),
     Child,HGroup,Child,label("\33bAgents / CLI / Scripts"),Child,HVSpace,Child,button("Add Codex",PF_ADDCODEX),Child,button("Add Claude",PF_ADDCLAUDE),Child,button("Add Cursor",PF_ADDCURSOR),Child,button("Reset built-ins",PF_RESET),End,
     Child,label("Configure API agents, CLI commands, ARexx and MicroPython scripts. Save keeps changes; Use lasts until reboot."),

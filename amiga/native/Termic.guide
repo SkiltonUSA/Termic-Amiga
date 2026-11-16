@@ -24,13 +24,12 @@ This manual does not execute commands. Type examples in an Amiga Shell.
 @ENDNODE
 
 @NODE Start "Getting started"
-The blue title bar belongs to Termic; Workbench fonts are unchanged.
-Drag its title to move the window, or the lower-right blue grip to resize.
-The cross saves and closes; overlapping squares send the window behind others;
-the single square fits it to the screen and restores its previous size.
-Hover over an icon for its tooltip.
-Title-bar height, icons and title font follow the screen height at launch.
-Restart after changing resolution. Editor and other UI fonts are unchanged. Files uses light text on black.
+Termic uses MUI 5 native window controls. Drag the title to move it;
+use the lower-right sizing gadget to resize, and the native zoom gadget
+to enlarge or restore it. Closing saves the workspace first.
+The top selector chooses Agent, Editor, Build log, Changes, Settings,
+Projects, Tasks, Files or CLI. Hover over an icon for its action name.
+The source editor and Files retain light text on black.
 
 1. Start TermicNative from its Workbench icon or the Shell.
 2. Type a name in the project field; choose New project. A clean
@@ -41,9 +40,12 @@ Restart after changing resolution. Editor and other UI fonts are unchanged. File
 6. After a successful build, press F7 to run Program.
 
 New task makes an independent copy of the selected workspace's source.
-The left pane selects projects and tasks. The right pane has Files above CLI.
-Files and CLI share its height; drag their horizontal divider to adjust it.
-Drag the pane dividers to adjust widths. F1-F5 select centre tabs.
+At small sizes, including 340x280, the selector shows one workspace pane.
+At 800x500 and above, Projects/Tasks and Files/CLI sit beside the work page.
+Files remains above CLI; drag its divider to change the height split.
+Column dividers adjust widths. F1-F5 select the five work pages.
+Long forms and tables have native scrollbars when needed. Resizing keeps
+unsaved code, task instructions and the editor position.
 
 You can build and edit locally without a cloud account. Direct API agents require an API key.
 Codex on Mac uses the Mac's ChatGPT sign-in through the relay. Review generated changes before running them.
@@ -264,11 +266,10 @@ check storage and retry if Termic reports a preference write failure.
 
 Build commands have their own Save build command button because they are
 workspace data. Settings > MUI Settings... opens MUI's appearance editor.
-Controls use Helvetica 13 and code uses Courier 13 when installed, falling
-back to MUI fonts if unavailable. Framed groups and aligned labels organize
-preferences. MUI supplies colours and gadget styling. Source text retains
-the requested black background and readable syntax palette. System
-preferences are not changed.
+MUI font preferences control the UI and fixed-width editor font. Framed
+groups and labelled fields organize preferences. MUI supplies colours,
+window controls and gadget styling. Source text retains the black background
+and readable syntax palette. System preferences are not changed.
 
 Preset files and SETTINGS ToolTypes/CLI overrides are not implemented.
 @ENDNODE

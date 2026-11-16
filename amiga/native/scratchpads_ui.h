@@ -36,7 +36,7 @@ static void pad_refresh(void)
 }
 static int pad_build_window(void)
 {
-    pad_window=WindowObject,MUIA_Window_Title,"Termic: Scratchpads",
+    pad_window=ResponsiveWindowObject,MUIA_Window_Title,"Termic: Scratchpads",
         MUIA_Window_ID,MAKE_ID('T','P','A','D'),MUIA_Window_Width,800,MUIA_Window_Height,460,
         WindowContents,VGroup,Child,pad_note=label("Task notes, shared with the scratchpad MCP tools"),
         Child,HGroup,Child,VGroup,MUIA_Weight,25,Child,list(&pad_list),Child,pad_name=entry(80),

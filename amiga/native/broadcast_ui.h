@@ -13,7 +13,7 @@ static void broadcast_open(void)
    MUIA_Font,bodyfont?(ULONG)bodyfont:MUIV_Font_List,
    MUIA_List_ConstructHook,MUIV_List_ConstructHook_String,
    MUIA_List_DestructHook,MUIV_List_DestructHook_String,End,End;
-  broadcast_window=WindowObject,MUIA_Window_Title,"Termic: Broadcast to agents",
+  broadcast_window=ResponsiveWindowObject,MUIA_Window_Title,"Termic: Broadcast to agents",
    MUIA_Window_ID,MAKE_ID('T','B','C','S'),MUIA_Window_Width,820,MUIA_Window_Height,500,
    WindowContents,VGroup,Child,label("Select agents (Shift-click for several). Each gets a new, independent copy of this task."),
    Child,HGroup,Child,VGroup,MUIA_Weight,35,Child,label("Agent profiles"),Child,view,End,

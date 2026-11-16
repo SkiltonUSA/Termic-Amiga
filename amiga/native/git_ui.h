@@ -3,7 +3,7 @@ static Object *git_window,*git_branch,*git_repo,*git_base,*git_title,*git_body,*
 static char git_root[PATH_SIZE];
 static int git_build_window(void)
 {
-    git_window=WindowObject,MUIA_Window_Title,"Termic: Git branches and worktrees",
+    git_window=ResponsiveWindowObject,MUIA_Window_Title,"Termic: Git branches and worktrees",
         MUIA_Window_ID,MAKE_ID('T','G','I','T'),MUIA_Window_Width,780,MUIA_Window_Height,420,
         WindowContents,VGroup,Child,git_note=label("Native branches; host worktrees and GitHub pull requests"),
         Child,ColGroup(2),Child,label("Task branch"),Child,git_branch=entry(81),

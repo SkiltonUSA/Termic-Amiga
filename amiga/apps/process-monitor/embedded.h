@@ -70,10 +70,6 @@ int termic_monitor_open(APTR application,int fixture_mode)
  app=(Object *)application;synthetic=fixture_mode;sort_order=0;ticks=0;
  totalhits=idlehits=losthits=0;snapshot_clipped=FALSE;
  if(!timerstart())goto fail;
- if(GfxBase && DiskfontBase) {
-  struct TextAttr body={"helvetica.font",13,0,FPF_DISKFONT},code={"courier.font",13,0,FPF_DISKFONT};
-  bodyfont=OpenDiskFont(&body);codefont=OpenDiskFont(&code);
- }
  if(synthetic) {
   strcpy(armtext,"SYNTHETIC ZZ9000: graphics and shared RAM boards\nARM CPU, memory, priority and dependencies: unavailable.\nNo ARM workload is inferred from an absent owner port.");
   nservices=1;badservices=0;memset(services,0,sizeof(services));
@@ -102,7 +98,7 @@ int termic_monitor_open(APTR application,int fixture_mode)
  for(i=0;i<5;++i){b[i]=button(labels[i]);if(!child(bar,b[i]))goto fail;}
  pausebutton=b[3];
  zzbutton=zz9000_button();if(!child(bar,zzbutton))goto fail;
- win=MUI_NewObject(MUIC_Window,MUIA_Window_Title,"Termic: Activity",MUIA_Window_ID,0x54414354,
+ win=mui_scroll_window(MUIA_Window_Title,"Termic: Activity",MUIA_Window_ID,0x54414354,
   MUIA_Window_Width,1000,MUIA_Window_Height,620,MUIA_Window_RootObject,root,TAG_DONE);
  if(!win)goto fail;root=NULL;DoMethod(app,OM_ADDMEMBER,win);
  DoMethod(win,MUIM_Notify,MUIA_Window_CloseRequest,TRUE,app,2,MUIM_Application_ReturnID,TM_EVENT+4);

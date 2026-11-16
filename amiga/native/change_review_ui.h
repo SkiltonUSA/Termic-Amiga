@@ -59,7 +59,7 @@ static void change_open(void)
 }
 static int change_build_window(void)
 {
-    change_window=WindowObject,MUIA_Window_Title,"Termic: Review agent changes",
+    change_window=ResponsiveWindowObject,MUIA_Window_Title,"Termic: Review agent changes",
         MUIA_Window_ID,MAKE_ID('T','C','H','G'),MUIA_Window_Width,900,MUIA_Window_Height,500,
         WindowContents,VGroup,Child,HGroup,Child,label("View"),
         Child,change_mode=CycleObject,MUIA_Cycle_Entries,change_modes,End,End,

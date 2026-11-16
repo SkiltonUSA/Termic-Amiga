@@ -5,12 +5,6 @@
 #include <devices/inputevent.h>
 #include <intuition/screens.h>
 
-struct MUI_CustomClass *__termic_mui_class(__reg("a6") struct Library *,
-                                           __reg("a0") struct Library *, __reg("a1") char *,
-                                           __reg("a2") struct MUI_CustomClass *, __reg("d0") ULONG,
-                                           __reg("a3") APTR) = "\tjsr\t-108(a6)";
-void __termic_mui_unclass(__reg("a6") struct Library *,
-                          __reg("a0") struct MUI_CustomClass *) = "\tjsr\t-114(a6)";
 static struct MUI_CustomClass *chrome_class, *chrome_icon_class;
 static struct ChromeMetrics chrome_sizes;
 static struct TextFont *chrome_font;
