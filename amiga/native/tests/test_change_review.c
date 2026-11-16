@@ -13,12 +13,13 @@ static void same(const char *path,const char *expected)
 }
 int main(void)
 {
-    struct ChangeReview review;char *preview;
+    struct ChangeReview review;char *preview;int coarse;
     assert(save_text("main.c","original\n",32768));
     assert(review_write("","main.c","first edit\n"));
     assert(review_write("","main.c","second edit\n"));
     assert(review_load(&review,"") && review.count==1);
     preview=review_preview("",0);assert(preview && strstr(preview,"original\n") && strstr(preview,"second edit\n"));free(preview);
+    preview=review_diff_preview("",0,&coarse);assert(preview && !coarse && strstr(preview,"-original\n+second edit\n"));free(preview);
     assert(review_resolve("",0,1));same("main.c","original\n");same("main.c.bak","second edit\n");
     assert(review_load(&review,"") && review.count==0);
     assert(review_write("","main.c","accepted\n"));assert(review_resolve("",0,0));same("main.c","accepted\n");

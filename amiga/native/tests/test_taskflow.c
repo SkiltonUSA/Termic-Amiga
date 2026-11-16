@@ -45,5 +45,19 @@ int main(void)
     {int i;char path[40];for(i=0;i<FLOW_MAX;i++){sprintf(path,"DH0:Task/%d",i);assert(flow_add(&g,path,0));}}
     assert(!flow_add(&g,"DH0:Task/full",0));
     assert(flow_save(&g,"queue.json"));assert(flow_load(&f,"queue.json") && f.count==FLOW_MAX && f.paused);
+    {int col;for(col=-1;col<=6;col++) {
+        assert(!board_drop_state(col,1));
+        if(col<0 || col>=6 || col==BOARD_WORKING)assert(!board_drop_state(col,0));
+        else assert(board_column(board_drop_state(col,0),0,0)==col);
+    }}
+    memset(&f,0,sizeof(f));f.parallel=2;
+    assert(flow_add(&f,"DH0:Tasks/one",0) && flow_add(&f,"DH0:Tasks/two",0) && flow_add(&f,"DH0:Tasks/three",1));
+    f.items[0].state=FLOW_RUNNING;assert(flow_next(&f)==1);
+    f.items[1].state=FLOW_RUNNING;assert(flow_next(&f)==-1);
+    flow_finish(&f,"DH0:Tasks/one",0);assert(flow_next(&f)==2);
+    flow_finish(&f,"DH0:Tasks/two",20);assert(f.paused && flow_next(&f)==-1);
+    assert(flow_save(&f,"queue.json") && flow_load(&g,"queue.json") && g.parallel==2 && g.paused);
+    assert(save_text("queue.json","{\"version\":1,\"parallel\":5,\"items\":[]}",65536));assert(!flow_load(&g,"queue.json"));
+    assert(save_text("queue.json","{\"version\":1,\"items\":[]}",65536));assert(flow_load(&g,"queue.json") && g.parallel==1);
     puts("Queue persistence, ordering, interruption and board state passed.");return 0;
 }

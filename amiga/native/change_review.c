@@ -1,4 +1,5 @@
 #include "change_review.h"
+#include "review_diff.h"
 #include "workspace.h"
 #include "native.h"
 #include "vendor/cJSON.h"
@@ -135,4 +136,17 @@ char *review_preview(const char *root,int index)
     size=strlen(before)+strlen(after)+512;result=malloc(size);
     if(result)snprintf(result,size,"File: %s\n\nBEFORE%s\n%s\n\nAFTER\n%s",row.name,row.existed?"":" (new file)",before,after);
     free(before);free(after);return result;
+}
+
+char *review_diff_preview(const char *root,int index,int *coarse)
+{
+ struct ChangeReview review;char path[512],*before,*after,*result;struct ReviewEntry *row;
+ *coarse=0;
+ if(!review_load(&review,root) || index<0 || index>=review.count)return NULL;
+ row=&review.entries[index];if(!snapshot_path(path,root,row->slot,0))return NULL;
+ before=read_text(path,SOURCE_LIMIT);
+ if(!snapshot_path(path,root,row->slot,1)){free(before);return NULL;}
+ after=read_text(path,SOURCE_LIMIT);
+ result=before && after?review_unified(before,after,row->name,coarse):NULL;
+ free(before);free(after);return result;
 }

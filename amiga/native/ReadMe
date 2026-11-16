@@ -152,8 +152,8 @@ Tab to a button first or choose a command using the mouse menu.
 BOUNDARIES
 This native implementation does not run the React/Tauri frontend or desktop
 agent CLIs. Host profiles provide buffered live response text through the proxy.
-There is no xterm terminal or broadcast/race mode. The serial queue and
-host worktree/PR controls are described below. Native tasks remain source copies.
+There is no xterm terminal or race mode. Broadcast task copies, the parallel
+queue and host worktree/PR controls are described below. Native tasks remain source copies.
 The shell exposes the installed native Git client's additional commands.
 Task instructions: 8 KiB. Individual source: 32 KiB. Agent compiler output:
 16 KiB. HTTP response: 256 KiB. File list: 128 files, six directory levels.
@@ -273,7 +273,7 @@ Right Amiga K or Help > Keyboard shortcuts opens the black reference window.
 Right Amiga I opens Tools > Process Monitor from any workspace page.
 Its optional ZZ9000 button shows/hides board information; it is off initially.
 This display option does not enable ARM compute offload.
-In the prompt: Tab sends, Shift Tab cycles profiles, Ctrl J adds a newline,
+Default prompt keys: Tab sends, Shift Tab cycles profiles, Ctrl J adds a newline,
 Ctrl G opens the editor, Ctrl R searches history, F4 opens Process Monitor,
 and two Esc presses recall the last sent message. In an empty prompt,
 / opens commands, @ mentions the open file, ! focuses the CLI, and ? shows
@@ -282,7 +282,10 @@ Ctrl Home/End or Shift Alt comma/period go to top/latest, and Ctrl Space
 starts line selection extended with Up/Down. Ctrl Space finishes selection;
 Right Amiga C copies. Esc returns to the prompt. Ctrl C quits from prompt
 or transcript with normal save handling. Code editor Tab is unchanged.
-Image paste, reasoning keys, subagents and custom keymaps are unavailable.
+Configure... in the reference remaps prompt/transcript actions, with conflict
+checks, Defaults and Save/Use/Cancel. Save writes Config/keymap.json with a backup;
+Use lasts this session. Menu/editor keys and empty-prompt symbols stay fixed.
+Image paste, reasoning keys and subagent switching are unavailable.
 
 Common action buttons use icons with hover tooltips: floppy Save, triangle
 Run, square Stop, hammer Build, gear Settings, magnifier Find, speech bubble
@@ -357,10 +360,15 @@ Full details: docs/agent-execution.md in the source repository.
 
 TASK BOARD, QUEUE, REVIEW AND NOTES
 Right Amiga Y: Kanban board (Backlog, Needs attention, Working, Review,
-Done, Archived). Filter by project/name; select tasks and use the actions.
-Right Amiga J: persistent queue. Resume starts serial jobs, failure pauses
-remaining work, and restart always pauses. Pause does not stop an active job.
-Right Amiga U: review agent file-tool edits, accept or revert with backup.
+Done, Archived). Drag idle tasks between columns or use the actions. Working
+is assigned by actual jobs; queued/running tasks reject state changes.
+Right Amiga J: persistent queue, one to four independent workers. Host proxy
+requests stay serial. Failure pauses new launches; active work can finish.
+Restart always pauses. Pause does not stop an active job.
+Queue > Broadcast creates separate task copies for selected agent profiles,
+with a shared instruction and YOLO off. Copies queue paused for inspection.
+Right Amiga U: coloured unified diff on black, or Before / after; whole-file
+accept/revert with backup. Large changes use bounded replacement alignment.
 Later user edits are protected. ARexx/program side effects need Git review.
 Right Amiga L: scratchpad notes shared with MCP, 32 KiB each, backup saves.
 Right Amiga G: native branches and host worktree/GitHub PR controls.

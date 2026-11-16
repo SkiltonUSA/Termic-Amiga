@@ -1,7 +1,44 @@
-enum { CR_CLOSE=5201,CR_SELECT,CR_ACCEPT,CR_REVERT,CR_REFRESH };
-static Object *change_window,*change_files,*change_text,*change_note;
+enum { CR_CLOSE=5201,CR_SELECT,CR_ACCEPT,CR_REVERT,CR_REFRESH,CR_MODE };
+static Object *change_window,*change_files,*change_note,*change_mode;
+static const char *change_modes[]={"Unified diff","Before / after",NULL};
 static struct ChangeReview change_set;
 static char change_root[PATH_SIZE];
+/* Source bytes are sanitized before adding our own TextEditor colour escapes. */
+static char *change_colours(const char *text,int unified)
+{
+ size_t n=strlen(text);const char *p=text;char *out=malloc((n+1)*12),*w=out;
+ if(!out)return NULL;
+ while(*p) {
+  const char *colour="E6EDF3";
+  if(unified) {
+   if(!strncmp(p,"--- ",4) || !strncmp(p,"+++ ",4) || !strncmp(p,"@@ ",3))colour="79C8FF";
+   else if(*p=='+')colour="8FE3A4";
+   else if(*p=='-')colour="FF7B8B";
+  }
+  memcpy(w,"\33P[",3);w+=3;memcpy(w,colour,6);w+=6;*w++=']';
+  while(*p && *p!='\n') {*w++=(unsigned char)*p<32 && *p!='\t' && *p!='\r'?'?':*p;++p;}
+  if(*p)*w++=*p++;
+ }
+ *w=0;return out;
+}
+static void change_show(void)
+{
+ int n=value(change_files,MUIA_List_Active),coarse=0,unified=value(change_mode,MUIA_Cycle_Active)==0;
+ char *preview=unified?review_diff_preview(change_root,n,&coarse):review_preview(change_root,n);
+ if(preview) {
+  char *coloured=change_colours(preview,unified);
+  if(coloured){set(change_text,MUIA_TextEditor_Contents,coloured);free(coloured);}
+  else set(change_text,MUIA_TextEditor_Contents,"Not enough memory for review display.");
+  free(preview);
+  set(change_note,MUIA_Text_Contents,coarse?
+   "Large change: replacement alignment. All lines retained; green + added, red - removed.":
+   unified?"Green + added; red - removed; blue headers. Accept/Revert still applies to the whole file.":
+   "Original and generated contents. Accept/Revert applies to the whole file.");
+ } else if(n>=0) {
+  set(change_text,MUIA_TextEditor_Contents,"");
+  set(change_note,MUIA_Text_Contents,"Cannot read review snapshots. Nothing has been accepted or reverted.");
+ }
+}
 static void change_refresh(void)
 {
     int i;
@@ -24,29 +61,28 @@ static int change_build_window(void)
 {
     change_window=WindowObject,MUIA_Window_Title,"Termic: Review agent changes",
         MUIA_Window_ID,MAKE_ID('T','C','H','G'),MUIA_Window_Width,900,MUIA_Window_Height,500,
-        WindowContents,VGroup,Child,change_note=label("Select a file"),Child,HGroup,
+        WindowContents,VGroup,Child,HGroup,Child,label("View"),
+        Child,change_mode=CycleObject,MUIA_Cycle_Entries,change_modes,End,End,
+        Child,change_note=label("Select a file"),Child,HGroup,
         Child,VGroup,MUIA_Weight,25,Child,list(&change_files),End,
         Child,VGroup,MUIA_Weight,75,Child,editor(&change_text,1),End,End,
         Child,HGroup,Child,button("Accept file",CR_ACCEPT),Child,button("Revert file",CR_REVERT),
         Child,button("Refresh",CR_REFRESH),Child,HVSpace,Child,button("Close",CR_CLOSE),End,End,End;
     if(!change_window)return 0;
+    set(change_text,MUIA_TextEditor_Pen,0xffe6edf3UL);
     DoMethod(app,OM_ADDMEMBER,change_window);
     notify(change_window,MUIA_Window_CloseRequest,TRUE,CR_CLOSE);
-    notify(change_files,MUIA_List_Active,MUIV_EveryTime,CR_SELECT);return 1;
+    notify(change_files,MUIA_List_Active,MUIV_EveryTime,CR_SELECT);
+    notify(change_mode,MUIA_Cycle_Active,MUIV_EveryTime,CR_MODE);return 1;
 }
 static void change_event(ULONG id)
 {
-    int n;char *preview;
+    int n;
     switch(id) {
     case CR_OPEN:change_open();break;
     case CR_CLOSE:set(change_window,MUIA_Window_Open,FALSE);break;
     case CR_REFRESH:change_refresh();break;
-    case CR_SELECT:
-        n=value(change_files,MUIA_List_Active);preview=review_preview(change_root,n);
-        if(preview) {
-            char *p;for(p=preview;*p;p++)if((unsigned char)*p<32 && *p!='\n' && *p!='\r' && *p!='\t')*p='?';
-            set(change_text,MUIA_TextEditor_Contents,preview);free(preview);
-        }break;
+    case CR_SELECT:case CR_MODE:change_show();break;
     case CR_ACCEPT:case CR_REVERT:
         n=value(change_files,MUIA_List_Active);
         if(n<0 || n>=change_set.count)break;

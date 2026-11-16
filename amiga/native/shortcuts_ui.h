@@ -1,5 +1,5 @@
 /* Included after gui.c's shared UI, workspace and profile helpers. */
-#include "shortcuts.h"
+#include "keymap.h"
 static Object *shortcut_window, *commands_window, *history_find;
 static int history_marking;
 static LONG history_anchor, history_line;
@@ -13,6 +13,28 @@ static Object *shortcut_column(const char *text)
         MUIA_Text_Contents, text, MUIA_Text_PreParse,
         MUIMasterBase->lib_Version >= 21 ? "\33P[EEEEEE]" : "\33" "3", End;
 }
+static Object *shortcut_reference;
+static void shortcut_key_label(char *out,size_t size,const struct ShortcutBinding *binding)
+{
+ unsigned i;const char *name="Disabled";
+ for(i=0;i<SHORTCUT_KEYS;i++)if(shortcut_keys[i].code==binding->code)name=shortcut_keys[i].name;
+ snprintf(out,size,"%s%s%s%s",binding->mods&KEY_SHIFT?"Shift ":"",
+     binding->mods&KEY_CTRL?"Ctrl ":"",binding->mods&KEY_ALT?"Alt ":"",name);
+}
+static void shortcut_reference_refresh(void)
+{
+ char text[2200],key[64];size_t used=0;int i;
+ if(!shortcut_ready){shortcut_defaults(shortcut_map);shortcut_ready=1;}
+ if(!shortcut_reference)return;
+ *text=0;
+ for(i=0;i<SHORTCUT_COUNT;i++) {
+  shortcut_key_label(key,sizeof(key),shortcut_map+i);
+  used+=snprintf(text+used,sizeof(text)-used,"%-19s %-28s %s%s",key,shortcut_defs[i].title,
+    shortcut_defs[i].contexts==1?"Prompt":shortcut_defs[i].contexts==2?"Transcript":"Both",i==SHORTCUT_COUNT-1?"":"\n");
+ }
+ set(shortcut_reference,MUIA_Text_Contents,text);
+}
+#include "keymap_ui.h"
 static void show_shortcuts(void)
 {
     if (!shortcut_window) {
@@ -22,47 +44,26 @@ static void show_shortcuts(void)
             WindowContents, VGroup, InnerSpacing(20,16), MUIA_Group_Spacing, 18,
             MUIA_Background, "2:r00000000,00000000,00000000",
             Child, shortcut_column("\33bKeyboard shortcuts"),
-            Child, HGroup, MUIA_Group_Spacing, 24,
+            Child, shortcut_reference=shortcut_column(""),
             Child, shortcut_column(
-                "\33bCompose\33n\n"
-                "/          Commands (empty prompt)\n"
-                "@          Mention open file\n"
-                "!          CLI command\n"
-                "Ctrl J     New line\n"
-                "Ctrl G     Open built-in editor\n"
-                "Ctrl R     Search history\n"
-                "Esc Esc    Edit last message"),
-            Child, shortcut_column(
-                "\33bSession\33n\n"
-                "Tab        Send message\n"
-                "Shift Tab  Change agent profile\n"
-                "F4         Process Monitor\n"
-                "Ctrl C     Quit (saves edits)\n\n"
-                "Prompt shortcuts apply only\n"
-                "while the prompt has focus."),
-            Child, shortcut_column(
-                "\33bTranscript (open first)\33n\n"
-                "Ctrl T          Open transcript\n"
-                "F3              Find text\n"
-                "PgUp / PgDn     Scroll\n"
-                "Ctrl Space      Select lines\n"
-                "Up / Down       Extend selection\n"
-                "Ctrl Home / End Top / latest\n"
-                "Shift Alt , / . Top / latest"), End,
+                "/ Commands   @ Mention file   ! CLI (empty prompt; US key positions)\n"
+                "Esc Esc: edit last message. Shift Alt , / .: top / latest transcript.\n"
+                "Prompt/transcript actions apply only while that editor has focus."),
             Child, shortcut_column(
                 "/keymap  Show this reference       Right Amiga K  Open from any page\n"
                 "Right Amiga I  Tools > Process Monitor (from any workspace page)\n\n"
-                "Not available: image paste, reasoning adjustment, subagents, custom keymaps.\n"
+                "Not available: image paste, reasoning adjustment and subagent switching.\n"
                 "Use Right Amiga V for text paste. Symbols use US keyboard positions.\n"
                 "Selection: Ctrl Space to finish, Right Amiga C to copy. Esc returns to prompt."),
             Child, HGroup, Child, shortcut_column("? / Esc  Close"), Child, HVSpace,
-            Child, button("Close", SHORTCUTSCLOSE), End, End, End;
+            Child, button("Configure...", KM_OPEN), Child, button("Close", SHORTCUTSCLOSE), End, End, End;
         if (!shortcut_window) {message("Cannot open keyboard shortcuts.");return;}
         DoMethod(app, OM_ADDMEMBER, shortcut_window);
         notify(shortcut_window, MUIA_Window_CloseRequest, TRUE, SHORTCUTSCLOSE);
         notify(shortcut_window, MUIA_Window_InputEvent, (ULONG)"-repeat esc", SHORTCUTSCLOSE);
         notify(shortcut_window, MUIA_Window_InputEvent, (ULONG)"-repeat ?", SHORTCUTSCLOSE);
     }
+    shortcut_reference_refresh();
     set(shortcut_window, MUIA_Window_CloseRequest, FALSE);
     set(shortcut_window, MUIA_Window_Open, TRUE);
     set(shortcut_window, MUIA_Window_Activate, TRUE);
@@ -109,7 +110,7 @@ static int prompt_command(void)
         else if (!strcmp(text,"/cli")) action=FOCUSCOMMAND;
         else if (!strcmp(text,"/editor")) action=FOCUSEDITOR;
         else if (!strcmp(text,"/history")) action=HISTORY;
-        else message("Unknown command. Use /commands or /keymap. Custom keymaps are unavailable.");
+        else message("Unknown command. Use /commands or /keymap.");
         if (action) {set(prompt,MUIA_TextEditor_Contents,"");queue_action(action);}
     }
     FreeVec(text);
@@ -162,7 +163,7 @@ static ULONG termic_key_event(struct IntuiMessage *im)
     case KEY_MODE:
         if(picker_count) set(profile_picker,MUIA_Cycle_Active,
             (value(profile_picker,MUIA_Cycle_Active)+1)%picker_count);
-        message("Agent profile changed. Tab sends using the selected profile.");break;
+        message("Agent profile changed. Use Send to start the selected profile.");break;
     case KEY_NEWLINE:
         DoMethod(prompt,MUIM_TextEditor_InsertText,"\n",MUIV_TextEditor_InsertText_Cursor);break;
     case KEY_EDITOR: queue_action(FOCUSEDITOR);break;
@@ -207,6 +208,7 @@ static ULONG termic_key_event(struct IntuiMessage *im)
 static int shortcut_event(ULONG id)
 {
     char path[PATH_SIZE], *text;
+    if(keymap_event(id))return 1;
     if(commands_window && value(commands_window,MUIA_Window_Open) &&
         (id==PL_OPEN || id==SHORTCUTS || id==INSTRUCTIONS || id==FOCUSCOMMAND || id==FOCUSEDITOR || id==HISTORY))
         set(commands_window,MUIA_Window_Open,FALSE);
@@ -234,7 +236,7 @@ static int shortcut_event(ULONG id)
         if(text && save_current()) {
             set(prompt,MUIA_TextEditor_Contents,text);
             set(prompt,MUIA_TextEditor_HasChanged,TRUE);
-            message("Last sent message restored for editing. Tab sends it again.");
+            message("Last sent message restored for editing. Use Send to submit it again.");
         } else message("No previous message, or the current edits could not be saved.");
         free(text);break;
     case MENTION:

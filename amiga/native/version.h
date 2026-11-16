@@ -1,7 +1,7 @@
 #ifndef TERMIC_VERSION_H
 #define TERMIC_VERSION_H
 /* Native Amiga version; independent of the desktop React/Tauri release. */
-#define TERMIC_VERSION "0.1.1 Beta"
+#define TERMIC_VERSION "0.1.2 Beta"
 #define TERMIC_VERSION_NUMBER "0.1"
 #define TERMIC_VERSION_DATE "15.11.2026"
 #define TERMIC_VERSION_TAG(name)                                                                   \

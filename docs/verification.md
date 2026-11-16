@@ -845,3 +845,47 @@ this exact archive was not repeated. Physical Windows-to-Amiga testing remains
 outstanding. The native direct-API credential file is empty, so no authenticated
 API request was attempted. ZZ9000 telemetry/offload is not implemented by the
 display toggle.
+
+## 0.1.2 Beta workflow checks (15 November 2026)
+
+All 74 portable tests passed, including unified-diff reconstruction and bounded
+large changes, shortcut map validation, and queue worker limits. The five native
+programs and standalone monitor cross-built with VBCC. The existing TLS timeval
+pointer warning remains; no authenticated direct-API test was possible.
+
+The native workflow fixture exercised shortcut Use/Cancel/Save/reload, independent
+broadcast copies and their instructions, relay serialization, and two overlapping
+native build workers. Both builds produced Amiga executables. A real input.device
+mouse gesture moved a task from Review to Done and the persisted state was checked.
+The board uses a local MUI pointer handler with a captured task path, destination
+feedback and Esc cancellation. Native checks also covered cancellation, refusal of
+manual Working transitions, and reserved-task protection. No synthetic agent
+profile made a model request.
+
+Synthetic captures of the board, shortcut preferences/reference, broadcast and
+queue were inspected. Broadcast text imports explicitly apply light colours on
+black; shortcut preferences use native columns. An unrelated bridge file-data
+error interrupted the last queue capture after the other captures succeeded.
+The fixture's successful completion and saved drop marker were recovered and its
+binary checksum matched. The complete queue screenshot from the preceding run
+was retained; production queue code was unchanged. Partial screenshot transfers
+were rejected and retried, never treated as valid images.
+
+The actual review window passed plain-text export checks in both unified and
+before/after modes. The unified view uses green additions, red removals and blue
+headers, with whole-file Accept/Revert operations. Large changes fall back to
+replacement alignment without omitting file contents.
+
+The LHA and AmiPkg entry passed schema, dependency minima/order, missing-dependency
+rejection, CPU constraints and a fresh host copy-plan validation. AmiPkg reported
+zero errors and its expected notice to review AmigaDOS installation scripts.
+Physical Windows-to-Amiga use and authenticated direct-API execution remain
+unverified. ZZ9000 information remains optional; ARM compute offload is not part
+of this release.
+
+The 0.1.2 upgrade was installed on the A4000TX after checksum verification of
+rollback copies. All 24 updated files matched their staged CRCs. The five native
+programs and standalone monitor reported 0.1.2 Beta; TermicCheck reported zero
+missing dependencies. The normal workspace reopened at its original size, and
+Tools > Process Monitor opened and closed successfully. User projects and
+configuration were preserved. This was an upgrade, not a fresh target install.

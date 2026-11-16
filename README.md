@@ -1,6 +1,6 @@
 # Termic Amiga
 
-**Native MUI development workspace for AmigaOS. Version 0.1.1 Beta.**
+**Native MUI development workspace for AmigaOS. Version 0.1.2 Beta.**
 
 This repository contains the Amiga implementation, separated from the desktop
 [Termic project](https://github.com/simion/termic). It runs on the Amiga using
@@ -10,15 +10,15 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 
 ## Downloads
 
-- [Native Amiga application and SDK kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.1-beta/Termic-Amiga-0.1.1-beta.lha)
-  and [pinned AmiPkg entry](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.1-beta/termic-amiga.json).
-- [Standalone Process Monitor](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.1-beta/Termic-Process-Monitor-0.1.1-beta.lha),
+- [Native Amiga application and SDK kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/Termic-Amiga-0.1.2-beta.lha)
+  and [pinned AmiPkg entry](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/termic-amiga.json).
+- [Standalone Process Monitor](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/Termic-Process-Monitor-0.1.2-beta.lha),
   including source and a Workbench icon.
 - AI Proxy for [Apple Silicon macOS](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-AI-Proxy-macOS.zip)
   or [Windows 11 x64](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-AI-Proxy-Windows11.zip).
 
 Read the installation requirements below before upgrading an existing drawer.
-[Release notes and checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.1.1-beta)
+[Release notes and checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.1.2-beta)
 include verification details.
 
 ## Features
@@ -32,8 +32,9 @@ include verification details.
 - Native Git initialization, status, diffs, source commits and branch controls.
 - Integrated Process Monitor with native column dividers, CPU/memory sorting and pause/resume.
 - Optional ZZ9000 information button, hidden by default; no ARM compute offload is enabled.
-- Kanban lifecycle board and a persistent serial task queue with failure recovery.
-- Agent edit review with accept/revert and task scratchpad notes.
+- Kanban drag-and-drop and a persistent queue with up to four independent workers; host relay requests stay serial.
+- Coloured unified change review with whole-file accept/revert, plus task scratchpad notes.
+- Broadcast instructions to selected agent profiles using independent task copies.
 - Clickable compiler diagnostics; host Git worktrees and GitHub PR controls.
 - Agent tools for C/header, Python, ARexx and text files, native builds, ARexx/MicroPython/program execution and live hardware queries.
 - Codex, Claude and Cursor host profiles, with model selection and live response/tool feedback on the Amiga.
@@ -44,7 +45,7 @@ include verification details.
 - Native MCP/CLI routines for task orchestration, builds, source files and scratchpads.
 - Editable prompt library with all 17 desktop Termic defaults and Save/Use/Cancel.
 - Project-local AGENTS.md and Termic SKILL.md guidance loaded by the API worker.
-- Compose, Session and Transcript keyboard reference, with Tab-to-send in the prompt.
+- Configurable prompt/transcript shortcuts with conflict checks, Defaults and Save/Use/Cancel.
 - Persistent workspace selection, task status, model settings and an About window.
 - Compact action icons with tooltips, native menus and Right-Amiga shortcuts.
 - Editor commands in the menu strip, crisp Helvetica/Courier fonts and framed MUI panels.
@@ -62,7 +63,9 @@ for the prompt library, project guidance and screenshot-style key bindings.
 
 ![Termic prompt library with black editor and action icons](docs/screenshots/prompts.png)
 
-![Compose, Session and Transcript shortcuts](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.1-beta/keyboard-shortcuts.png)
+![Active keyboard shortcuts](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/keyboard-shortcuts.png)
+
+[Shortcut preferences](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/shortcut-preferences.png) support Assign, Defaults, Save, Use and Cancel.
 
 See [Agent execution on the Amiga](docs/agent-execution.md) for the shared
 tools, execution results and hardware detection. Cursor collects slow operations
@@ -95,7 +98,11 @@ preferences and clipboard behavior and its remaining limitations.
 See [Task workflow](docs/task-workflow.md) for the Kanban board, queue, edit review,
 notes, compiler locations and Git worktree controls.
 
-![Kanban task completed after native build, tests and review](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/kanban-monitor-done.png)
+![Kanban task dragged from Review to Done after a native build](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/kanban-dragged.png)
+
+![Coloured unified change review on a black background](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/review-diff.png)
+
+See [broadcast instructions](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/broadcast.png) and the [parallel worker queue](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/parallel-queue.png).
 
 ## Integrated Process Monitor
 
@@ -118,7 +125,7 @@ RAM boards and an optional ARM debug owner are reported. The installed legacy
 firmware does not expose ARM processes or per-process telemetry; the app labels
 those values unavailable. It does not reset or replace ARM firmware.
 
-![Process Monitor with synthetic tasks and disabled process controls](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.1-beta/process-monitor.png)
+![Process Monitor with synthetic tasks and disabled process controls](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/process-monitor.png)
 
 ## Requirements and installation
 
@@ -187,6 +194,13 @@ headers and `-lamiga`, then run `accept_activity_scroll.py --binary <probe>`
 with AI Proxy stopped. It uses synthetic text and leaves production tasks
 and settings untouched.
 
+`accept_workflow_ui.py` exercises native drag-and-drop, configurable shortcuts,
+broadcast source copies and overlapping builds in isolated Acceptance tasks.
+It requires the compiled `test_workflow_window.c`, `input_gesture.c` and
+`inspect_chrome.c` helpers, the installed compiler/worker, and an idle AI Proxy.
+The normal Termic window can remain open. Captures use synthetic data and the
+MCP screenshot method; the suite rejects incomplete image transfers.
+
 [Verification and limitations](docs/verification.md) distinguishes tested
 behavior from functionality still awaiting hardware or authenticated checks.
 
@@ -194,8 +208,8 @@ behavior from functionality still awaiting hardware or authenticated checks.
 
 Tasks are independent source snapshots, not Git worktrees. The shell captures
 commands; it is not an interactive PTY. Desktop agent CLIs run on the host through the proxy.
-The serial queue and host worktree/PR controls are described above.
-Broadcast/race modes are not implemented.
+The queue supports independent workers and broadcast task copies. Host proxy
+requests remain serial; race mode is not implemented.
 ZZ9000 supplies the existing RTG display; ARM compute offload is not implemented.
 
 ## Credits and licence

@@ -78,7 +78,7 @@ The current user task takes precedence over project defaults.
 ## Keyboard
 
 **Right Amiga K**, **Help > Keyboard shortcuts**, or the **Shortcuts** button
-opens the black reference window, grouped like the supplied screenshot.
+opens the black reference window showing the active bindings and their contexts.
 `?` in an empty prompt opens it too. Escape closes it.
 
 | Context | Keys | Action |
@@ -112,5 +112,14 @@ The palette offers Prompts, keyboard reference, instruction installation,
 CLI, editor and transcript. Pasted slash commands followed by Tab accept
 `/prompts`, `/keymap`, `/help`, `/commands`, `/instructions`, `/cli`, `/editor`
 and `/history`. Unknown commands stay in the composer and are not sent.
-Image paste, reasoning adjustment, subagent switching and custom keymap
-editing are unavailable. The reference window labels those limits.
+Choose **Configure...** in the reference window to change 16 prompt/transcript
+actions. Select an action, choose a key and modifiers, then **Assign**. Conflicts
+in overlapping contexts and reserved typing/paste combinations are rejected.
+Choose Disabled to free a binding before assigning it elsewhere.
+
+**Save** applies the draft and writes `Termic:Config/keymap.json` with a backup;
+**Use** applies it for this session; **Cancel** discards the draft. **Defaults**
+resets the draft and still requires Save or Use. An invalid saved map falls back
+to defaults with a status message. The table above describes defaults.
+Workbench menu keys, code-editor bindings, Escape and empty-prompt symbols are
+fixed. Image paste, reasoning adjustment and subagent switching remain unavailable.

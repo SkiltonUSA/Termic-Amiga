@@ -33,6 +33,14 @@ class NativeProtocolTests(unittest.TestCase):
                 '-o',str(binary)],check=True)
             subprocess.run([str(binary)],cwd=directory,check=True)
 
+    def test_review_diff(self):
+        with tempfile.TemporaryDirectory() as directory:
+            binary=Path(directory)/'review-diff'
+            subprocess.run(['cc','-std=c99','-Wall','-Wextra','-Werror',
+                '-fsanitize=address,undefined','-I',str(SOURCE),
+                str(SOURCE/'tests/test_review_diff.c'),'-o',str(binary)],check=True)
+            subprocess.run([str(binary)],check=True)
+
     def test_change_review(self):
         with tempfile.TemporaryDirectory() as directory:
             binary=Path(directory)/'review'
@@ -63,9 +71,9 @@ class NativeProtocolTests(unittest.TestCase):
     def test_shortcuts(self):
         with tempfile.TemporaryDirectory() as directory:
             binary = str(Path(directory) / "shortcuts")
-            subprocess.run(["cc", "-std=c99", "-Wall", "-Wextra", "-Werror",
+            subprocess.run(["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-Wno-deprecated-declarations",
                 "-fsanitize=address,undefined", "-I", str(SOURCE),
-                str(SOURCE / "tests/test_shortcuts.c"), "-o", binary], check=True)
+                str(SOURCE / "tests/test_shortcuts.c"), str(SOURCE / "vendor/cJSON.c"), "-lm", "-o", binary], check=True)
             subprocess.run([binary], check=True)
 
     def test_profiles(self):

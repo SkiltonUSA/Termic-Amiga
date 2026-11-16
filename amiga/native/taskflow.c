@@ -37,8 +37,10 @@ int flow_remove(struct TaskFlow *f,int index)
 }
 int flow_next(const struct TaskFlow *f)
 {
-    int i;if(f->paused)return -1;
-    for(i=0;i<f->count;i++)if(f->items[i].state==FLOW_RUNNING)return -1;
+    int i,running=0,limit=f->parallel>=1 && f->parallel<=4?f->parallel:1;
+    if(f->paused)return -1;
+    for(i=0;i<f->count;i++)if(f->items[i].state==FLOW_RUNNING)running++;
+    if(running>=limit)return -1;
     for(i=0;i<f->count;i++)if(f->items[i].state==FLOW_QUEUED)return i;
     return -1;
 }
@@ -56,7 +58,8 @@ int flow_save(const struct TaskFlow *f,const char *path)
     if(!root)return 0;
     items=cJSON_AddArrayToObject(root,"items");
     if(!items || !cJSON_AddNumberToObject(root,"version",1) ||
-       !cJSON_AddBoolToObject(root,"paused",f->paused))goto done;
+       !cJSON_AddBoolToObject(root,"paused",f->paused) ||
+       !cJSON_AddNumberToObject(root,"parallel",f->parallel>=1 && f->parallel<=4?f->parallel:1))goto done;
     for(i=0;i<f->count;i++) {
         cJSON *item=cJSON_CreateObject();if(!item)goto done;
         cJSON_AddItemToArray(items,item);
@@ -71,12 +74,18 @@ done:free(text);cJSON_Delete(root);return ok;
 int flow_load(struct TaskFlow *f,const char *path)
 {
     char *text=read_text(path,65536);const char *end; cJSON *root,*items,*item,*v;struct TaskFlow *next;int ok=0,i;
-    memset(f,0,sizeof(*f));f->paused=1;
+    memset(f,0,sizeof(*f));f->paused=1;f->parallel=1;
     if(!text)return 0;
     root=cJSON_ParseWithOpts(text,&end,1);free(text);if(!root)return 0;
     next=calloc(1,sizeof(*next));if(!next){cJSON_Delete(root);return 0;}
     v=cJSON_GetObjectItem(root,"version");items=cJSON_GetObjectItem(root,"items");
     if(!cJSON_IsNumber(v) || v->valuedouble!=1 || !cJSON_IsArray(items) || cJSON_GetArraySize(items)>FLOW_MAX)goto done;
+    next->parallel=1;
+    v=cJSON_GetObjectItem(root,"parallel");
+    if(v) {
+        if(!cJSON_IsNumber(v) || v->valuedouble!=v->valueint || v->valueint<1 || v->valueint>4)goto done;
+        next->parallel=v->valueint;
+    }
     next->paused=1; /* Restart never silently resumes pending or uncertain work. */
     cJSON_ArrayForEach(item,items) {
         struct FlowItem *row=&next->items[next->count];
@@ -100,4 +109,11 @@ int board_column(const char *state,int running,int queued)
     if(!strcmp(state,"Review"))return BOARD_REVIEW;
     if(!strcmp(state,"Done"))return BOARD_DONE;
     return BOARD_BACKLOG;
+}
+
+/* Working describes a live worker and cannot be assigned by dragging. */
+const char *board_drop_state(int column,int reserved)
+{
+    static const char *states[]={"Ready","Needs attention",NULL,"Review","Done","Archived"};
+    return !reserved && column>=0 && column<6?states[column]:NULL;
 }

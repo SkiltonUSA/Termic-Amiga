@@ -11,7 +11,11 @@ Select a row to open its workspace, queue an agent/build, review agent edits,
 mark it done, archive it or restore it to Backlog. Working reflects actual
 registered jobs. A completed agent run reaches Review; it does not mark the
 task Done on your behalf. Queued/running tasks cannot be marked done or archived.
-State changes use buttons; this version does not implement drag-and-drop.
+Drag a task with the left mouse button between Backlog, Needs attention, Review,
+Done and Archived (Esc cancels), or
+use the buttons. A drop saves the task state; it never starts a job. Working
+accepts only real running jobs. Queued/running tasks reject state changes,
+and a failed save leaves the task in its previous column.
 
 ## Persistent queue
 
@@ -20,23 +24,46 @@ move pending entries up/down, remove pending/finished entries and clear
 finished history. The queue holds 64 entries. Queued workspaces are reserved
 against simultaneous GUI/MCP writes. Other tasks can still be edited.
 
-Resume runs one queued job at a time, waiting for jobs attached to the open
-workspace and any active host relay. Externally launched workers in other
+The **Parallel work** selector allows one to four independent workers; one is
+the default. Resume dispatches queued jobs up to that limit, counting workers
+already attached to the UI. Lowering the limit lets existing jobs finish.
+Native builds and direct API/native-agent tasks can overlap in separate tasks.
+Codex, Claude, Cursor and host Git requests share a relay mailbox, so only one
+host request runs at a time. The queue waits at a blocked head entry; it does
+not reorder pending work to bypass that entry. Externally launched workers in other
 projects can run independently; task locks prevent simultaneous access to the
 same task. A failed job pauses the queue and leaves later entries pending. Inspect the failed
 task's activity before resuming. Resume continues the remaining work; it does
 not retry the failed entry. Add that task again explicitly to retry it.
 
+A failure leaves already-running jobs active and pauses further launches.
 Pause prevents the next launch; **Stop** remains the control for an active job.
 Queue state is stored in `Termic:Config/queue.json`, with `.bak` backup. Termic
 always starts paused. It reattaches to a registered running worker; an
 interrupted job without a worker becomes Needs attention and is never replayed
 automatically. An invalid queue file disables dispatch until repaired/restored.
 
+## Broadcast to agents
+
+Open **Queue > Broadcast...** from a saved, idle task. Select agent profiles
+with Shift-click and enter one shared instruction. **Queue copies** creates a
+fresh source-copy task per selected profile, with separate instructions, files,
+review journals and conversations. Existing tasks are preserved. YOLO is off in
+these copies. Native CLI agent profiles must be configured to read `task.txt`.
+
+Broadcast pauses dispatch and opens the queue. Inspect the new tasks and worker
+limit before choosing Resume. Host profiles still run serially; independent
+native/API tasks can use the parallel limit. This is not a race mode: every
+queued task runs unless explicitly removed or stopped. A partial storage failure
+leaves completed copies queued and reports the count; inspect unfinished copies
+before retrying. No job starts automatically from the Broadcast dialog.
+
 ## Review agent edits
 
 **Right Amiga U**, the Changes page or the board's Review button opens file
-review. Select a file to compare its original and latest generated contents.
+review. Select a file for a full-context unified diff on a black background:
+green `+` lines are additions, red `-` lines are removals and blue lines are
+headers. The View selector also offers the original Before / after comparison.
 **Accept file** keeps the edit; **Revert file** restores the original after
 confirmation. A generated version is retained as `.bak`. Reverting a new file
 moves that file to `.bak`. Changes made since the recorded agent edit cause a
@@ -46,8 +73,10 @@ Snapshots survive restarts in each task's hidden `.review.json` and
 `.review-XX.before/after` files. They cover writes made through the agent's
 `write_file` and `write_source` tools. Program/ARexx side effects, external
 editors and the standalone MCP file interface are not captured by this journal;
-use Git diff for those changes. The preview shows full BEFORE/AFTER text rather
-than an inline patch. Resolving edits does not automatically mark a task Done.
+use Git diff for those changes. Accept/Revert applies to the whole file,
+not individual hunks. Large changed regions use replacement alignment to bound
+68k processing and memory; no lines are discarded. Missing final newlines are
+marked explicitly. Resolving edits does not automatically mark a task Done.
 
 ## Editor, compiler locations and scripts
 

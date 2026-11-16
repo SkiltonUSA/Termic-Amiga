@@ -1,7 +1,7 @@
 @DATABASE Termic.guide
 @INDEX Index
 @NODE MAIN "Termic Amiga - User Guide"
-@{b}Termic Amiga 0.1.1 Beta@{ub}
+@{b}Termic Amiga 0.1.2 Beta@{ub}
 Native MUI development workspace for AmigaOS 3.2 / 68020+.
 
   @{"Getting started" LINK Start}       @{"Installation" LINK Install}
@@ -292,13 +292,13 @@ Right Amiga I opens Activity. See @{"Process monitor" LINK activitymonitor}.
 Settings: Preferences, MUI Settings..., Save Settings, Use Settings,
           Cancel Edits (the last three apply while Settings is open).
 Help: Contents... opens this AmigaGuide manual in MultiView.
-      Keyboard shortcuts opens the black grouped reference.
+      Keyboard shortcuts opens the black reference of active bindings.
 
 @{"Prompt library and project instructions" LINK Prompts}
 Right Amiga P opens Prompts; Right Amiga K opens keyboard shortcuts.
 Right Amiga E opens Agents / CLI / Scripts; Right Amiga M opens MCP settings.
 Right Amiga I opens Tools > Process Monitor from any workspace page.
-In the prompt, Tab sends and Shift Tab changes agent profile. Ctrl J adds
+Default prompt keys: Tab sends and Shift Tab changes agent profile. Ctrl J adds
 a newline, Ctrl G opens the editor, Ctrl R searches history and F4 opens
 the Activity process monitor. Two Esc presses recall the last sent message. In an empty prompt,
 / opens commands, @ mentions the open file, ! opens CLI, ? shows shortcuts.
@@ -307,7 +307,12 @@ Ctrl Home/End or Shift Alt comma/period go to top/latest. Ctrl Space starts
 line selection; Up/Down extends; Ctrl Space finishes; Right Amiga C copies.
 Esc returns to prompt. Ctrl C quits from prompt/transcript with save handling.
 These keys do not replace editor Tab. Image paste, reasoning adjustment,
-subagents and keymap customization are not available.
+and subagent switching are not available.
+Configure... in Keyboard shortcuts remaps 16 prompt/transcript actions.
+Select an action and binding, then Assign. Conflicts are rejected. Disabled
+frees a binding. Save persists Config/keymap.json with backup; Use lasts this
+session; Cancel discards the draft. Defaults still needs Save or Use.
+Menu keys, editor bindings, Escape and empty-prompt symbols stay fixed.
 
 Right-Amiga + N New project     O Open/import    S Save
 Right-Amiga + X Cut             C Copy           V Paste
@@ -461,12 +466,13 @@ change firmware, display mode or ownership of ARM applications.
 This is a native MUI implementation, not the React/Tauri desktop app.
 No native desktop agent CLIs, interactive PTY or Git worktrees.
 Host profiles provide buffered live response text, worktrees and PR controls.
-The serial queue is available; broadcast/race modes are not implemented.
+The queue supports independent workers and broadcast task copies. Host proxy
+requests stay serial; race mode is not implemented.
 Classic AmigaOS has no process isolation: review code before running it.
 @ENDNODE
 
 @NODE About "Version, support and credits"
-Termic Amiga 0.1.1 Beta. Native version source: Source/version.h.
+Termic Amiga 0.1.2 Beta. Native version source: Source/version.h.
 Project > About... and the About toolbar button show version and credits.
 AmigaDOS can inspect all three executable version tags:
 
@@ -675,11 +681,15 @@ Right Amiga Y opens the board: Backlog, Needs attention, Working, Review,
 Done and Archived. Search task/project names and press Return. Select a
 task to open it, queue work, review, mark done, archive or restore it.
 Running jobs determine Working. Agent completion waits in Review for you.
-Use the buttons to change state; drag-and-drop is not implemented.
+Drag idle tasks between columns or use the buttons. A drop saves state;
+it never starts work. Working accepts only actual jobs. Queued/running
+tasks cannot move; failed saves leave the previous state intact.
 
 Right Amiga J opens the queue. Add agent instructions or builds, reorder
-pending rows, remove rows or clear finished history. Resume runs serially.
-A failure pauses later work. Resume continues without retrying the failed
+pending rows, remove rows or clear finished history. Parallel work permits
+one to four independent workers (default one). Host proxy requests stay
+serial. A blocked head entry waits; later entries are not moved ahead.
+A failure pauses new launches; active jobs can finish. Resume continues without retrying the failed
 entry. Re-add a failed task explicitly to retry it. Pause prevents the next
 launch; use Stop for active work. Queued tasks are reserved against edits.
 
@@ -687,12 +697,22 @@ The queue survives in Config/queue.json and starts paused after a restart.
 Existing workers are reattached; uncertain interrupted jobs need attention.
 They are never replayed automatically. Up to 64 queue entries are retained.
 
+Queue > Broadcast... copies the saved idle source task for each selected
+agent profile. Shift-click selects several profiles. Enter a shared prompt,
+then Queue copies. Each copy has separate source, instructions and history;
+YOLO is off. Dispatch pauses so you can inspect the copies before Resume.
+A partial storage failure reports how many copies were queued. Inspect any
+unfinished copies before retrying. Broadcast does not start jobs by itself.
+
 @{"Review and notes" LINK ReviewNotes}  @{"Projects" LINK Projects}
 @ENDNODE
 
 @NODE ReviewNotes "Agent edit review and scratchpads"
-Right Amiga U opens agent edit review. Select a file to see BEFORE/AFTER.
-Accept keeps the edit. Revert asks for confirmation, restores the original
+Right Amiga U opens agent edit review. Unified diff uses a black background:
+green + additions, red - removals and blue headers. View also offers
+Before / after. Large changes use replacement alignment to bound work on
+68k; all lines remain visible. Missing final newlines are marked.
+Accept/Revert applies to the whole file. Accept keeps the edit. Revert asks for confirmation, restores the original
 and retains generated contents in .bak. A new file moves to .bak. Later
 user edits cause a conflict and are never overwritten by review.
 

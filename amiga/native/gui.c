@@ -118,7 +118,7 @@ enum
 struct Job
 {
     char path[PATH_SIZE];
-    int active, polls;
+    int active, polls, host;
     long bytes;
 } jobs[16];
 #include "activity_scroll.h"
@@ -127,6 +127,9 @@ static struct ActivityView activity;
 static int transcript_pending;
 static void editor_recolour(void);
 static int colour_pending,colour_delay;
+static int task_uses_relay(const char *path);
+static void broadcast_open(void);
+static int broadcast_event(ULONG id);
 static void flow_tick(void), flow_changed(void), flow_completed(const char *, int);
 static struct MsgPort *timer_port;
 static struct timerequest *timer_io;
@@ -151,8 +154,8 @@ static Object *label(const char *s)
 static Object *button(const char *s, int id)
 {
     int kind=action_icon_kind(s,id);
-    const char *help=id==CANCEL?"Stop current job (Shift F10)":id==RUN?"Run program (F7)":
-        id==BUILD?"Build (F6)":id==SAVE?"Save (F8 / Right Amiga S)":id==AGENT?"Start agent (Tab in prompt)":s;
+    const char *help=id==CANCEL?"Stop current job (see Keyboard shortcuts)":id==RUN?"Run program (see Keyboard shortcuts)":
+        id==BUILD?"Build (see Keyboard shortcuts)":id==SAVE?"Save (Right Amiga S)":id==AGENT?"Start agent (see Keyboard shortcuts)":s;
     Object *o;
     if(kind>=0) o=action_icon(kind,help);
     else o = TextObject, ButtonFrame, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Button,
@@ -195,6 +198,7 @@ static Object *list(Object **o)
 /* Register on the active editor itself: MUI delivers active-object handlers
  * before other objects, regardless of a title bar handler's priority.
  * Each class owns its handler; unhandled events pass to TextEditor's node. */
+static Object *change_text,*broadcast_text;
 static struct MUI_CustomClass *keyeditor_class;
 struct KeyEditorData { struct MUI_EventHandlerNode events; };
 static ULONG keyeditor_dispatch(__reg("a0") struct IClass *cl,
@@ -227,7 +231,7 @@ static Object *editor(Object **o, int readonly)
     if(!keyeditor_class)return NULL;
     g = HGroup, Child, *o = NewObject(keyeditor_class->mcc_Class, NULL, InputListFrame, MUIA_Font,
            codefont ? (ULONG)codefont : MUIV_Font_Fixed,
-           (o == &source || o == &prompts_body || o == &transcript) ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
+           (o == &source || o == &prompts_body || o == &transcript || o == &change_text || o == &broadcast_text) ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
            MUIA_TextEditor_ReadOnly, readonly, MUIA_TextEditor_ActiveObjectOnClick, TRUE,
            MUIA_TextEditor_ImportHook,
            MUIV_TextEditor_ImportHook_Plain, MUIA_TextEditor_ExportHook,
@@ -408,6 +412,7 @@ static void attach_job(const char *path)
     {
         strcpy(jobs[free_slot].path, path);
         jobs[free_slot].active = 1;
+        jobs[free_slot].host = 1; /* Unknown reattached action: conservatively reserve relay. */
         jobs[free_slot].polls = 0;
         jobs[free_slot].bytes = -1;
         arm_timer();
@@ -801,11 +806,18 @@ static int any_jobs(void)
             return 1;
     return 0;
 }
+static int host_job_active(void)
+{
+    struct MsgPort *port;int i;
+    for(i=0;i<16;i++)if(jobs[i].active && jobs[i].host)return 1;
+    Forbid();port=FindPort((STRPTR)"TermicCodexRelay");Permit();return port!=NULL;
+}
 static int launch_at(const char *target, const char *action, int page)
 {
     char path[PATH_SIZE], line[512];
     BPTR in, out;
-    int i;
+    int i,host=!strcmp(action,"--host-git") || (!strcmp(action,"--agent") && task_uses_relay(target));
+    if(host && host_job_active()) {message("A host relay is already active. Queue this task to run after it.");return 0;}
     if (busy(target))
     {
         message("A job is already running in this workspace.");
@@ -857,6 +869,7 @@ static int launch_at(const char *target, const char *action, int page)
     }
     strcpy(jobs[i].path, target);
     jobs[i].active = 1;
+    jobs[i].host = host;
     jobs[i].polls = 0;
     jobs[i].bytes = -1;
     join(path, target, "state.txt");
@@ -1079,6 +1092,14 @@ static void configure(int permanent)
             : "Preferences in use until reboot. Restart Termic for a changed project drawer.");
 }
 #include "profiles_ui.h"
+static int task_uses_relay(const char *task)
+{
+    char path[PATH_SIZE],*id;int n;
+    join(path,task,"agent-profile");id=read_value(path,31);
+    n=profile_find(&profile_live,id?id:"openai");free(id);
+    /* Unknown profiles must not bypass serialization. Worker reports the error. */
+    return n<0 || profile_is_relay(profile_live.items[n].kind);
+}
 #include "access_ui.h"
 static void open_help(void)
 {
@@ -1169,6 +1190,7 @@ static void open_about(void)
 #include "editor_tools_ui.h"
 #include "change_review_ui.h"
 #include "taskflow_ui.h"
+#include "broadcast_ui.h"
 #include "scratchpads_ui.h"
 #include "git_ui.h"
 static Object *menu_items[COMMANDSCLOSE + 1];
@@ -1601,6 +1623,7 @@ int main(int argc, char **argv)
         goto cleanup;
     activity_scroll_bottom(transcript);
     flow_startup();
+    keymap_load();
     if(argc==2 && !strcmp(argv[1],"--activity-fixture"))termic_monitor_open(app,1);
     while (!done)
     {
@@ -1617,7 +1640,7 @@ int main(int argc, char **argv)
             if(termic_monitor_event(id))continue;
             if(id>=AC_OPEN && id<=AC_CANCEL) {access_event(id);continue;}
             if(id>=PF_OPEN && id<=PF_ADDCURSOR) {profile_event(id);continue;}
-            if (shortcut_event(id)) continue;
+            if (shortcut_event(id) || broadcast_event(id)) continue;
             if(id>=PL_OPEN && id<=PL_INSERT) {prompts_event(id);continue;}
             if(id==ED_DIAGNOSTIC) {
                 int row=value(diagnostic_list,MUIA_List_Active);
@@ -1634,7 +1657,7 @@ int main(int argc, char **argv)
             }
             if(id>=GT_OPEN && id<=GT_PR) {git_event(id);continue;}
             if(id>=SP_OPEN && id<=SP_REFRESH) {pad_event(id);continue;}
-            if(id>=CR_OPEN && id<=CR_REFRESH) {change_event(id);continue;}
+            if(id>=CR_OPEN && id<=CR_MODE) {change_event(id);continue;}
             if(id>=KB_OPEN && id<=Q_LAST) {flow_event(id);continue;}
             switch (id)
             {
@@ -2025,6 +2048,7 @@ cleanup:
     cJSON_Delete(prompts_items);
     cJSON_Delete(prompts_defaults);
     if(keyeditor_class)__termic_mui_unclass(MUIMasterBase,keyeditor_class);
+    if(board_list_class)__termic_mui_unclass(MUIMasterBase,board_list_class);
     if(pane_class)__termic_mui_unclass(MUIMasterBase,pane_class);
     if(action_icon_class)__termic_mui_unclass(MUIMasterBase,action_icon_class);
     chrome_cleanup();
