@@ -76,7 +76,10 @@ int relay_message(struct RelayState *s,const char *json,char **reply)
 #include <exec/ports.h>
 #include <proto/dos.h>
 #include <proto/exec.h>
-#define RELAY "Termic:Relay/"
+#ifndef TERMIC_RELAY_ROOT
+#define TERMIC_RELAY_ROOT "Termic:Relay"
+#endif
+#define RELAY TERMIC_RELAY_ROOT "/"
 /* This target's C runtime fails fopen(a/r+) on the tested filesystem.
  * Use bounded backup-and-replace writes and close after each message so the
  * GUI can read progress. A full/unreadable transcript is never truncated. */
@@ -110,7 +113,7 @@ static int publish(const char *path,const char *text)
     if(!ok) {printf("Cannot publish relay output: %s (DOS %ld).\n",path,(long)IoErr());DeleteFile((STRPTR)temp);}
     return ok;
 }
-static int run_relay_mode(int host_git)
+static int run_relay_mode(int host_git,const char *profile_id,const char *handoff_task)
 {
     struct AgentProfiles *registry=calloc(1,sizeof(*registry));
     struct AgentProfile *p;struct RelayState s;
@@ -122,17 +125,18 @@ static int run_relay_mode(int host_git)
     if(host_git) {
         p=&registry->items[0];strcpy(p->id,"host-git");p->kind=5;p->readonly=1;p->steps=129;
     } else {
-        if(!profiles_load(registry) || (selected=profile_selected(registry))<0) {puts("Cannot load Mac relay profile.");goto end;}
+        if(!profiles_load(registry) || (selected=profile_id?profile_find(registry,profile_id):profile_selected(registry))<0) {puts("Cannot load Mac relay profile.");goto end;}
         p=&registry->items[selected];if(!profile_is_relay(p->kind)) {puts("Select a Mac agent profile.");goto end;}
     }
-    task=read_text(host_git?".host-git-request":"task.txt",8192);
+    if(handoff_task && strlen(handoff_task)<=8192) {task=malloc(strlen(handoff_task)+1);if(task)strcpy(task,handoff_task);}
+    else if(!handoff_task)task=read_text(host_git?".host-git-request":"task.txt",8192);
     if(!task || !*task) {puts("Enter task instructions first.");goto end;}
     memset(&port,0,sizeof(port));port.mp_Node.ln_Name="TermicCodexRelay";
     port.mp_Node.ln_Type=NT_MSGPORT;port.mp_Flags=PA_IGNORE;port.mp_SigTask=FindTask(NULL);
     Forbid();if(!FindPort((STRPTR)"TermicCodexRelay")) {AddPort(&port);owned=1;}Permit();
     if(!owned) {puts("Another Mac relay task is running. Wait or stop it first.");goto end;}
-    l=Lock((STRPTR)"Termic:Relay",ACCESS_READ);
-    if(!l)l=CreateDir((STRPTR)"Termic:Relay");
+    l=Lock((STRPTR)TERMIC_RELAY_ROOT,ACCESS_READ);
+    if(!l)l=CreateDir((STRPTR)TERMIC_RELAY_ROOT);
     if(!l) {puts("Cannot create Termic:Relay drawer.");goto end;}UnLock(l);
     DateStamp(&stamp);
     sprintf(s.id,"%08lx-%08lx-%04lx",(unsigned long)stamp.ds_Days,
@@ -198,6 +202,9 @@ end:
     cJSON_Delete(request);cJSON_Delete(guides);free(previous);free(task);free(json);free(registry);
     return s.result;
 }
-int run_relay(void) {return run_relay_mode(0);}
-int run_git_relay(void) {return run_relay_mode(1);}
+int run_relay(void) {return run_relay_mode(0,NULL,NULL);}
+int run_git_relay(void) {return run_relay_mode(1,NULL,NULL);}
+int run_relay_handoff(const char *profile_id,const char *task)
+{if(!profile_id || !task)return 20;return run_relay_mode(0,profile_id,task);}
+
 #endif

@@ -15,6 +15,7 @@
 #include <string.h>
 #include "job_finish.h"
 #include "tiny_profile.h"
+#include "tiny_assistant.h"
 const char version_tag[] = TERMIC_VERSION_TAG("TermicAgent");
 const char stack_size[] = "$STACK:262144";
 int cancel_requested(void)
@@ -197,7 +198,9 @@ static LONG run_binary(const char *binary,const char *arguments)
 static int run_tiny(const struct AgentProfile *profile)
 {
     char question[74],*task=read_text("task.txt",8192),*answer;
-    char *entry;LONG result=20;
+    char *entry;LONG result=20;int local;
+    if(cancel_requested())goto done;
+    local=tiny_local(task);if(local){result=local>0?0:20;goto done;}
     if(strcmp(profile->model,"tiny-2.1")) {
         puts("Tiny supports model tiny-2.1. Choose it in Agents settings.");goto done;
     }
@@ -224,6 +227,7 @@ static int run_tiny(const struct AgentProfile *profile)
         goto done;
     }
     free(entry);
+    if(!tiny_remember_turn(task,answer))puts("Answer saved, but Tiny memory could not be updated.");
     free(answer);
     puts("Tiny finished. Its answer is in Agent activity; no project files were changed.");
 done:

@@ -165,7 +165,7 @@ static void profile_show(int index)
     set(profile_env, MUIA_Disabled, p->kind == PROFILE_TINY || p->kind == 0 || profile_is_relay(p->kind));
     set(profile_info, MUIA_Text_Contents,
         p->kind == PROFILE_TINY
-            ? "TINY 2.1 by WollyMonjac, local tiny68k. Model: tiny-2.1. No API key.\nShort questions (72 ASCII characters), no file/build tools or conversation memory."
+            ? "TINY 2.1 by WollyMonjac, local tiny68k. Model: tiny-2.1. No API key.\nOffline /docs, /files, /read, /history and /help. Read-only project access.\nUse /handoff for a host agent. Model questions: 72 ASCII characters."
             : p->kind == 0
             ? "Direct OpenAI API. Blank model uses the main Settings model.\nBlank key retains "
               "this profile's credential. Copies need their own key."

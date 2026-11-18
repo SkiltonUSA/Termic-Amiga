@@ -5,7 +5,7 @@
     "\n.launch\n.job*\n.result*\njob.log\n.stderr\n.command.log\nbuild.log\ntranscript."       \
     "txt\nsession.txt*\nsession-*.txt*\nusage-*.txt*\nname.txt\nstate.txt\ncommand."           \
     "txt\ncommit.txt\nagent-profile\nagent-yolo\ncli-started\n.mcp-owned\n.scratchpads/"       \
-    "\nbranch.txt*\n.host-git*\n.queued*\n.review*\nlast-prompt.txt*\n.tiny-input*\nTasks/\n"
+    "\nbranch.txt*\n.host-git*\n.queued*\n.review*\nlast-prompt.txt*\n.tiny-input*\n.tiny-memory*\nTasks/\n"
 /* File names accepted by editor and agent. No devices, parent traversal,
  * hidden state, shell metacharacters or arbitrary executable writes. */
 int agent_source_name(const char *path);

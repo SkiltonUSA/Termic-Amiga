@@ -21,6 +21,7 @@ int decode_http(const char *raw, size_t size, int eof, int *status, char **body)
 int cloud_request(const char *key, const char *json, char **reply);
 int run_agent(void);
 int run_relay(void);
+int run_relay_handoff(const char *profile_id,const char *task);
 /* Bounded backup-and-replace append; preserves unreadable/full transcripts. */
 int append_transcript(const char *text);
 int run_git_relay(void);

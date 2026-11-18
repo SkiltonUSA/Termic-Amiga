@@ -22,10 +22,101 @@ Task text is supplied through a temporary input file, never shell source.
 The worker records the answer in the task transcript displayed in Agent
 activity, and reports failures through the normal task result. Stop uses the
 worker's cooperative cancellation path. There is no automatic cloud fallback.
-Tiny has no file/build tools, YOLO behavior or conversation memory. Choose
-Codex, Claude, Cursor or OpenAI when those capabilities are needed.
+Termic adds the local commands below around Tiny's model. Project access is
+**read-only**. Tiny cannot edit, build or execute project code. Its neural model
+still receives only the current short question; saved context is used by recall
+and explicit handoff, not squeezed into the model's 72-character input.
+
+## Local commands
+
+Select Tiny, enter a command in **Task instructions**, then start the agent.
+Commands and their results appear in Agent activity. These commands work without
+network access, except for the explicit host-agent handoff.
+
+| Command | Result |
+| --- | --- |
+| `/help` | Show the command list. |
+| `/docs yolo` | Search the installed AmigaGuide and display the best matching chapter, with its title and node ID. |
+| `/files` | List supported source files under the current task/project. |
+| `/read main.c` | Display a project source file, without changing it. |
+| `/history` | Show saved recent conversation and notes. |
+| `/recall MUI` | Search saved questions, answers and notes for that phrase. |
+| `/remember Use MUI 5 for this project` | Save an explicit note for recall and handoff. |
+| `/forget` | Clear Tiny's saved context; keep the activity transcript. |
+| `/agents` | List configured Codex, Claude and Cursor profile IDs. |
+| `/handoff ID Review main.c without changing it` | Send the request and saved context to the named host agent. Replace `ID` with an ID from `/agents`. |
+
+Guide lookup is a local keyword search over `Termic:Termic.guide`. It displays
+source text, not a generated answer. Search by feature name, such as `kanban`,
+`shortcuts`, `ARexx` or `yolo`. Excerpts are limited to 12,000 characters; open
+Help for the complete chapter. Ordinary questions still use Tiny inference;
+use `/docs` explicitly when you want documented Termic behavior.
+
+File access uses Termic's existing project containment checks. It accepts C/H,
+Python, ARexx, text/Markdown and the named project guidance files, up to 32 KiB.
+Device paths, parent traversal, reserved task/session files and links outside
+the project are rejected. There is no Tiny write or execution command.
+
+## Conversation memory
+
+Memory persists in `.tiny-memory.json` in each task's directory. It survives
+closing Termic and restarting the Amiga, and is separate for each task. The
+New projects ignore `.tiny-memory*` in Git. For an existing repository, add
+that pattern to its `.gitignore` before committing task state.
+
+The last **eight** recorded turns retain up to **256 characters of the question**
+and **1,024 characters of the answer**. Explicit notes retain up to **4,096
+characters**. Full results remain in `transcript.txt`, subject to its existing
+256 KiB limit. History/recall queries do not displace saved turns.
+
+Reading a project file records an excerpt in memory. Use `/history` to inspect
+what is retained before handoff. `/forget` resets memory and removes its ordinary
+backup, but does not erase the transcript, external backups or a host agent's
+conversation. Invalid memory is preserved and reported rather than silently
+replaced; `/forget` explicitly resets it.
+
+This is application-managed context, not a larger neural context window.
+Tiny does not automatically resolve pronouns or reason over earlier messages.
+Use `/recall` to retrieve earlier information, or hand off to a capable agent.
+
+## Agent handoff
+
+Create or configure a Codex, Claude or Cursor host profile in **Settings >
+Agents / CLI / Scripts**, and start Termic AI Proxy on the Mac or Windows PC.
+Use `/agents` to obtain its ID, then `/handoff ID your request`.
+
+Only that explicit command starts a handoff. The selected target receives:
+
+- Your complete new request, up to 3,000 characters.
+- Up to 512 characters of saved notes.
+- The newest complete saved turns that fit within 4,096 characters, newest first.
+
+Context is labelled reference data; Tiny's answers may be wrong and should be
+verified. File excerpts previously read can be included. The target's configured
+model, permissions, step limit and session-resume settings apply. Credentials
+remain on the host. Read-only Tiny access does not change the target profile's
+permissions; choose a read-only target for a read-only handoff.
+
+Replies and progress appear in the same activity transcript. The task's Tiny
+selection and original instructions remain unchanged. Stop uses the existing
+relay cancellation path. If the host is unavailable or the ID is invalid,
+Termic reports failure without selecting another provider. Direct API and local
+CLI profiles are not handoff targets in this implementation.
+
+The original 0.1.4 Beta archives and MUI guide update predate these local-assistant
+features. They require the updated worker, guide and source from this revision.
 
 ## Verification status
+
+The local-assistant commands, memory bounds, corrupt-state preservation,
+read-only path rejection and handoff context construction pass host tests.
+The worker and MUI application cross-compile. The written physical acceptance
+runner is `scripts/amiga/accept_tiny_assistant.py`; its synthetic provider
+fixtures check relay handoffs without a live provider login. Physical acceptance
+of these new features and target installation are pending: the bridge paused
+on the initial port-list request, before the fixture was launched.
+
+The following results describe the earlier Tiny inference/transcript fix:
 
 The host suite passes 101 tests, including profile migration, Tiny question
 bounds, transcript recording, cancellation and failure handling. Native

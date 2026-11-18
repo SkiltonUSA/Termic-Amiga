@@ -39,7 +39,14 @@ include verification details.
 
 [Offline Tiny 2.1](docs/tiny.md) is the default agent for tasks without a saved
 selection. Its runtime and model are bundled; inference needs no API key,
-network or host proxy. Tiny answers short questions and has no coding tools.
+network or host proxy. Tiny answers short questions.
+
+Current source also adds **offline guide lookup, read-only project access,
+persistent task memory and explicit Codex/Claude/Cursor handoff**. Select Tiny
+and enter `/help`, `/docs yolo`, `/files`, `/read main.c` or `/history` in Task
+instructions. See the [command reference and handoff limits](docs/tiny.md#local-commands).
+These additions require the updated worker and guide; the original 0.1.4 Beta
+archives and earlier MUI guide update predate them.
 The processor monitor now occupies the main **Processors** tab.
 
 ![Tiny offline profile and its documented limits](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/tiny-profile.png)

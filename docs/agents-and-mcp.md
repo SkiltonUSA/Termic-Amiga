@@ -224,5 +224,7 @@ Live cloud access still requires a valid provider login and account entitlement.
 Tiny 2.1 is now the fallback profile for tasks without an `agent-profile`
 file. Existing task selections remain unchanged. Native MCP `task_new`
 defaults to Tiny and `task_send` accepts Tiny or a direct API profile. Tiny
-executes locally with no API key or relay; it answers short questions and
-has no file/build tools. See [offline Tiny setup and limits](tiny.md).
+executes locally with no API key or relay. Its local assistant supports guide
+lookup, read-only project files and persistent context. Explicit `/handoff`
+commands send the request and recent context to a configured host profile.
+Tiny cannot edit or build project code. See [offline Tiny setup and limits](tiny.md).

@@ -54,7 +54,16 @@ typedef int BPTR;
 static BPTR Lock(STRPTR path,int mode){struct stat st;(void)mode;return stat(path,&st)==0;}
 static void UnLock(BPTR l){(void)l;}
 static int IoErr(void){return ERROR_OBJECT_NOT_FOUND;}
-static int calls,fail,stopped,stop_after;
+static int calls,fail,stopped,stop_after,handoffs;
+int project_source_allowed(const char *p){return agent_source_name(p);}
+int project_guidance_allowed(const char *p){return guidance_name(p);}
+char *list_project_sources(void){char *p=malloc(8);strcpy(p,"main.c\n");return p;}
+int run_relay_handoff(const char *id,const char *task) {
+ assert(!strcmp(id,"codex"));assert(strstr(task,"Current user request:"));
+ assert(strstr(task,"Use MUI 5"));assert(strstr(task,"original source"));
+ assert(strlen(task)<=8192);handoffs++;return 0;
+}
+#include "tiny_assistant.h"
 int cancel_requested(void){return stopped;}
 static LONG run_binary_input(const char *command,const char *args,const char *input) {
  char *text=read_text(input,100);++calls;
@@ -90,6 +99,46 @@ int main(void) {
  assert(!read_text("transcript.txt",1000));
  stop_after=stopped=0;strcpy(p.model,"unavailable");assert(run_tiny(&p)!=0 && calls==5);
  strcpy(p.model,"tiny-2.1");assert(save_text("task.txt","",10));assert(run_tiny(&p)!=0 && calls==5);
+ {struct AgentProfiles r;int index;char *json;
+  profiles_defaults(&r);index=profile_add(&r,5,-1);assert(index>=0);
+  strcpy(r.items[index].id,"codex");json=profiles_json(&r);assert(json);
+  assert(!mkdir("Termic:Config",0700));assert(save_text("Termic:Config/agents.json",json,PROFILE_LIMIT));free(json);}
+ /* Local tools never call inference or run source text as instructions. */
+ assert(tiny_local("  /help\n")==1);
+ assert(tiny_local("/remember Use MUI 5")==1);
+ assert(tiny_local("/files")==1);
+ assert(tiny_local("/read main.c")==1);
+ assert(tiny_local("/read ../outside.c")==-1);
+ assert(tiny_local("/read SYS:secret.txt")==-1);
+ assert(tiny_local("/write main.c hacked")==-1);
+ text=read_text("main.c",100);assert(text && !strcmp(text,"original source"));free(text);
+ assert(tiny_local("/history")==1);
+ assert(tiny_local("/recall MUI")==1);
+ text=tiny_handoff_text("Review this file without editing it.");assert(text && strstr(text,"Use MUI 5"));free(text);
+ assert(tiny_local("/handoff tiny run")==-1 && handoffs==0);
+ assert(tiny_local("/handoff unknown run")==-1 && handoffs==0);
+ assert(tiny_local("/handoff codex Review without edits.")==1 && handoffs==1);
+ assert(tiny_local("/agents")==1);
+ assert(save_text("Termic:Termic.guide","@NODE MAIN \"Contents\"\nGuide contents.\n@ENDNODE\n@NODE YOLO \"YOLO mode\"\nYOLO enables faster agent execution.\n@ENDNODE\n",1000));
+ text=tiny_docs("what does yolo mean");assert(text && strstr(text,"[YOLO]") && strstr(text,"faster"));free(text);
+ assert(tiny_local("/docs yolo")==1);
+ assert(calls==5); /* No local command launched the model. */
+ {int i;for(i=0;i<12;i++)assert(tiny_remember_turn("question","answer"));}
+ {cJSON *m=tiny_memory();assert(m && cJSON_GetArraySize(cJSON_GetObjectItemCaseSensitive(m,"turns"))==8);cJSON_Delete(m);}
+ assert(save_text(".tiny-memory.json","invalid",100));
+ assert(tiny_recall("")==NULL);assert(!tiny_remember_turn("x","y"));
+ text=read_text(".tiny-memory.json",100);assert(text && !strcmp(text,"invalid"));free(text);
+ assert(tiny_local("/forget")==1);
+ {char request[3002],notes[4097],answer[1025];int i;char *context;
+  memset(request,'q',3000);request[3000]=0;memset(notes,'n',4095);notes[4095]=0;
+  memset(answer,'a',1024);answer[1024]=0;
+  {cJSON *m=tiny_memory();cJSON_AddStringToObject(m,"notes",notes);assert(tiny_save_memory(m));cJSON_Delete(m);}
+  for(i=0;i<8;i++)assert(tiny_remember_turn(request,answer));
+  context=tiny_handoff_text(request);assert(context && strlen(context)<=8192 && strstr(context,request));free(context);
+  request[3000]='q';request[3001]=0;assert(!tiny_handoff_text(request));
+ }
+ assert(tiny_local("/forget")==1);
+ text=tiny_recall("");assert(text && strstr(text,"No matching saved context"));free(text);
  return 0;
 }
 '''
@@ -98,5 +147,6 @@ int main(void) {
             subprocess.run(['cc','-std=c99','-Wall','-Wextra','-Werror','-Wno-deprecated-declarations',
                             '-fsanitize=address,undefined','-I',str(ROOT/'amiga/native'),str(source),
                             str(ROOT/'amiga/native/files.c'),str(ROOT/'amiga/native/workspace.c'),
+                            str(ROOT/'amiga/native/profiles.c'),str(ROOT/'amiga/native/vendor/cJSON.c'),
                             '-o',str(binary)],check=True)
             subprocess.run([str(binary)],cwd=d,check=True)

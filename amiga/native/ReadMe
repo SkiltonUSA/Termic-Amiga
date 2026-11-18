@@ -14,8 +14,18 @@ Tiny runs on the Amiga 68k CPU using Tools/Tiny/tiny68k and Tools/Tiny/tiny.t68.
 Both are bundled: no internet connection, API key, Mac proxy or ZZ9000 is
 needed for inference. The reply appears in Agent activity. There is no
 automatic cloud fallback. Tiny is a small factual question-answering model;
-it cannot edit files, run builds or remember conversations. Select another
-agent for coding tasks. Stop requests cooperative cancellation.
+it cannot edit files or run builds. Termic adds offline guide search,
+read-only project access, saved conversation context and explicit handoff.
+Type /help with Tiny selected. Examples: /docs yolo, /files, /read main.c,
+/history, /recall MUI, /remember Use MUI 5, /forget and /agents.
+Use /handoff ID request with an ID from /agents to send the request and
+recent saved context to Codex, Claude or Cursor through the host AI Proxy.
+Target profile permissions apply. Tiny stays selected and task text is kept.
+Memory stores 8 shortened turns and 4096 characters of notes per task.
+It supports recall/handoff, not neural conversation reasoning. /forget
+keeps the activity transcript. See Help > Contents > Offline Tiny for
+all commands, limits and exactly what handoff sends.
+Stop requests cooperative cancellation.
 TINY 2.1 is by WollyMonjac; the Amiga engine is SkiltonUSA/tiny68k.
 Keep Tools/Tiny/LICENSE and DATA_LICENSES.md with the model. See the Tiny
 node in Termic.guide for usage and the upstream training sources.

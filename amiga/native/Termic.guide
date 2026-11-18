@@ -820,7 +820,58 @@ Ask one short question (up to 72 printable ASCII characters).
 The answer appears in Agent activity. Stop uses normal task cancellation.
 No network, API key, host proxy or ZZ9000 is needed. No automatic cloud fallback.
 Runtime: Termic:Tools/Tiny/tiny68k. Model: Termic:Tools/Tiny/tiny.t68.
-Tiny has no code editing/build tools or conversation memory.
+LOCAL ASSISTANT COMMANDS
+Enter these in Task instructions with Tiny selected, then Start Agent:
+
+/help                 Show available commands.
+/docs yolo            Search the installed guide, with chapter/source labels.
+/files                List project sources.
+/read main.c          Read a project file; no changes are made.
+/history              Show saved recent questions, answers and notes.
+/recall MUI           Find matching saved context.
+/remember Use MUI 5   Save a note for this task.
+/forget               Reset Tiny memory; retain the activity transcript.
+/agents               List configured host-agent IDs.
+/handoff ID request   Send a request and saved context to that host agent.
+
+Replace ID with an ID shown by /agents. Handoff supports Codex, Claude and
+Cursor profiles through Termic AI Proxy on Mac or Windows. Start the proxy
+and sign in to the selected provider first. Handoff is the only command
+above requiring a host connection. There is no automatic provider fallback.
+Target profile model, permissions, step limits and resume settings apply.
+Choose a read-only target to keep the handoff read-only too.
+Replies appear in the same activity transcript; Tiny stays selected.
+The original task instructions are preserved. Stop cancels the relay job.
+
+READ-ONLY PROJECT ACCESS
+Read C/H, Python, ARexx, text/Markdown or named project guidance files up to
+32 KiB. Paths must stay inside this task/project. Device paths, traversal,
+reserved task/session files and links outside the project are rejected.
+Tiny cannot write files, run builds or execute code.
+
+LOOKUP AND MEMORY
+/docs is keyword search, returning the best matching chapter from this
+installed guide. Try kanban, shortcuts or ARexx. Results are source text,
+not model-generated answers. Excerpts are limited to 12,000 characters;
+open Help for the complete chapter. Ordinary questions still use Tiny.
+
+Each task stores .tiny-memory.json: the last 8 turns, with up to 256
+characters per question and 1024 per answer, plus 4096 characters of notes.
+Memory survives closing Termic and restarting. Full activity is retained
+in transcript.txt up to its existing 256 KiB limit. /history and /recall
+do not replace saved turns. Corrupt memory is reported; /forget resets it.
+
+Handoff sends your new request (up to 3000 characters), up to 512 characters
+of notes and the newest complete saved turns fitting 4096 characters.
+Previously read file excerpts can be included. Check /history first.
+The receiving agent is told that saved context is reference data and Tiny
+answers need verification. No credentials are included by these commands.
+
+/forget resets memory and removes its normal backup. It does not erase the
+activity transcript, external backups or conversations on the host.
+This memory supports recall and handoff; it does not enlarge Tiny's model
+context. The neural model still answers only the current short question.
+Use /recall explicitly, or hand off when conversation reasoning is needed.
 
 Keep Tools/Tiny/LICENSE and DATA_LICENSES.md with the model.
 Upstream source and training kit: https://github.com/WollyMonjac/Tiny-2.1
