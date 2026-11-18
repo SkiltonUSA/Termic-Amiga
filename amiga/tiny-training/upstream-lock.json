@@ -1,0 +1,11 @@
+{
+  "repository": "https://github.com/WollyMonjac/Tiny-2.1",
+  "commit": "49348445661ffc9106f243afb4eafe499a51e286",
+  "files": {
+    "training/train2.py": "733b3db1aa91610dbcf12fd86a448b22af97f39986d7770e81beb79c30c74ce0",
+    "training/gen2.py": "d0532c697020039337ccc1aa2515401d58eccb114a326650e2d04338b2b52b24",
+    "training/tiny2.pt": "16a3b456c5eff78513c586cfd9225755e1af8573afbb411203c9a6dfda36a58d",
+    "LICENSE": "9773b974303fbbb5d522cb4f33f8b8431100a9d0c0ce8994b6c1de2af9dc8598",
+    "DATA_LICENSES.md": "0a7c16b5ad7830e73a8098b9e417385b3a7a5c676a1996a1369bdd25ee9bbb79"
+  }
+}

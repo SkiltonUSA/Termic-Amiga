@@ -1,0 +1,5 @@
+# Host training only; never install these on the Amiga.
+numpy==2.5.5
+torch==2.15.0
+# Required by the separate compiled-68000 numerical gate.
+machine68k==0.5.1

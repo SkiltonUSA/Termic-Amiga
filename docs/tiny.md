@@ -71,6 +71,11 @@ agent's model. Existing installations can copy the drawer independently.
 
 ## Training sources
 
+The [Termic documentation training pipeline](../amiga/tiny-training/README.md)
+fine-tunes Tiny's weights using documented Amiga workflows and a separate
+held-out question set. Candidate training does not automatically replace the
+bundled model or give Tiny execution tools.
+
 The upstream [training kit](https://github.com/WollyMonjac/Tiny-2.1/tree/main/training)
 contains the facts, question generator, PyTorch trainer and checkpoint. Training
 is a separate host task, not an Amiga UI action. See its `TRAINING.TXT` before

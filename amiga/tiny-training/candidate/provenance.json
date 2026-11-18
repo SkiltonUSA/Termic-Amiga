@@ -1,0 +1,84 @@
+{
+  "data_sha256": "7c54fc4ddd9f7c9ebf522154fa2fb86cd23897474dee657d89322cef681123aa",
+  "checkpoint_sha256": "16a3b456c5eff78513c586cfd9225755e1af8573afbb411203c9a6dfda36a58d",
+  "trainer_sha256": "3ee5b63ea2802abe1d2ffe519b93bbf178e702a318c8e794f27cdfceb3cd5955",
+  "upstream_commit": "49348445661ffc9106f243afb4eafe499a51e286",
+  "upstream_files": {
+    "train2.py": "733b3db1aa91610dbcf12fd86a448b22af97f39986d7770e81beb79c30c74ce0",
+    "gen2.py": "d0532c697020039337ccc1aa2515401d58eccb114a326650e2d04338b2b52b24"
+  },
+  "replay_facts": {
+    "animals.tsv": "5f883c9494ec702a7987a8a11a365c56c026c4e19fefa1ee8b7ace918b09e055",
+    "body.txt": "2931b40735f50d36e0b0551bb877948f4f86c513a2b8eebdeba71962e0642d66",
+    "dos.txt": "2262b9ff7e9a03576697dcba189b8176a24e3bee2c1f34c32c7dd804d4fa5a08",
+    "elements.tsv": "0a7216fdbf6c2333035e3284ceeb8eaab3c252477d8312ecde0be5cd221ff12b",
+    "food.txt": "268aa25268fb391fe21a98fb21f5d1d757b735b805691e3b38e191ad91b59bd1",
+    "geo.tsv": "8423210c8a0b074ea2c522ec301b7905803889ebc64a68d38517cc5eb07ab18f",
+    "geo2.tsv": "9b58ef2f791cdf38b8be489770bd74546e89e6f4f43d0e864e3a757a7b8d0bea",
+    "geo3.tsv": "949e0631e82139c0797d64ec0bef1021318280e79fd93f2208ad1512ad73aeb9",
+    "history.txt": "deb32d8706707f67eeec1009479366ac4897d106531132fe8d4ce70da67a13b5",
+    "lang.tsv": "6c01ffab33d9caf1cb182dc6e00050534532ca3379c0dca1aec40a9148cfe254",
+    "maths.txt": "85e90be2aa376e4640a9abc4be093af0d93bc90bcfe551bf834fc781da389566",
+    "more.txt": "da4b52892c0d28ca5e6e38bd7ad677b580f4be2a3dcd3abc1fb4a21d7bf20def",
+    "nature.txt": "9a5b58b90f4263d31d33e0250d28b60608afa4d35107e6cd3c429a56a74035c5",
+    "science.txt": "7c8321b289b2c47e3bad0deb72ef72d99b2cd19f0e8652565af2c2b5ff670524",
+    "shapes.txt": "cacf738a060e2fa99b91530babef898e21b661d7251b06cda33a7b75da4528e1",
+    "space.txt": "26f6c4983d3c2a6774226723ec72fd57fad10add93f1f07e92a2158ed8a77dcc",
+    "sport.txt": "f074caa5c4b2dec56f574896d0e3b33bccec97d12da65ca0bfa5dbc689523e87",
+    "talk.txt": "0720c794790e9cc3e312894ada5033a74a4071ad50f5aed91212cea85d32bb9e",
+    "tech.txt": "7a426eadc0ac4ea87660a96f7a04397ea2fc3052651d45299f1c10597bca069e",
+    "time.tsv": "7bf7783f837e2923d7103862d470f25eed739582562d3270b29bec315ddcc127",
+    "time.txt": "51b0df465d022b38a997b191a6552df334f647338e271a53c4a3166d3de28fa5",
+    "words2.tsv": "c76c4aceeab38478d3fee86d7c3932a66c1a3cba06ba87bb4b9fb28852129fe7",
+    "world.txt": "d7685cbfbcdf46ff71b83018d15814440c1250b6ce8ea19bb6f2c930cbc0f3ac"
+  },
+  "sources": {
+    "amiga/native/ReadMe": "2e49d609b9fe493476043eb068e28530e336e205b9717ece5d2c786fabe8a580",
+    "docs/agent-execution.md": "29251313f6b2c0bf7c88d938e0d3174e3aab0593e14019d74f62433abe885fc3",
+    "docs/task-workflow.md": "c482db13e04debfa5896522938d21bb8a3d3934f70d16ee44fcd68f6652eeeb2",
+    "docs/agents-and-mcp.md": "c17085388d5c473c530e13927b1718a149cca6d7222047a2ce47dd1bbd1711fb",
+    "docs/prompts-and-instructions.md": "a2062a39459eb9e3caba2b1c548af0b81579d8b016e0108986ea81ba0f42e8e1",
+    "amiga/native/Termic.guide": "7bfef3dfdde7078241274be4dea7328a46bf289f58deb823dfcbb22d6301de0d",
+    "docs/tiny.md": "32e7fbc994c7d6f0a5a090e8bbdac8eb8912392ae2d3a1ff30c72d09c7512753"
+  },
+  "config": {
+    "action": "train",
+    "steps": 16000,
+    "batch": 32,
+    "threads": 2,
+    "lr": 0.0003,
+    "replay": 0.25,
+    "seed": 20261118,
+    "eval_every": 4000,
+    "split": "validation"
+  },
+  "torch": "2.15.0",
+  "parameters": 366528,
+  "steps": 16000,
+  "elapsed_seconds": 427.1386470419966,
+  "best_validation_correct": 37,
+  "exported_sha256": "71ab5482648371722fa79735eca58571b89b2a7cdae5240cd7c213a4b632189c",
+  "unique_training_questions": 109523,
+  "holdout_overlap": 0,
+  "model": "tiny-termic-experimental",
+  "promoted": false,
+  "converted_sha256": "12319f67ebac6b8b71054ae921db9c3876b1a062eb6a9f335f4bf86bc7682bd9",
+  "selection_step": 8000,
+  "evaluation": {
+    "train": {
+      "correct": 494,
+      "total": 497,
+      "accuracy": 0.993963782696177
+    },
+    "validation": {
+      "correct": 37,
+      "total": 71,
+      "accuracy": 0.5211267605633803
+    },
+    "test": {
+      "correct": 31,
+      "total": 71,
+      "accuracy": 0.43661971830985913
+    }
+  }
+}

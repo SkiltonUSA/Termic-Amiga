@@ -1,0 +1,508 @@
+{
+  "runtime": "tiny68k integer C",
+  "model_sha256": "12319f67ebac6b8b71054ae921db9c3876b1a062eb6a9f335f4bf86bc7682bd9",
+  "dataset_sha256": "7c54fc4ddd9f7c9ebf522154fa2fb86cd23897474dee657d89322cef681123aa",
+  "split": "test",
+  "correct": 31,
+  "total": 71,
+  "accuracy": 0.43661971830985913,
+  "rows": [
+    {
+      "id": "about",
+      "question": "where can i find the version",
+      "expected": "Project > About, or Shift-Help.",
+      "answer": "Press Esc twice in the prompt to recall the last sent message.",
+      "correct": false
+    },
+    {
+      "id": "help",
+      "question": "where do i get termic help",
+      "expected": "Press Help to open Termic.guide in MultiView.",
+      "answer": "Press Help to open Termic.guide in MultiView.",
+      "correct": true
+    },
+    {
+      "id": "save_source",
+      "question": "how do i keep editor changes",
+      "expected": "Use the Save icon, F8, or Right Amiga S.",
+      "answer": "Use the Save icon, F8, or Right Amiga S.",
+      "correct": true
+    },
+    {
+      "id": "unsaved",
+      "question": "how can i tell if code is unsaved",
+      "expected": "An asterisk before the filename marks unsaved changes.",
+      "answer": "Steve persists preferences; Use lasts until reboot; Cancel discards.",
+      "correct": false
+    },
+    {
+      "id": "new_project",
+      "question": "how do i create a termic project",
+      "expected": "Use New in Projects; it copies the clean Template drawer.",
+      "answer": "Use New in Projects; it copies the clean Template drawer.",
+      "correct": true
+    },
+    {
+      "id": "new_task",
+      "question": "does a new task share the source files",
+      "expected": "New task makes an independent copy of the selected workspace.",
+      "answer": "No, a new is an ewaler.",
+      "correct": false
+    },
+    {
+      "id": "import",
+      "question": "how do i bring existing code into termic",
+      "expected": "Use Import Folder in Projects to copy an existing source drawer.",
+      "answer": "Reviro bnon the name, border odd it try a clect nuer cold.",
+      "correct": false
+    },
+    {
+      "id": "compiler",
+      "question": "which tools compile the code",
+      "expected": "Termic builds locally with VBCC and the NDK.",
+      "answer": "Termic builds locally with VBCC and the NDK.",
+      "correct": true
+    },
+    {
+      "id": "build_command",
+      "question": "how can i set up my own build",
+      "expected": "Set Build command in Settings; it must produce Program.new.",
+      "answer": "Set Build command in Settings; it must produce Program.new.",
+      "correct": true
+    },
+    {
+      "id": "failed_build",
+      "question": "is the old program run after build errors",
+      "expected": "A failed build keeps the previous Program and does not run it.",
+      "answer": "Read Build / CLI; double-click a diagnostic to open its source.",
+      "correct": false
+    },
+    {
+      "id": "build_log",
+      "question": "how do i jump from an error to the code",
+      "expected": "Read Build / CLI; double-click a diagnostic to open its source.",
+      "answer": "Read Build / CLI; double-click a diagnostic to open its source.",
+      "correct": true
+    },
+    {
+      "id": "run",
+      "question": "how do i execute my compiled app",
+      "expected": "Use the Run triangle to launch the workspace Program.",
+      "answer": "Use the Run triangle to launch the workspace Program.",
+      "correct": true
+    },
+    {
+      "id": "stop",
+      "question": "will stop always terminate a program",
+      "expected": "Stop requests a cooperative break; some programs may ignore it.",
+      "answer": "Stop requests by it is a goen Doubling pant.",
+      "correct": false
+    },
+    {
+      "id": "arexx",
+      "question": "how is an arexx file run in termic",
+      "expected": "Select ARexx in the CLI panel; enter a script path and press Return.",
+      "answer": "Select ARexx in the CLI panel; enter a script path and press Return.",
+      "correct": true
+    },
+    {
+      "id": "rexxmast",
+      "question": "what must be running for rexx scripts",
+      "expected": "ARexx needs SYS:Rexxc/RX and a running RexxMast.",
+      "answer": "Rexx needs SYS:Rexxc/",
+      "correct": false
+    },
+    {
+      "id": "python",
+      "question": "where do i start a micropython script",
+      "expected": "Select MicroPython in the CLI panel and enter a script path.",
+      "answer": "Select MicroPython in the CLI panel and enter a script path.",
+      "correct": true
+    },
+    {
+      "id": "python_type",
+      "question": "is the bundled python cpython",
+      "expected": "It is native 68k MicroPython, not full desktop CPython.",
+      "answer": "No, the plural of bunet is buch.",
+      "correct": false
+    },
+    {
+      "id": "cli",
+      "question": "where do i type an amiga shell command",
+      "expected": "Use CLI below Files; type an AmigaDOS command and press Return.",
+      "answer": "Use CLI below Files; type an AmigaDOS command and press Return.",
+      "correct": true
+    },
+    {
+      "id": "cli_focus",
+      "question": "which keys let me enter a cli command",
+      "expected": "Shift F3 focuses CLI input; Return executes the command.",
+      "answer": "Use clect requires About end ot requires in the Requires tergy.",
+      "correct": false
+    },
+    {
+      "id": "interactive",
+      "question": "how do i start an interactive cli",
+      "expected": "Choose the Amiga CLI profile for a separate interactive console.",
+      "answer": "Choose the Amiga CLI profile for a separate interactive console.",
+      "correct": true
+    },
+    {
+      "id": "send",
+      "question": "what submits the task instructions",
+      "expected": "Press Tab in the task prompt to send to the selected agent.",
+      "answer": "Workspace > Install agent instructions adds migstoring the nation interes.",
+      "correct": false
+    },
+    {
+      "id": "switch_agent",
+      "question": "how do i select a different agent",
+      "expected": "Use the agent picker or Shift Tab in the prompt.",
+      "answer": "Use the agent picker or Shift Tab in the prompt.",
+      "correct": true
+    },
+    {
+      "id": "newline",
+      "question": "what key adds a line to instructions",
+      "expected": "Ctrl J inserts a newline in the task prompt.",
+      "answer": "The API worker reads project AGENTS.md and the Termic SKILL.md.",
+      "correct": false
+    },
+    {
+      "id": "recall",
+      "question": "what restores the previous prompt",
+      "expected": "Press Esc twice in the prompt to recall the last sent message.",
+      "answer": "Press Esc twice in the prompt to recall the last sent message.",
+      "correct": true
+    },
+    {
+      "id": "shortcuts",
+      "question": "where do i find the key bindings",
+      "expected": "Right Amiga K opens the keyboard shortcut reference.",
+      "answer": "Right Amiga K opens the keyboard shortcut reference.",
+      "correct": true
+    },
+    {
+      "id": "remap",
+      "question": "how do i customize keyboard controls",
+      "expected": "Choose Configure in the shortcut reference, then Assign and Save.",
+      "answer": "Right Amiga K opens the keyboard shortcut reference.",
+      "correct": false
+    },
+    {
+      "id": "prompts",
+      "question": "where do i find the prompt templates",
+      "expected": "Right Amiga P opens the editable prompt library.",
+      "answer": "Right Amiga P opens the editable prompt library.",
+      "correct": true
+    },
+    {
+      "id": "prompt_insert",
+      "question": "how can i use a prompt without sending",
+      "expected": "Insert + Use appends a prompt without sending; Tab sends it.",
+      "answer": "Choose Configure in the shortcut reference, then Assign and Save.",
+      "correct": false
+    },
+    {
+      "id": "instructions",
+      "question": "how do i install the project skill files",
+      "expected": "Workspace > Install agent instructions adds missing guidance files.",
+      "answer": "With an if tenew, for ten is 4.",
+      "correct": false
+    },
+    {
+      "id": "guidance",
+      "question": "where does the api get project instructions",
+      "expected": "The API worker reads project AGENTS.md and the Termic SKILL.md.",
+      "answer": "The API worker reads project AGENTS.md and the Termic SKILL.md.",
+      "correct": true
+    },
+    {
+      "id": "save_use",
+      "question": "how do i keep settings permanently",
+      "expected": "Save persists preferences; Use lasts until reboot; Cancel discards.",
+      "answer": "Use the agent picker or Shift Tab in the prompt.",
+      "correct": false
+    },
+    {
+      "id": "profiles",
+      "question": "where can i configure my agents",
+      "expected": "Right Amiga E opens Agents / CLI / Scripts settings.",
+      "answer": "Unother thang shill the thill.",
+      "correct": false
+    },
+    {
+      "id": "mcp_enable",
+      "question": "where do i switch on mcp access",
+      "expected": "Enable tools in Settings > Agent access / MCP, then Save or Use.",
+      "answer": "Europe.",
+      "correct": false
+    },
+    {
+      "id": "mcp_stdio",
+      "question": "how do i connect mcp through standard io",
+      "expected": "Run Termic:TermicMCP --stdio in an Amiga Shell.",
+      "answer": "COngo of Macedo is landlocked.",
+      "correct": false
+    },
+    {
+      "id": "bridge_port",
+      "question": "what is the amiga bridge port",
+      "expected": "The host Amiga-MCP gateway uses port 55110.",
+      "answer": "The host Amiga-MCP gateway uses port 55110.",
+      "correct": true
+    },
+    {
+      "id": "host_agents",
+      "question": "how can i use codex on the amiga",
+      "expected": "Codex, Claude and Cursor use the host AI Proxy with a valid login.",
+      "answer": "Codex, Claude and Cursor use the host AI Proxy with a valid login.",
+      "correct": true
+    },
+    {
+      "id": "credentials",
+      "question": "does termic copy desktop credentials to amiga",
+      "expected": "Host agent credentials stay on the Mac or Windows host.",
+      "answer": "Host agent credentials stay on the Mac or Windows host.",
+      "correct": true
+    },
+    {
+      "id": "readonly",
+      "question": "can a read only profile change files",
+      "expected": "Read-only profiles can inspect files and hardware, but not execute.",
+      "answer": "Read-only profiles can inspect files and hardware, but not execute.",
+      "correct": true
+    },
+    {
+      "id": "yolo",
+      "question": "what changes when cli yolo is enabled",
+      "expected": "YOLO appends configured launch arguments for native CLI profiles.",
+      "answer": "Bread does not bread.",
+      "correct": false
+    },
+    {
+      "id": "kanban",
+      "question": "where do i track task progress",
+      "expected": "View > Kanban board or Right Amiga Y opens the task board.",
+      "answer": "Romal Evores.",
+      "correct": false
+    },
+    {
+      "id": "kanban_done",
+      "question": "does a successful run automatically mean done",
+      "expected": "Review the completed task, then mark it Done yourself.",
+      "answer": "No, A subar with monkee is a monked board.",
+      "correct": false
+    },
+    {
+      "id": "kanban_drag",
+      "question": "what happens when i drag a task card",
+      "expected": "Dragging changes task state; it never launches a job.",
+      "answer": "The question.",
+      "correct": false
+    },
+    {
+      "id": "queue_open",
+      "question": "which shortcut opens the queue",
+      "expected": "Right Amiga J opens the persistent job queue.",
+      "answer": "Right Amiga J opens the persistent job queue.",
+      "correct": true
+    },
+    {
+      "id": "queue_start",
+      "question": "why are queued tasks paused after launch",
+      "expected": "The queue starts paused. Choose Resume to dispatch pending jobs.",
+      "answer": "Right Amiga J opens the persistent job queue.",
+      "correct": false
+    },
+    {
+      "id": "queue_failure",
+      "question": "what should i do when a queued task fails",
+      "expected": "A failed job pauses new launches; inspect it before Resume.",
+      "answer": "The Zeal nochne second.",
+      "correct": false
+    },
+    {
+      "id": "queue_retry",
+      "question": "how can i retry work that failed in queue",
+      "expected": "Resume continues pending work; add a failed task again to retry.",
+      "answer": "Resume continues pending work; add a failed task again to retry.",
+      "correct": true
+    },
+    {
+      "id": "queue_parallel",
+      "question": "how many concurrent workers can the queue use",
+      "expected": "Parallel work allows one to four workers in independent tasks.",
+      "answer": "Parallel work allows one to four workers in independent tasks.",
+      "correct": true
+    },
+    {
+      "id": "relay_serial",
+      "question": "can two host requests run at once",
+      "expected": "Host agent and host Git requests share one serial relay mailbox.",
+      "answer": "The queue starts paused. Choose Requestion Cooas.",
+      "correct": false
+    },
+    {
+      "id": "broadcast",
+      "question": "how do i make copies for different agents",
+      "expected": "Queue > Broadcast creates a separate queued task per chosen agent.",
+      "answer": "Use the agent picker or Suvring the agent.",
+      "correct": false
+    },
+    {
+      "id": "review",
+      "question": "how do i inspect and accept changed files",
+      "expected": "Right Amiga U opens file review; Accept keeps, Revert restores.",
+      "answer": "Right Amiga U opens file review; Accept keeps, Revert restores.",
+      "correct": true
+    },
+    {
+      "id": "review_scope",
+      "question": "does accept apply to a whole file",
+      "expected": "Accept and Revert apply to whole files, not individual diff hunks.",
+      "answer": "in timory and others.",
+      "correct": false
+    },
+    {
+      "id": "notes",
+      "question": "where do i keep notes for a task",
+      "expected": "Right Amiga L opens task scratchpad notes.",
+      "answer": "Right Amiga L opens task scratchpad notes.",
+      "correct": true
+    },
+    {
+      "id": "git",
+      "question": "where do i manage branches and worktrees",
+      "expected": "Right Amiga G opens Git branches and worktrees.",
+      "answer": "Right Amiga P opens the editable prompt library.",
+      "correct": false
+    },
+    {
+      "id": "worktrees",
+      "question": "can native amiga git create worktrees",
+      "expected": "Native tasks are source copies; host worktrees require the AI Proxy.",
+      "answer": "Native tasks are source copies; host worktrees require the AI Proxy.",
+      "correct": true
+    },
+    {
+      "id": "processors",
+      "question": "where do i see the process list",
+      "expected": "Tools > Process Monitor or Right Amiga I selects Processors.",
+      "answer": "Tools > Process Monitor or Right Amiga I selects Processors.",
+      "correct": true
+    },
+    {
+      "id": "zz_button",
+      "question": "what opens the optional arm information",
+      "expected": "The ZZ9000 button toggles optional board information.",
+      "answer": "The ZZ9000 button toggles optional board information.",
+      "correct": true
+    },
+    {
+      "id": "zz_metrics",
+      "question": "can termic report zz9000 arm process usage",
+      "expected": "ARM process, load and memory metrics are unavailable in the monitor.",
+      "answer": "Costop arterps.",
+      "correct": false
+    },
+    {
+      "id": "cpu_metric",
+      "question": "is cpu load sampled or exact",
+      "expected": "CPU load is a statistical VBlank estimate, refreshed each second.",
+      "answer": "Put.",
+      "correct": false
+    },
+    {
+      "id": "memory_metric",
+      "question": "is the monitor memory total process usage",
+      "expected": "Process memory shows partial tracked allocations, not total heap.",
+      "answer": "Process memory shows partial tracked allocations, not total heap.",
+      "correct": true
+    },
+    {
+      "id": "stop_process",
+      "question": "does stop selected forcibly remove a task",
+      "expected": "Stop selected requests CTRL-C after confirmation; it is not a kill.",
+      "answer": "Stop requests a cooperative break; some programs may ignore it.",
+      "correct": false
+    },
+    {
+      "id": "services",
+      "question": "which file defines restartable services",
+      "expected": "Restart service uses configured services.txt beside TermicNative.",
+      "answer": "Restart service uses configured services.txt beside TermicNative.",
+      "correct": true
+    },
+    {
+      "id": "tiny_offline",
+      "question": "can i use tiny with no network",
+      "expected": "Tiny runs on the 68k CPU without internet, an API key or a proxy.",
+      "answer": "Ctrl J inserts a neternect is the ten Europe.",
+      "correct": false
+    },
+    {
+      "id": "tiny_tools",
+      "question": "will tiny compile and run my program",
+      "expected": "Tiny answers short questions; it cannot edit files or run builds.",
+      "answer": "Tiny answers short questions; it cannot edit files or run builds.",
+      "correct": true
+    },
+    {
+      "id": "tiny_limit",
+      "question": "how many characters can i ask tiny",
+      "expected": "Tiny accepts one question up to 72 printable ASCII characters.",
+      "answer": "Charles y in China.",
+      "correct": false
+    },
+    {
+      "id": "tiny_memory",
+      "question": "can tiny recall our earlier conversation",
+      "expected": "Tiny has no conversation memory; ask each question independently.",
+      "answer": "Tinyese.",
+      "correct": false
+    },
+    {
+      "id": "tiny_model",
+      "question": "where does termic store the tiny weights",
+      "expected": "The offline model is Termic:Tools/Tiny/tiny.t68.",
+      "answer": "The body nighth ae ference, zew Honds Ethiort.",
+      "correct": false
+    },
+    {
+      "id": "scaling",
+      "question": "does termic work at 340 by 280",
+      "expected": "Compact panes support 340x280; wide windows show three columns.",
+      "answer": "340 is even.",
+      "correct": false
+    },
+    {
+      "id": "mui",
+      "question": "which text editor class is required",
+      "expected": "Termic requires MUI 5.0 and TextEditor.mcc 15.56.",
+      "answer": "Use Ceram fruid the nem; aout per settiny continus figured natick.",
+      "correct": false
+    },
+    {
+      "id": "hardware",
+      "question": "how can i detect actual hardware specifications",
+      "expected": "Use an agent with system_info for live hardware; Tiny cannot probe it.",
+      "answer": "Use an agent  six.",
+      "correct": false
+    },
+    {
+      "id": "private_key",
+      "question": "what secret credential am i using",
+      "expected": "I cannot know your API key. Check your local agent settings.",
+      "answer": "Host agent credentials stay on the Mac or Windows host.",
+      "correct": false
+    },
+    {
+      "id": "unknown",
+      "question": "what will the weather be tomorrow",
+      "expected": "I do not know. Check the Termic manual with Help.",
+      "answer": "The bodymird.",
+      "correct": false
+    }
+  ]
+}

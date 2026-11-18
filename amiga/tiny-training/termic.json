@@ -1,0 +1,1426 @@
+{
+  "schema": 1,
+  "description": "Termic Amiga documentation QA; independent validation and test phrasings.",
+  "facts": [
+    {
+      "id": "about",
+      "source": "amiga/native/ReadMe",
+      "answer": "Project > About, or Shift-Help.",
+      "train": [
+        "how do i open about",
+        "where is the about page",
+        "show the termic version",
+        "show about information",
+        "how do i see about",
+        "where is version information",
+        "which menu has about"
+      ],
+      "validation": [
+        "how can i see about"
+      ],
+      "test": [
+        "where can i find the version"
+      ]
+    },
+    {
+      "id": "help",
+      "source": "amiga/native/ReadMe",
+      "answer": "Press Help to open Termic.guide in MultiView.",
+      "train": [
+        "how do i open help",
+        "where is the termic manual",
+        "open the user guide",
+        "how do i read documentation",
+        "how do i view the manual",
+        "where can i get help",
+        "which key opens the manual"
+      ],
+      "validation": [
+        "how can i read the manual"
+      ],
+      "test": [
+        "where do i get termic help"
+      ]
+    },
+    {
+      "id": "save_source",
+      "source": "amiga/native/ReadMe",
+      "answer": "Use the Save icon, F8, or Right Amiga S.",
+      "train": [
+        "how do i save code",
+        "save the editor file",
+        "which key saves source",
+        "how do i save a file",
+        "how do i save my file",
+        "how do i keep code changes",
+        "what saves the editor buffer"
+      ],
+      "validation": [
+        "how can i save my file"
+      ],
+      "test": [
+        "how do i keep editor changes"
+      ]
+    },
+    {
+      "id": "unsaved",
+      "source": "amiga/native/ReadMe",
+      "answer": "An asterisk before the filename marks unsaved changes.",
+      "train": [
+        "what does the filename asterisk mean",
+        "why is there a star by my file",
+        "how are unsaved edits marked",
+        "what does the star mean",
+        "what marks changed code",
+        "how do i recognize unsaved code",
+        "why is a filename marked with an asterisk"
+      ],
+      "validation": [
+        "what is the star before the filename"
+      ],
+      "test": [
+        "how can i tell if code is unsaved"
+      ]
+    },
+    {
+      "id": "new_project",
+      "source": "amiga/native/ReadMe",
+      "answer": "Use New in Projects; it copies the clean Template drawer.",
+      "train": [
+        "how do i make a project",
+        "create a new project",
+        "where do new projects come from",
+        "how do i start a new project",
+        "how do i make a termic project",
+        "what does new project copy",
+        "where is the new project button"
+      ],
+      "validation": [
+        "how can i start a new project"
+      ],
+      "test": [
+        "how do i create a termic project"
+      ]
+    },
+    {
+      "id": "new_task",
+      "source": "amiga/native/ReadMe",
+      "answer": "New task makes an independent copy of the selected workspace.",
+      "train": [
+        "how do i create a task",
+        "what does new task do",
+        "are task sources independent",
+        "how do i start a new task",
+        "create an independent task",
+        "does new task copy source",
+        "what are task source copies"
+      ],
+      "validation": [
+        "how can i start a task"
+      ],
+      "test": [
+        "does a new task share the source files"
+      ]
+    },
+    {
+      "id": "import",
+      "source": "amiga/native/ReadMe",
+      "answer": "Use Import Folder in Projects to copy an existing source drawer.",
+      "train": [
+        "how do i import source",
+        "import an existing project",
+        "how to open my source folder",
+        "how do i load an existing project",
+        "import existing code into termic",
+        "how do i bring source into termic",
+        "how do i import a source drawer"
+      ],
+      "validation": [
+        "how can i import a project"
+      ],
+      "test": [
+        "how do i bring existing code into termic"
+      ]
+    },
+    {
+      "id": "compiler",
+      "source": "amiga/native/ReadMe",
+      "answer": "Termic builds locally with VBCC and the NDK.",
+      "train": [
+        "which compiler does termic use",
+        "what builds amiga programs",
+        "does termic compile locally",
+        "name the compiler",
+        "which tool compiles code",
+        "what is the amiga compiler",
+        "how are programs compiled"
+      ],
+      "validation": [
+        "what compiler is used"
+      ],
+      "test": [
+        "which tools compile the code"
+      ]
+    },
+    {
+      "id": "build_command",
+      "source": "amiga/native/ReadMe",
+      "answer": "Set Build command in Settings; it must produce Program.new.",
+      "train": [
+        "how do i change the build command",
+        "configure a custom build",
+        "what must my build produce",
+        "where do i edit the build command",
+        "set my build settings",
+        "how do i configure my own build",
+        "what file must the compiler create"
+      ],
+      "validation": [
+        "where is the build command"
+      ],
+      "test": [
+        "how can i set up my own build"
+      ]
+    },
+    {
+      "id": "failed_build",
+      "source": "docs/agent-execution.md",
+      "answer": "A failed build keeps the previous Program and does not run it.",
+      "train": [
+        "what happens if a build fails",
+        "does a failed build run old code",
+        "will compile failure overwrite program",
+        "what if compilation fails",
+        "what happens on compiler errors",
+        "does failure preserve the old binary",
+        "will an unsuccessful build execute anything"
+      ],
+      "validation": [
+        "what follows a compiler failure"
+      ],
+      "test": [
+        "is the old program run after build errors"
+      ]
+    },
+    {
+      "id": "build_log",
+      "source": "docs/task-workflow.md",
+      "answer": "Read Build / CLI; double-click a diagnostic to open its source.",
+      "train": [
+        "where are compiler errors",
+        "how do i open an error line",
+        "where is the build output",
+        "where do i read compiler output",
+        "how do i jump to a compiler error",
+        "how do i find errors in code",
+        "show the compiler diagnostics"
+      ],
+      "validation": [
+        "how can i find a compiler error"
+      ],
+      "test": [
+        "how do i jump from an error to the code"
+      ]
+    },
+    {
+      "id": "run",
+      "source": "amiga/native/ReadMe",
+      "answer": "Use the Run triangle to launch the workspace Program.",
+      "train": [
+        "how do i run my app",
+        "run the built program",
+        "what does the run button do",
+        "how do i execute my app",
+        "how do i launch my app",
+        "which icon runs the program",
+        "what starts the compiled binary"
+      ],
+      "validation": [
+        "how can i launch the program"
+      ],
+      "test": [
+        "how do i execute my compiled app"
+      ]
+    },
+    {
+      "id": "stop",
+      "source": "docs/agent-execution.md",
+      "answer": "Stop requests a cooperative break; some programs may ignore it.",
+      "train": [
+        "how do i stop a running job",
+        "does stop force kill a program",
+        "what does stop do",
+        "how do i cancel a job",
+        "how do i cancel execution",
+        "does cancel forcibly kill a program",
+        "what if a program ignores stop"
+      ],
+      "validation": [
+        "how can i cancel execution"
+      ],
+      "test": [
+        "will stop always terminate a program"
+      ]
+    },
+    {
+      "id": "arexx",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "Select ARexx in the CLI panel; enter a script path and press Return.",
+      "train": [
+        "how do i run arexx",
+        "execute an arexx script",
+        "where can i start a rexx file",
+        "how is arexx executed",
+        "where do i enter an arexx script",
+        "how do i launch rexx code",
+        "what mode runs rexx scripts"
+      ],
+      "validation": [
+        "how can i launch an arexx script"
+      ],
+      "test": [
+        "how is an arexx file run in termic"
+      ]
+    },
+    {
+      "id": "rexxmast",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "ARexx needs SYS:Rexxc/RX and a running RexxMast.",
+      "train": [
+        "what does arexx require",
+        "why does arexx not work",
+        "does arexx need rexxmast",
+        "which command interprets rexx",
+        "what must run before arexx",
+        "what are rexx dependencies",
+        "why is rexxmast needed"
+      ],
+      "validation": [
+        "which interpreter runs arexx"
+      ],
+      "test": [
+        "what must be running for rexx scripts"
+      ]
+    },
+    {
+      "id": "python",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "Select MicroPython in the CLI panel and enter a script path.",
+      "train": [
+        "how do i run python",
+        "execute a python script",
+        "how to launch a py file",
+        "where do i run py scripts",
+        "how do i execute a micropython file",
+        "how do i use python mode",
+        "what launches python scripts"
+      ],
+      "validation": [
+        "how can i run a python file"
+      ],
+      "test": [
+        "where do i start a micropython script"
+      ]
+    },
+    {
+      "id": "python_type",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "It is native 68k MicroPython, not full desktop CPython.",
+      "train": [
+        "which python is included",
+        "is this full python",
+        "does python run on the arm",
+        "what kind of python is bundled",
+        "is python a full desktop version",
+        "which processor runs micropython",
+        "is micropython the same as cpython"
+      ],
+      "validation": [
+        "what python does termic use"
+      ],
+      "test": [
+        "is the bundled python cpython"
+      ]
+    },
+    {
+      "id": "cli",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "Use CLI below Files; type an AmigaDOS command and press Return.",
+      "train": [
+        "how do i run cli commands",
+        "where is the command line",
+        "how to execute amigados commands",
+        "where do i type commands",
+        "how do i execute shell commands",
+        "how do i use the cli panel",
+        "how do i run an amiga shell command"
+      ],
+      "validation": [
+        "how can i use the cli"
+      ],
+      "test": [
+        "where do i type an amiga shell command"
+      ]
+    },
+    {
+      "id": "cli_focus",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "Shift F3 focuses CLI input; Return executes the command.",
+      "train": [
+        "what key opens cli input",
+        "how do i focus the cli",
+        "cli keyboard shortcut",
+        "which keys focus the cli",
+        "keyboard shortcut for command input",
+        "how do i enter commands using the keyboard",
+        "which key executes cli input"
+      ],
+      "validation": [
+        "which shortcut focuses commands"
+      ],
+      "test": [
+        "which keys let me enter a cli command"
+      ]
+    },
+    {
+      "id": "interactive",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "Choose the Amiga CLI profile for a separate interactive console.",
+      "train": [
+        "how do i get an interactive shell",
+        "can i type into a running interpreter",
+        "open a real amiga console",
+        "where can i type interactive input",
+        "how do i start a shell console",
+        "can the shell be interactive",
+        "how do i use an interactive interpreter"
+      ],
+      "validation": [
+        "how can i use interactive input"
+      ],
+      "test": [
+        "how do i start an interactive cli"
+      ]
+    },
+    {
+      "id": "send",
+      "source": "docs/prompts-and-instructions.md",
+      "answer": "Press Tab in the task prompt to send to the selected agent.",
+      "train": [
+        "how do i send a prompt",
+        "which key sends a task",
+        "send the instruction",
+        "how do i submit instructions",
+        "how do i submit my message",
+        "which key sends instructions",
+        "how do i send my task"
+      ],
+      "validation": [
+        "how can i send my message"
+      ],
+      "test": [
+        "what submits the task instructions"
+      ]
+    },
+    {
+      "id": "switch_agent",
+      "source": "docs/prompts-and-instructions.md",
+      "answer": "Use the agent picker or Shift Tab in the prompt.",
+      "train": [
+        "how do i change agents",
+        "switch the agent profile",
+        "cycle agents shortcut",
+        "how do i select another agent",
+        "how do i choose an agent",
+        "what changes the selected profile",
+        "which control switches agents"
+      ],
+      "validation": [
+        "how can i choose another agent"
+      ],
+      "test": [
+        "how do i select a different agent"
+      ]
+    },
+    {
+      "id": "newline",
+      "source": "docs/prompts-and-instructions.md",
+      "answer": "Ctrl J inserts a newline in the task prompt.",
+      "train": [
+        "how do i add a newline",
+        "insert a line break in the prompt",
+        "new line shortcut",
+        "which key inserts a prompt line",
+        "how do i add an instruction line",
+        "put a line break in task instructions",
+        "what inserts a new line"
+      ],
+      "validation": [
+        "how can i make a new prompt line"
+      ],
+      "test": [
+        "what key adds a line to instructions"
+      ]
+    },
+    {
+      "id": "recall",
+      "source": "docs/prompts-and-instructions.md",
+      "answer": "Press Esc twice in the prompt to recall the last sent message.",
+      "train": [
+        "how do i recall a prompt",
+        "edit the last sent message",
+        "bring back my last instruction",
+        "how do i retrieve my previous prompt",
+        "which key recalls messages",
+        "restore my last message",
+        "how do i edit a previous instruction"
+      ],
+      "validation": [
+        "how can i recall my last message"
+      ],
+      "test": [
+        "what restores the previous prompt"
+      ]
+    },
+    {
+      "id": "shortcuts",
+      "source": "docs/prompts-and-instructions.md",
+      "answer": "Right Amiga K opens the keyboard shortcut reference.",
+      "train": [
+        "where are keyboard shortcuts",
+        "show shortcut help",
+        "open the keyboard reference",
+        "where do i view keyboard help",
+        "show the key binding list",
+        "how do i find key bindings",
+        "which key opens shortcut documentation"
+      ],
+      "validation": [
+        "how can i view the shortcut list"
+      ],
+      "test": [
+        "where do i find the key bindings"
+      ]
+    },
+    {
+      "id": "remap",
+      "source": "docs/prompts-and-instructions.md",
+      "answer": "Choose Configure in the shortcut reference, then Assign and Save.",
+      "train": [
+        "how do i remap a key",
+        "change keyboard shortcuts",
+        "configure key bindings",
+        "how do i customize shortcuts",
+        "how do i set a key binding",
+        "can i assign a different key",
+        "how do i change a prompt shortcut"
+      ],
+      "validation": [
+        "how can i assign a shortcut"
+      ],
+      "test": [
+        "how do i customize keyboard controls"
+      ]
+    },
+    {
+      "id": "prompts",
+      "source": "docs/prompts-and-instructions.md",
+      "answer": "Right Amiga P opens the editable prompt library.",
+      "train": [
+        "how do i open prompts",
+        "where are default prompts",
+        "open the prompt library",
+        "where are the prompt templates",
+        "how do i use the template library",
+        "how do i find saved prompts",
+        "where are reusable instructions"
+      ],
+      "validation": [
+        "how can i see saved prompts"
+      ],
+      "test": [
+        "where do i find the prompt templates"
+      ]
+    },
+    {
+      "id": "prompt_insert",
+      "source": "docs/prompts-and-instructions.md",
+      "answer": "Insert + Use appends a prompt without sending; Tab sends it.",
+      "train": [
+        "does insert use send a prompt",
+        "how do i insert a saved prompt",
+        "what does insert use do",
+        "can i insert without sending",
+        "does inserting automatically submit",
+        "what happens after insert use",
+        "how do i append a template to instructions"
+      ],
+      "validation": [
+        "does inserting a prompt send it"
+      ],
+      "test": [
+        "how can i use a prompt without sending"
+      ]
+    },
+    {
+      "id": "instructions",
+      "source": "docs/prompts-and-instructions.md",
+      "answer": "Workspace > Install agent instructions adds missing guidance files.",
+      "train": [
+        "how do i install agents md",
+        "add project instructions",
+        "where do i get skills md",
+        "how do i add agent rules",
+        "how do i install project guidance",
+        "how do i get skill files",
+        "where do i install agents instructions"
+      ],
+      "validation": [
+        "how can i add agent guidance"
+      ],
+      "test": [
+        "how do i install the project skill files"
+      ]
+    },
+    {
+      "id": "guidance",
+      "source": "docs/prompts-and-instructions.md",
+      "answer": "The API worker reads project AGENTS.md and the Termic SKILL.md.",
+      "train": [
+        "which guidance files are read",
+        "does the api read agents md",
+        "what gives the agent project rules",
+        "what instructions does the api load",
+        "where are project rules read from",
+        "which project documents guide agents",
+        "what files contain api guidance"
+      ],
+      "validation": [
+        "which files guide the api agent"
+      ],
+      "test": [
+        "where does the api get project instructions"
+      ]
+    },
+    {
+      "id": "save_use",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "Save persists preferences; Use lasts until reboot; Cancel discards.",
+      "train": [
+        "what is save versus use",
+        "how do save use cancel differ",
+        "does use keep settings after reboot",
+        "how are settings persisted",
+        "what keeps preferences after restarting",
+        "how do i permanently save preferences",
+        "what is the difference between use and save"
+      ],
+      "validation": [
+        "what does use do in preferences"
+      ],
+      "test": [
+        "how do i keep settings permanently"
+      ]
+    },
+    {
+      "id": "profiles",
+      "source": "docs/prompts-and-instructions.md",
+      "answer": "Right Amiga E opens Agents / CLI / Scripts settings.",
+      "train": [
+        "where are agent settings",
+        "how do i open profiles",
+        "configure an agent profile",
+        "where do i configure profiles",
+        "where do i edit my agents",
+        "how do i set up agent profiles",
+        "how do i find agent configuration"
+      ],
+      "validation": [
+        "how can i edit agent settings"
+      ],
+      "test": [
+        "where can i configure my agents"
+      ]
+    },
+    {
+      "id": "mcp_enable",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "Enable tools in Settings > Agent access / MCP, then Save or Use.",
+      "train": [
+        "how do i enable mcp",
+        "turn on agent access",
+        "enable termic mcp tools",
+        "where do i enable agent tools",
+        "how do i turn on mcp access",
+        "how do i activate native mcp",
+        "how do i permit mcp tools"
+      ],
+      "validation": [
+        "how can i activate mcp"
+      ],
+      "test": [
+        "where do i switch on mcp access"
+      ]
+    },
+    {
+      "id": "mcp_stdio",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "Run Termic:TermicMCP --stdio in an Amiga Shell.",
+      "train": [
+        "how do i start mcp stdio",
+        "native mcp command",
+        "launch the mcp stdio server",
+        "what is the stdio command",
+        "start native mcp from shell",
+        "how do i run the mcp server",
+        "how do i open the stdio transport"
+      ],
+      "validation": [
+        "what command starts termic mcp"
+      ],
+      "test": [
+        "how do i connect mcp through standard io"
+      ]
+    },
+    {
+      "id": "bridge_port",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "The host Amiga-MCP gateway uses port 55110.",
+      "train": [
+        "which bridge port is used",
+        "what port is amiga mcp",
+        "termic bridge port number",
+        "what is the bridge port",
+        "which port should clients use",
+        "what port does the gateway use",
+        "which tcp port is for amiga bridge"
+      ],
+      "validation": [
+        "which port connects the bridge"
+      ],
+      "test": [
+        "what is the amiga bridge port"
+      ]
+    },
+    {
+      "id": "host_agents",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "Codex, Claude and Cursor use the host AI Proxy with a valid login.",
+      "train": [
+        "how do codex and claude connect",
+        "does cursor need the proxy",
+        "how do host agents work",
+        "how do i use claude on amiga",
+        "how do i connect codex",
+        "what lets cursor access the amiga",
+        "how are desktop agents connected"
+      ],
+      "validation": [
+        "what connects the desktop agents"
+      ],
+      "test": [
+        "how can i use codex on the amiga"
+      ]
+    },
+    {
+      "id": "credentials",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "Host agent credentials stay on the Mac or Windows host.",
+      "train": [
+        "where are codex credentials",
+        "are host login keys on the amiga",
+        "where do proxy credentials stay",
+        "where are proxy logins kept",
+        "does the amiga store codex keys",
+        "where are host credentials saved",
+        "where does the desktop login live"
+      ],
+      "validation": [
+        "where is my host agent login stored"
+      ],
+      "test": [
+        "does termic copy desktop credentials to amiga"
+      ]
+    },
+    {
+      "id": "readonly",
+      "source": "docs/agent-execution.md",
+      "answer": "Read-only profiles can inspect files and hardware, but not execute.",
+      "train": [
+        "what can a read only agent do",
+        "can read only agents build",
+        "does read only allow execution",
+        "can read only profiles write",
+        "what access does read only grant",
+        "does read only let agents execute",
+        "which tools work in read only mode"
+      ],
+      "validation": [
+        "what does read only access permit"
+      ],
+      "test": [
+        "can a read only profile change files"
+      ]
+    },
+    {
+      "id": "yolo",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "YOLO appends configured launch arguments for native CLI profiles.",
+      "train": [
+        "what does yolo mean here",
+        "what does yolo do",
+        "when are yolo arguments used",
+        "what happens with cli yolo on",
+        "what are yolo launch arguments",
+        "does yolo append cli options",
+        "how are native yolo options applied"
+      ],
+      "validation": [
+        "how does yolo affect a cli profile"
+      ],
+      "test": [
+        "what changes when cli yolo is enabled"
+      ]
+    },
+    {
+      "id": "kanban",
+      "source": "docs/task-workflow.md",
+      "answer": "View > Kanban board or Right Amiga Y opens the task board.",
+      "train": [
+        "how do i open kanban",
+        "where is the task board",
+        "kanban keyboard shortcut",
+        "where do i see task status",
+        "how do i track task completion",
+        "how do i view the board",
+        "which key opens kanban"
+      ],
+      "validation": [
+        "how can i see the kanban board"
+      ],
+      "test": [
+        "where do i track task progress"
+      ]
+    },
+    {
+      "id": "kanban_done",
+      "source": "docs/task-workflow.md",
+      "answer": "Review the completed task, then mark it Done yourself.",
+      "train": [
+        "does an agent mark tasks done",
+        "how does a task become done",
+        "why is my task in review",
+        "how do i mark a task done",
+        "why is completed work in review",
+        "when should i mark done",
+        "does success finish the task automatically"
+      ],
+      "validation": [
+        "how can i finish a reviewed task"
+      ],
+      "test": [
+        "does a successful run automatically mean done"
+      ]
+    },
+    {
+      "id": "kanban_drag",
+      "source": "docs/task-workflow.md",
+      "answer": "Dragging changes task state; it never launches a job.",
+      "train": [
+        "does dragging start a job",
+        "what does a kanban drag do",
+        "can i drag to start work",
+        "does dragging launch execution",
+        "does moving a card run anything",
+        "what happens on a board drop",
+        "can dragging move task state"
+      ],
+      "validation": [
+        "does moving a task run it"
+      ],
+      "test": [
+        "what happens when i drag a task card"
+      ]
+    },
+    {
+      "id": "queue_open",
+      "source": "docs/task-workflow.md",
+      "answer": "Right Amiga J opens the persistent job queue.",
+      "train": [
+        "how do i open the queue",
+        "where is the job queue",
+        "queue shortcut key",
+        "where do i view queued tasks",
+        "how do i see the queue",
+        "which key shows job queue",
+        "open the queued work list"
+      ],
+      "validation": [
+        "how can i see queued jobs"
+      ],
+      "test": [
+        "which shortcut opens the queue"
+      ]
+    },
+    {
+      "id": "queue_start",
+      "source": "docs/task-workflow.md",
+      "answer": "The queue starts paused. Choose Resume to dispatch pending jobs.",
+      "train": [
+        "why is the queue not running",
+        "how do i start queued jobs",
+        "does the queue run at startup",
+        "why is dispatch paused",
+        "how do i launch the queue",
+        "does startup resume jobs",
+        "why does the queue start paused"
+      ],
+      "validation": [
+        "how can i resume the queue"
+      ],
+      "test": [
+        "why are queued tasks paused after launch"
+      ]
+    },
+    {
+      "id": "queue_failure",
+      "source": "docs/task-workflow.md",
+      "answer": "A failed job pauses new launches; inspect it before Resume.",
+      "train": [
+        "what happens after a queue failure",
+        "why did my queue stop",
+        "does a failed job pause the queue",
+        "what if a queued build fails",
+        "why are later queue entries waiting",
+        "how does queue failure affect launches",
+        "what happens when queued work fails"
+      ],
+      "validation": [
+        "how are failed queued jobs handled"
+      ],
+      "test": [
+        "what should i do when a queued task fails"
+      ]
+    },
+    {
+      "id": "queue_retry",
+      "source": "docs/task-workflow.md",
+      "answer": "Resume continues pending work; add a failed task again to retry.",
+      "train": [
+        "does resume retry failed jobs",
+        "how do i retry a failed queue task",
+        "will failed jobs replay automatically",
+        "how do i retry a queue failure",
+        "will resume rerun a failed task",
+        "are failed entries automatically retried",
+        "how do i repeat failed work"
+      ],
+      "validation": [
+        "does queue resume repeat a failure"
+      ],
+      "test": [
+        "how can i retry work that failed in queue"
+      ]
+    },
+    {
+      "id": "queue_parallel",
+      "source": "docs/task-workflow.md",
+      "answer": "Parallel work allows one to four workers in independent tasks.",
+      "train": [
+        "how many jobs run in parallel",
+        "set parallel queue workers",
+        "can tasks run at the same time",
+        "what is the worker count limit",
+        "how many parallel tasks are allowed",
+        "how many queue workers are supported",
+        "how do i set concurrent workers"
+      ],
+      "validation": [
+        "what is the parallel worker limit"
+      ],
+      "test": [
+        "how many concurrent workers can the queue use"
+      ]
+    },
+    {
+      "id": "relay_serial",
+      "source": "docs/task-workflow.md",
+      "answer": "Host agent and host Git requests share one serial relay mailbox.",
+      "train": [
+        "can host agents run in parallel",
+        "why do host jobs wait",
+        "are codex and claude requests serial",
+        "why do host requests run one at a time",
+        "can the proxy run requests concurrently",
+        "why are relay tasks serial",
+        "how many host requests can run together"
+      ],
+      "validation": [
+        "why are proxy jobs serialized"
+      ],
+      "test": [
+        "can two host requests run at once"
+      ]
+    },
+    {
+      "id": "broadcast",
+      "source": "docs/task-workflow.md",
+      "answer": "Queue > Broadcast creates a separate queued task per chosen agent.",
+      "train": [
+        "how do i broadcast a task",
+        "send instructions to several agents",
+        "what does broadcast do",
+        "how do i queue copies for agents",
+        "how do i give agents the same prompt",
+        "how does multi agent broadcast work",
+        "how do i send instructions to multiple profiles"
+      ],
+      "validation": [
+        "how can i send one task to multiple agents"
+      ],
+      "test": [
+        "how do i make copies for different agents"
+      ]
+    },
+    {
+      "id": "review",
+      "source": "docs/task-workflow.md",
+      "answer": "Right Amiga U opens file review; Accept keeps, Revert restores.",
+      "train": [
+        "how do i review agent changes",
+        "accept or revert edits",
+        "where is file review",
+        "how do i accept an edited file",
+        "how do i revert agent changes",
+        "how do i inspect changed files",
+        "how do i undo agent edits"
+      ],
+      "validation": [
+        "how can i undo an agent file edit"
+      ],
+      "test": [
+        "how do i inspect and accept changed files"
+      ]
+    },
+    {
+      "id": "review_scope",
+      "source": "docs/task-workflow.md",
+      "answer": "Accept and Revert apply to whole files, not individual diff hunks.",
+      "train": [
+        "can i accept one diff hunk",
+        "is review per file",
+        "what does revert file restore",
+        "can review accept part of a file",
+        "is revert a whole file action",
+        "does accept work on single hunks",
+        "is file review hunk based"
+      ],
+      "validation": [
+        "can i revert only one diff block"
+      ],
+      "test": [
+        "does accept apply to a whole file"
+      ]
+    },
+    {
+      "id": "notes",
+      "source": "docs/task-workflow.md",
+      "answer": "Right Amiga L opens task scratchpad notes.",
+      "train": [
+        "how do i open notes",
+        "where are scratchpads",
+        "task notes shortcut",
+        "where do i write notes",
+        "how do i add a scratchpad",
+        "how do i store task notes",
+        "which key opens scratchpads"
+      ],
+      "validation": [
+        "how can i write task notes"
+      ],
+      "test": [
+        "where do i keep notes for a task"
+      ]
+    },
+    {
+      "id": "git",
+      "source": "docs/task-workflow.md",
+      "answer": "Right Amiga G opens Git branches and worktrees.",
+      "train": [
+        "how do i open git controls",
+        "where are git branches",
+        "git window shortcut",
+        "where do i manage git branches",
+        "how do i view git controls",
+        "how do i manage branches",
+        "which key opens git settings"
+      ],
+      "validation": [
+        "how can i view branches"
+      ],
+      "test": [
+        "where do i manage branches and worktrees"
+      ]
+    },
+    {
+      "id": "worktrees",
+      "source": "docs/task-workflow.md",
+      "answer": "Native tasks are source copies; host worktrees require the AI Proxy.",
+      "train": [
+        "are native tasks git worktrees",
+        "does amiga git support worktrees",
+        "how do worktrees work",
+        "are amiga tasks independent source copies",
+        "can native git make worktrees",
+        "what needs the host for worktrees",
+        "does native amiga git implement worktree"
+      ],
+      "validation": [
+        "are task drawers real git worktrees"
+      ],
+      "test": [
+        "can native amiga git create worktrees"
+      ]
+    },
+    {
+      "id": "processors",
+      "source": "amiga/native/Termic.guide",
+      "answer": "Tools > Process Monitor or Right Amiga I selects Processors.",
+      "train": [
+        "how do i open the process monitor",
+        "where is the processors tab",
+        "processor monitor shortcut",
+        "where do i see running tasks",
+        "how do i display process information",
+        "how do i view processes",
+        "which menu contains the process monitor"
+      ],
+      "validation": [
+        "how can i view running processes"
+      ],
+      "test": [
+        "where do i see the process list"
+      ]
+    },
+    {
+      "id": "zz_button",
+      "source": "amiga/native/Termic.guide",
+      "answer": "The ZZ9000 button toggles optional board information.",
+      "train": [
+        "what does the zz9000 button do",
+        "how do i see zz9000 information",
+        "is the zz9000 panel optional",
+        "how do i toggle zz9000 details",
+        "how do i show arm information",
+        "is arm information optional",
+        "what button shows board details"
+      ],
+      "validation": [
+        "how can i show the zz9000 details"
+      ],
+      "test": [
+        "what opens the optional arm information"
+      ]
+    },
+    {
+      "id": "zz_metrics",
+      "source": "amiga/native/Termic.guide",
+      "answer": "ARM process, load and memory metrics are unavailable in the monitor.",
+      "train": [
+        "can i see arm cpu load",
+        "does the monitor list arm processes",
+        "what are zz9000 process metrics",
+        "can i measure arm memory",
+        "are arm processes visible",
+        "does termic know arm usage",
+        "is zz9000 cpu load available"
+      ],
+      "validation": [
+        "is arm memory usage measured"
+      ],
+      "test": [
+        "can termic report zz9000 arm process usage"
+      ]
+    },
+    {
+      "id": "cpu_metric",
+      "source": "amiga/native/Termic.guide",
+      "answer": "CPU load is a statistical VBlank estimate, refreshed each second.",
+      "train": [
+        "how is cpu load measured",
+        "is the process cpu usage exact",
+        "what is the cpu percentage",
+        "is cpu use approximate",
+        "what samples the cpu load",
+        "is the process percentage estimated",
+        "what measures cpu utilization"
+      ],
+      "validation": [
+        "how does the monitor estimate load"
+      ],
+      "test": [
+        "is cpu load sampled or exact"
+      ]
+    },
+    {
+      "id": "memory_metric",
+      "source": "amiga/native/Termic.guide",
+      "answer": "Process memory shows partial tracked allocations, not total heap.",
+      "train": [
+        "what does process memory show",
+        "is process memory the full heap",
+        "how is task memory measured",
+        "is all task memory tracked",
+        "does task memory report the entire heap",
+        "are process allocations complete",
+        "what memory does the monitor count"
+      ],
+      "validation": [
+        "does memory include every allocation"
+      ],
+      "test": [
+        "is the monitor memory total process usage"
+      ]
+    },
+    {
+      "id": "stop_process",
+      "source": "amiga/native/Termic.guide",
+      "answer": "Stop selected requests CTRL-C after confirmation; it is not a kill.",
+      "train": [
+        "how do i terminate a process",
+        "does process monitor force kill",
+        "what does stop selected do",
+        "does stop selected kill immediately",
+        "how do i request a process stop",
+        "how is process termination requested",
+        "can the process monitor kill a task forcibly"
+      ],
+      "validation": [
+        "how can i stop a process in the monitor"
+      ],
+      "test": [
+        "does stop selected forcibly remove a task"
+      ]
+    },
+    {
+      "id": "services",
+      "source": "amiga/native/Termic.guide",
+      "answer": "Restart service uses configured services.txt beside TermicNative.",
+      "train": [
+        "how do service restarts work",
+        "where are service definitions",
+        "configure restart service",
+        "where do i configure services",
+        "how do i define restartable services",
+        "what supplies service restart definitions",
+        "where is services txt kept"
+      ],
+      "validation": [
+        "how can i configure service restarts"
+      ],
+      "test": [
+        "which file defines restartable services"
+      ]
+    },
+    {
+      "id": "tiny_offline",
+      "source": "docs/tiny.md",
+      "answer": "Tiny runs on the 68k CPU without internet, an API key or a proxy.",
+      "train": [
+        "does tiny need internet",
+        "can tiny work offline",
+        "does tiny require an api key",
+        "can tiny answer without a connection",
+        "does tiny work without a proxy",
+        "does tiny need a mac",
+        "does local tiny use the network"
+      ],
+      "validation": [
+        "is tiny usable without the mac"
+      ],
+      "test": [
+        "can i use tiny with no network"
+      ]
+    },
+    {
+      "id": "tiny_tools",
+      "source": "docs/tiny.md",
+      "answer": "Tiny answers short questions; it cannot edit files or run builds.",
+      "train": [
+        "can tiny build code",
+        "does tiny have file tools",
+        "can tiny execute commands",
+        "can tiny change source code",
+        "will tiny execute programs",
+        "can tiny compile a project",
+        "does tiny have coding tools"
+      ],
+      "validation": [
+        "can tiny edit my project"
+      ],
+      "test": [
+        "will tiny compile and run my program"
+      ]
+    },
+    {
+      "id": "tiny_limit",
+      "source": "docs/tiny.md",
+      "answer": "Tiny accepts one question up to 72 printable ASCII characters.",
+      "train": [
+        "what is the tiny question limit",
+        "how long can a tiny prompt be",
+        "does tiny support unicode",
+        "how many prompt characters are allowed for tiny",
+        "what length question can tiny take",
+        "is tiny input ascii only",
+        "how large is the tiny question limit"
+      ],
+      "validation": [
+        "what is the maximum tiny input"
+      ],
+      "test": [
+        "how many characters can i ask tiny"
+      ]
+    },
+    {
+      "id": "tiny_memory",
+      "source": "docs/tiny.md",
+      "answer": "Tiny has no conversation memory; ask each question independently.",
+      "train": [
+        "does tiny remember messages",
+        "can tiny resume a conversation",
+        "does tiny have chat history memory",
+        "can tiny recall previous messages",
+        "does tiny use earlier chat context",
+        "does tiny remember earlier questions",
+        "is tiny stateless between questions"
+      ],
+      "validation": [
+        "does tiny remember the last question"
+      ],
+      "test": [
+        "can tiny recall our earlier conversation"
+      ]
+    },
+    {
+      "id": "tiny_model",
+      "source": "docs/tiny.md",
+      "answer": "The offline model is Termic:Tools/Tiny/tiny.t68.",
+      "train": [
+        "where is the tiny model",
+        "which file contains tiny weights",
+        "where are offline model files",
+        "where are the tiny weights saved",
+        "what file is the local model",
+        "what is the offline model filename",
+        "where does the tiny model live"
+      ],
+      "validation": [
+        "what is the tiny model path"
+      ],
+      "test": [
+        "where does termic store the tiny weights"
+      ]
+    },
+    {
+      "id": "scaling",
+      "source": "amiga/native/ReadMe",
+      "answer": "Compact panes support 340x280; wide windows show three columns.",
+      "train": [
+        "does termic scale to small screens",
+        "what is the minimum window size",
+        "can i resize the termic window",
+        "does the ui resize",
+        "can i use a 340x280 window",
+        "how small can termic go",
+        "what changes in compact mode"
+      ],
+      "validation": [
+        "how small can the workspace be"
+      ],
+      "test": [
+        "does termic work at 340 by 280"
+      ]
+    },
+    {
+      "id": "mui",
+      "source": "amiga/native/ReadMe",
+      "answer": "Termic requires MUI 5.0 and TextEditor.mcc 15.56.",
+      "train": [
+        "which mui version is needed",
+        "what ui libraries does termic need",
+        "does termic use mui five",
+        "which mui and editor versions are needed",
+        "what version of texteditor is needed",
+        "what ui dependencies are required",
+        "does termic require mui 5"
+      ],
+      "validation": [
+        "what are the mui requirements"
+      ],
+      "test": [
+        "which text editor class is required"
+      ]
+    },
+    {
+      "id": "hardware",
+      "source": "docs/agent-execution.md",
+      "answer": "Use an agent with system_info for live hardware; Tiny cannot probe it.",
+      "train": [
+        "how do i detect the amiga hardware",
+        "can tiny read my cpu",
+        "how do i query live machine specs",
+        "how do i inspect real hardware",
+        "what tool queries the machine",
+        "can tiny detect machine specifications",
+        "can tiny inspect live hardware"
+      ],
+      "validation": [
+        "can tiny measure my free memory"
+      ],
+      "test": [
+        "how can i detect actual hardware specifications"
+      ]
+    },
+    {
+      "id": "private_key",
+      "source": "docs/agents-and-mcp.md",
+      "answer": "I cannot know your API key. Check your local agent settings.",
+      "train": [
+        "what is my api key",
+        "tell me my secret key",
+        "show my api password",
+        "do you know my api key",
+        "can you read my secret key",
+        "tell me my private api credential",
+        "what is my saved api credential"
+      ],
+      "validation": [
+        "can you tell me my api key"
+      ],
+      "test": [
+        "what secret credential am i using"
+      ]
+    },
+    {
+      "id": "unknown",
+      "source": "docs/tiny.md",
+      "answer": "I do not know. Check the Termic manual with Help.",
+      "train": [
+        "what is my favorite color",
+        "how do i book a hotel",
+        "predict the next lottery",
+        "what is the current weather",
+        "can you predict tomorrow",
+        "what is my favorite movie",
+        "how many coins are in my pocket"
+      ],
+      "validation": [
+        "what is my bank balance"
+      ],
+      "test": [
+        "what will the weather be tomorrow"
+      ]
+    }
+  ]
+}
