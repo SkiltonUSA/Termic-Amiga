@@ -14,6 +14,12 @@ includes Tiny, Processors, ZZ9000 details and compact layouts.
 
 ## Downloads
 
+- [MUI 5 guide update for an existing installation](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-MUI5-Guide-Update.lha)
+  ([checksum](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-MUI5-Guide-Update.sha256)).
+  Includes the native help window, matching 0.1.4 workers and offline Tiny.
+  Back up first; see `ReadMe-Update` inside. The original kit below predates
+  the MUI help window and remains unchanged.
+
 - [Native Amiga application and SDK kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-Amiga-0.1.4-beta.lha)
   and [pinned AmiPkg entry](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/termic-amiga.json).
 - [Standalone Process Monitor](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-Process-Monitor-0.1.4-beta.lha),
@@ -79,7 +85,7 @@ proxies are unchanged from 0.1.3 and retain their existing download links.
 - Compact action icons with tooltips, single-row Projects/Tasks controls, native menus and Right-Amiga shortcuts.
 - Editor commands in the menu strip, crisp Helvetica/Courier fonts and native framed panels.
 - Save/Use/Cancel preferences and shared Amiga IFF text clipboard.
-- Linked AmigaGuide manual available with Help or Help > Contents... .
+- Native MUI 5 help window with chapter navigation, related topics, history and search.
 
 ![Tiny selected in the Agent pane, with cyan and amber demonstration activity](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/live-feedback.png)
 
@@ -176,13 +182,12 @@ Host CLI profiles use their existing Mac/Windows login through the AI Proxy.
 
 Press **Help** for the [AmigaGuide manual](amiga/native/Termic.guide), with linked
 chapters, an index and optional ToolsDaemon Workbench launcher instructions.
-Install `Termic.guide` beside `TermicNative`; it opens in MultiView.
+Install `Termic.guide` beside `TermicNative`. The current source opens it inside
+Termic in a native MUI 5 help window. Contents, Index, Back, chapter navigation,
+related topics and search are built in. MultiView remains an optional external viewer.
 **Shift-Help** opens About. MagicMenu and ToolsDaemon are optional and unbundled.
 
-The guide screenshot refresh is pending a bridge recovery.
-The [current 0.1.4 Beta manual](amiga/native/Termic.guide) includes Offline Tiny.
-
-![Earlier AmigaGuide contents capture](docs/screenshots/guide.png)
+![Native MUI 5 guide with offline Tiny and Process Monitor topics](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/guide.png)
 
 See the [native installation guide](amiga/native/ReadMe) for installation layout,
 SDK setup, builds, project storage, shortcuts and limits. Dependency archives

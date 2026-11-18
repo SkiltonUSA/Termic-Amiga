@@ -38,9 +38,14 @@ API keys remain plaintext local files and are never displayed in the editor.
 Build-command saving is separate workspace data. Preference writes are atomic
 per file, not a transaction spanning the whole set; a partial failure is reported.
 
-Help opens the locally installed `Termic.guide` in MultiView. The manual includes
-a contents node, linked chapters and alphabetical index, and does not execute
-commands from links. Shift-Help and Project > About show version and credits.
+Help opens the locally installed `Termic.guide` in a native MUI 5 window.
+A chapter selector, Contents, Index, Back, previous/next chapter controls,
+related-topic navigation and Find/Find next keep the manual inside Termic.
+The read-only body uses light text on black and soft wrapping. Native scrolling
+keeps controls reachable at small sizes. Escape closes the help window;
+reopening preserves the selected chapter. The reader only follows local node
+links and never executes commands or opens external URLs. MultiView can still
+open the guide file separately. Shift-Help and Project > About show version and credits.
 The local installation-kit builder includes the guide automatically.
 
 Native MUI Title tabs select Agent, Editor, Build / CLI, Changes and Settings.

@@ -16,6 +16,9 @@ int gallery_profiles_load(struct AgentProfiles *p) {profiles_defaults(p);return 
 char *gallery_read_text(const char *path,size_t limit)
 {
  char mapped[PATH_SIZE],*s;
+ if(!strcmp(path,"Termic:Termic.guide")) {
+  join(mapped,project_root,"Termic.guide");return read_text(mapped,limit);
+ }
  if(!strcmp(path,"Termic:Prompts/defaults.json")) {
   join(mapped,project_root,"defaults.json");return read_text(mapped,limit);
  }
@@ -30,7 +33,7 @@ static void gallery_pump(void)
  ULONG sigs,id;int i;
  for(i=0;i<6;i++) {
   while((id=DoMethod(app,MUIM_Application_NewInput,&sigs))!=0) {
-   workspace_event(id);termic_monitor_event(id);
+   workspace_event(id);guide_event(id);termic_monitor_event(id);
    if(id==ED_STATUS)source_editor_status();
   }
   workspace_layout();termic_monitor_poll();Delay(2);
@@ -115,6 +118,28 @@ int main(int argc,char **argv)
    else if(!strcmp(mode,"board"))shown=board_window;
    else if(!strcmp(mode,"queue"))shown=queue_window;
    else if(!strcmp(mode,"review"))shown=change_window;
+   else if(!strncmp(mode,"guide",5)) {
+    int link;
+    open_help();REQUIRE(guide_window && value(guide_window,MUIA_Window_Open));
+    guide_event(HG_CONTENTS);REQUIRE(guide_current==guide_find(&guide_doc,"MAIN"));
+    guide_event(HG_INDEX);REQUIRE(guide_current==guide_find(&guide_doc,"Index"));
+    guide_event(HG_BACK);REQUIRE(guide_current==guide_find(&guide_doc,"MAIN"));
+    for(link=0;link<guide_link_count;link++)if(guide_targets[link].target==guide_find(&guide_doc,"Start"))break;
+    REQUIRE(link<guide_link_count);set(guide_links,MUIA_Cycle_Active,link);guide_event(HG_LINK);
+    REQUIRE(guide_current==guide_find(&guide_doc,"Start"));guide_event(HG_BACK);
+    set(guide_chapters,MUIA_Cycle_Active,guide_find(&guide_doc,"TINY"));gallery_pump();
+    REQUIRE(guide_current==guide_find(&guide_doc,"TINY"));
+    guide_event(HG_PREV);guide_event(HG_NEXT);REQUIRE(guide_current==guide_find(&guide_doc,"TINY"));
+    set(guide_search,MUIA_String_Contents,"Tiny");guide_event(HG_FIND);
+    REQUIRE(strstr((char *)value(guide_note,MUIA_Text_Contents),"Match selected"));
+    set(guide_search,MUIA_String_Contents,"no-such-fixture-phrase");guide_event(HG_FIND);
+    REQUIRE(strstr((char *)value(guide_note,MUIA_Text_Contents),"No further match"));
+    set(guide_search,MUIA_String_Contents,"");
+    guide_event(HG_CLOSE);REQUIRE(!value(guide_window,MUIA_Window_Open));open_help();
+    REQUIRE(value(guide_window,MUIA_Window_Open) && value(guide_text,MUIA_TextEditor_ReadOnly));
+    REQUIRE(guide_show(guide_find(&guide_doc,!strcmp(mode,"guide-tiny")?"TINY":"MAIN"),0));
+    shown=guide_window;
+   }
    else if(!strcmp(mode,"about")){open_about();shown=about_window;}
    else if(!strcmp(mode,"prompts")){prompts_open();shown=prompts_window;}
    else if(!strcmp(mode,"shortcuts")){show_shortcuts();shown=shortcut_window;}
@@ -144,7 +169,7 @@ int main(int argc,char **argv)
  }
  REQUIRE(captures>0 && ticks<36000);
 done:
- termic_monitor_close();if(app)MUI_DisposeObject(app);
+ termic_monitor_close();if(app)MUI_DisposeObject(app);guide_free(&guide_doc);
  if(keyeditor_class)__termic_mui_unclass(MUIMasterBase,keyeditor_class);
  if(workspace_class)__termic_mui_unclass(MUIMasterBase,workspace_class);
  if(board_list_class)__termic_mui_unclass(MUIMasterBase,board_list_class);

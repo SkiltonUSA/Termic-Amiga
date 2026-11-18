@@ -11,6 +11,14 @@ SOURCE = ROOT / "amiga/native"
 
 
 class NativeProtocolTests(unittest.TestCase):
+    def test_mui_guide_document(self):
+        with tempfile.TemporaryDirectory() as directory:
+            binary = Path(directory) / 'guide'
+            subprocess.run(['cc', '-std=c99', '-Wall', '-Wextra', '-Werror',
+                '-fsanitize=address,undefined', str(SOURCE/'tests/test_guide.c'),
+                '-o', str(binary)], check=True)
+            subprocess.run([str(binary), str(SOURCE/'Termic.guide')], check=True)
+
     def test_streaming_archive_checksum(self):
         import zlib
         with tempfile.TemporaryDirectory() as directory:

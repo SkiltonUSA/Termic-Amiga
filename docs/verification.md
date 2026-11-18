@@ -1265,3 +1265,44 @@ All 100 host tests passed in the configured Python environment; fixture
 cross-compilation and Python syntax checks passed. An initial run with the
 system Python lacked the MCP dependencies and was rerun in that environment.
 These checks do not establish release installation or model inference.
+
+### Native MUI 5 guide update (18 November 2026)
+
+The user requested a native MUI 5 help window. Help now reads the local
+Termic.guide inside Termic, with chapter selection, Contents, Index, bounded
+Back history, previous/next chapter controls, related-topic links and
+Find/Find next. The body uses light text on black with soft wrapping. The
+same file remains compatible with external MultiView. No additional MUI
+classes or system libraries are required beyond the workspace dependencies.
+The bounded reader handles the shipped guide's nodes, formatting and local
+links; it rejects executable/external link directives.
+
+All 101 host tests passed under the configured Python environment. The new
+ASan/UBSan test covers malformed nodes, duplicate IDs, missing targets,
+unsafe directives, control bytes, size limits and all 27 shipped chapters.
+The native MUI fixture passed chapter selection, related links, Back,
+previous/next, successful/missing searches, close/reopen, read-only content,
+source preservation and resizing to 900x650 and 340x280. The inspected final
+screenshots confirm the black background and visible navigation icons.
+Small layouts use native scrolling for controls that do not fit.
+
+The earlier guide capture block is resolved by the native MUI reader; it no
+longer launches or resizes MultiView. The Broadcast retake now shows all three
+instruction lines. The gallery contains 26 current screenshots including the
+new guide, its Tiny chapter and compact view.
+
+The existing hardware installation was 0.1.2 Beta. Its affected files were
+backed up under Backup/mui-guide-1795016458 inside the application drawer,
+and their CRC32/lengths checked before replacement. All 89 files in the
+separate guide-update kit were verified in staging and after installation.
+The kit contains the new GUI, matching 0.1.4 workers, source, documentation
+and the pinned original offline Tiny runtime/model. Projects, Config, SDK,
+startup files and system libraries were not replaced. The original 0.1.4
+release archives/checksums remain unchanged; the update is a separate LHA.
+
+The installed application launched and its Help key opened the MUI guide.
+TermicCheck passed with zero missing dependencies: dos.library 47.30,
+muimaster.library 21.227, TextEditor.mcc 15.56 and AmiSSL 5.27 were detected.
+Termic and its guide were left open. This validates help and installation;
+Tiny inference, cloud execution and fresh AmiPkg installation were not part
+of this follow-up. Automated checks do not replace human interaction testing.

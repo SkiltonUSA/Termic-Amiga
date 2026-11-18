@@ -23,6 +23,8 @@ async def main(args):
   await root.verify_file('ChromeProbe',args.probe.read_bytes())
   await b.call('amiga_push_file',{'local_path':str(Path('amiga/native/Prompts/defaults.json').resolve()),'amiga_path':stage+'/defaults.json'})
   await root.verify_file('defaults.json',Path('amiga/native/Prompts/defaults.json').read_bytes())
+  await b.call('amiga_push_file',{'local_path':str(Path('amiga/native/Termic.guide').resolve()),'amiga_path':stage+'/Termic.guide'})
+  await root.verify_file('Termic.guide',Path('amiga/native/Termic.guide').read_bytes())
   await b.shell('Protect '+stage+'/ChromeProbe +e\nProtect '+stage+'/GalleryCheck +e\nEcho "Stack 262144" >'+stage+'/launch\nEcho "'+stage+'/GalleryCheck '+stage+'" >>'+stage+'/launch')
   try:await b.call('amiga_launch',{'command':'Execute '+stage+'/launch'})
   except (ConnectionError,TimeoutError):pass
@@ -83,7 +85,9 @@ async def main(args):
     ('zz9000',1024,800,9,'zz9000.png'),
     ('main',340,280,1,'editor-340x280.png'),
     ('main',340,280,0,'tiny-340x280.png'),
-    ('main',340,280,9,'processors-340x280.png')]:
+    ('main',340,280,9,'processors-340x280.png'),
+    ('guide',900,650,0,'guide.png'),('guide-tiny',900,650,0,'guide-tiny.png'),
+    ('guide',340,280,0,'guide-340x280.png')]:
     if shot==args.start_at:started=True
     if not started or (args.only and shot!=args.only):continue
     frame=dict(panel=panel,width=width,height=height,view=view)

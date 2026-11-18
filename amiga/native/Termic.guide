@@ -17,11 +17,16 @@ Native MUI development workspace for AmigaOS 3.2 / 68020+.
   @{"Codex on Mac" LINK Codex}          @{"Prompts" LINK Prompts}
   @{"Kanban and queue" LINK TaskFlow}    @{"Review and notes" LINK ReviewNotes}
   @{"Branches and worktrees" LINK HostGit}
-  @{"Offline Tiny" LINK TINY}
+  @{"Offline Tiny" LINK TINY}          @{"Process monitor" LINK activitymonitor}
   @{"Alphabetical index" LINK Index}
 
-Use Contents to return here, Index for topics, Retrace to go back,
-and the Browse arrows to move between chapters. Links open local topics.
+Help opens this manual inside Termic in a native MUI 5 window.
+Use Chapter to select a topic, Contents to return here, Index for topics,
+and Back to retrace your navigation. Previous and Next browse chapters.
+Choose a Related topic and press Open to follow a link from this chapter.
+Find and Find next search the displayed chapter. Escape closes help.
+Resize the window as needed; small windows have native scrollbars.
+The same file can also be opened separately in MultiView.
 This manual does not execute commands. Type examples in an Amiga Shell.
 @ENDNODE
 
@@ -66,7 +71,8 @@ Next: @{"Projects" LINK Projects}  @{"Editor" LINK Editor}  @{"Build" LINK Build
 @NODE Install "Installation and dependencies"
 Requirements: AmigaOS 3.2, a 68020 or newer CPU, Fast RAM, MUI 5.0
 and TextEditor.mcc 15.56. Builds require VBCC, vasm, vlink and the NDK.
-MultiView and the AmigaGuide datatype display this manual.
+Termic displays this manual in its built-in MUI 5 help window.
+MultiView is optional for viewing the AmigaGuide file outside Termic.
 
 A complete local installation kit contains the executables, Source,
 Template, SDK archives and installation scripts. The GitHub repository
@@ -307,7 +313,7 @@ Tools: Process Monitor... (also available from View > Activity / processes...).
 Right Amiga I opens Activity. See @{"Process monitor" LINK activitymonitor}.
 Settings: Preferences, MUI Settings..., Save Settings, Use Settings,
           Cancel Edits (the last three apply while Settings is open).
-Help: Contents... opens this AmigaGuide manual in MultiView.
+Help: Contents... opens this manual in the native MUI 5 help window.
       Keyboard shortcuts opens the black reference of active bindings.
 
 @{"Prompt library and project instructions" LINK Prompts}
@@ -440,8 +446,9 @@ Shell for startup messages, using Stack 262144 before launching TermicNative.
 The Workbench icon already requests this stack. Keep supporting files together.
 MUI 5 uses Title-class tabs; MUI 3.8 uses its original Register tabs.
 
-Help fails: install Termic.guide beside TermicNative, and ensure
-SYS:Utilities/MultiView and the AmigaGuide datatype are installed.
+Help fails: install an intact Termic.guide beside TermicNative.
+The built-in reader needs MUI 5 and TextEditor.mcc, like the workspace.
+MultiView and the AmigaGuide datatype are needed only for external viewing.
 
 Cannot save: check free space, protection, file size and active jobs.
 Never overwrite the original with the explanatory read-only error text.

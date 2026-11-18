@@ -8,8 +8,9 @@ it does not show a completed inference. No cloud requests, queued builds,
 process termination or service restarts run during capture.
 
 The Mac proxy is the unchanged companion application. Its own version label
-is independent of the native 0.1.4 Beta release. The AmigaGuide refresh is pending a bridge recovery.
-The [current manual](../amiga/native/Termic.guide) includes Offline Tiny.
+is independent of the native 0.1.4 Beta release. The native MUI 5 guide uses the same [local manual](../amiga/native/Termic.guide),
+including Offline Tiny. Its screenshots show the guide update after the
+original 0.1.4 Beta package; the original release archive is unchanged.
 
 ## Workspace and Tiny
 
@@ -115,8 +116,15 @@ The [current manual](../amiga/native/Termic.guide) includes Offline Tiny.
 
 ### AmigaGuide contents
 
-Pending: the bridge paused while preparing the new MultiView capture.
-The README retains its clearly labelled earlier guide image.
+![Native MUI 5 guide](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/guide.png)
+
+### Offline Tiny documentation
+
+![Tiny chapter in the MUI guide](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/guide-tiny.png)
+
+### Compact help at 340 x 280
+
+![Compact MUI guide](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/guide-340x280.png)
 
 ## Reproducing captures
 
@@ -142,6 +150,7 @@ separate.
 
 Capture the companion app with
 `python scripts/proxy/app.py --screenshot-fixture .context/ai-proxy.png`.
-After target recovery, capture the shipped guide in its own MultiView instance with
-`python scripts/amiga/accept_guide_gallery.py --output .context/guide-new`.
+To capture only the three guide views, add `--start-at guide.png`.
+The guide fixture exercises chapter selection, links, history, search,
+close/reopen and wide/compact sizing without launching MultiView.
 Screenshots stay outside Git history and are attached to the release.

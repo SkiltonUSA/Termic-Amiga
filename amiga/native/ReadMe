@@ -208,7 +208,10 @@ patches. VBCC/NDK/MUI SDKs retain their own redistribution conditions.
 
 HELP AND AMIGA CONVENTIONS
 Press Help or choose Help > Contents... for the linked Termic.guide manual.
-Keep it beside TermicNative. MultiView and the AmigaGuide datatype are required.
+Keep it beside TermicNative. Help uses a native MUI 5 window with chapter
+selection, Contents, Index, Back, previous/next chapter and text search.
+The related-topic selector follows local AmigaGuide links. Escape closes help.
+MultiView is optional for viewing the same file outside Termic.
 Project/Edit menus provide Right-Amiga-N/O/S/Q and X/C/V/Z. Edit commands
 use the focused text editor, with unavailable actions ghosted. MUI handles
 single-line field shortcuts; TextEditor uses the shared IFF text clipboard.

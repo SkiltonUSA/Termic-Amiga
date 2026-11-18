@@ -42,7 +42,7 @@ const char stack_size[] = "$STACK:262144";
 #define MAX_ITEMS 128
 #define PATH_SIZE 384
 static Object *app, *win, *projects, *tasks, *files, *pages, *source, *prompt, *output, *review,
-    *transcript, *cli_output, *editor_save;
+    *transcript, *cli_output, *editor_save, *guide_text;
 static Object *prompts_body,*diagnostic_list,*diagnostic_view;
 static struct Diagnostic diagnostic_rows[DIAGNOSTIC_MAX];
 static int diagnostic_count;
@@ -234,7 +234,7 @@ static Object *editor(Object **o, int readonly)
     if(!keyeditor_class)return NULL;
     g = HGroup, Child, *o = NewObject(keyeditor_class->mcc_Class, NULL, InputListFrame, MUIA_Font,
            codefont ? (ULONG)codefont : MUIV_Font_Fixed,
-           (o == &source || o == &prompts_body || o == &transcript || o == &change_text || o == &broadcast_text) ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
+           (o == &source || o == &prompts_body || o == &transcript || o == &change_text || o == &broadcast_text || o == &guide_text) ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
            MUIA_TextEditor_ReadOnly, readonly, MUIA_TextEditor_ActiveObjectOnClick, TRUE,
            MUIA_TextEditor_ImportHook,
            MUIV_TextEditor_ImportHook_Plain, MUIA_TextEditor_ExportHook,
@@ -1119,27 +1119,7 @@ static int task_uses_relay(const char *task)
     return n<0 || profile_is_relay(profile_live.items[n].kind);
 }
 #include "access_ui.h"
-static void open_help(void)
-{
-    BPTR in, out;
-    if (!exists("Termic:Termic.guide") || !exists("SYS:Utilities/MultiView"))
-    {
-        message("Install Termic.guide beside TermicNative and MultiView in SYS:Utilities.");
-        return;
-    }
-    in = Open((STRPTR) "NIL:", MODE_OLDFILE);
-    out = Open((STRPTR) "NIL:", MODE_NEWFILE);
-    if (!in || !out ||
-        SystemTags((STRPTR) "SYS:Utilities/MultiView Termic:Termic.guide", SYS_Input, in,
-                   SYS_Output, out, SYS_Asynch, TRUE, TAG_DONE) == -1)
-    {
-        if (in)
-            Close(in);
-        if (out)
-            Close(out);
-        message("Unable to open AmigaGuide manual.");
-    }
-}
+#include "guide_ui.h"
 static int icon(const char *p)
 {
     struct DiskObject *d;
@@ -1654,7 +1634,7 @@ int main(int argc, char **argv)
         {
             int n;
             char *name;
-            if(workspace_event(id))continue;
+            if(workspace_event(id) || guide_event(id))continue;
             if(id==TM_ACTIVITY_OPEN) {
                 workspace_select(9);
                 continue;
@@ -2074,6 +2054,7 @@ cleanup:
     activity_clear(&activity);
     if (app)
         MUI_DisposeObject(app);
+    guide_free(&guide_doc);
     cJSON_Delete(prompts_items);
     cJSON_Delete(prompts_defaults);
     if(keyeditor_class)__termic_mui_unclass(MUIMasterBase,keyeditor_class);
