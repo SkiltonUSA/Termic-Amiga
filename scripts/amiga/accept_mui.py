@@ -11,9 +11,7 @@ import asyncio
 import json
 from pathlib import Path
 import subprocess
-import urllib.request
-import urllib.parse
-from mcp import ClientSession
+from bridge_client import ClientSession, capture_png
 from mcp.client.streamable_http import streamablehttp_client
 
 TITLE = "Termic Amiga Workspace"
@@ -27,7 +25,7 @@ async def main(args):
         else []
     )
     async with streamablehttp_client(args.server + "/mcp") as (read, write, _):
-        async with ClientSession(read, write) as session:
+        async with ClientSession(read, write, bridge_url=args.server + "/mcp") as session:
             await session.initialize()
 
             async def call(name, arguments):
@@ -110,26 +108,7 @@ async def main(args):
                     await key(mapping[char], delay=0.1)
 
             async def capture(name):
-                with urllib.request.urlopen(
-                    args.server
-                    + "/api/screenshot?"
-                    + urllib.parse.urlencode({"window": TITLE}),
-                    timeout=60,
-                ) as r:
-                    data = json.load(r)
-                subprocess.run(
-                    [
-                        "sips",
-                        "-s",
-                        "format",
-                        "png",
-                        data["path"],
-                        "--out",
-                        str(args.output / name),
-                    ],
-                    check=True,
-                    capture_output=True,
-                )
+                await capture_png(session, args.output / name, TITLE)
 
             async def wait_job(expect_failure=False):
                 for _ in range(60):
@@ -399,7 +378,7 @@ def cli():
         help="Resume after a capture interruption following the fixture commit",
     )
     p.add_argument("--binary", default="Termic:TermicNative")
-    p.add_argument("--server", default="http://127.0.0.1:55010")
+    p.add_argument("--server", default="http://127.0.0.1:55110")
     p.add_argument("--output", type=Path, default=Path(".context/amiga-mui"))
     asyncio.run(main(p.parse_args()))
 

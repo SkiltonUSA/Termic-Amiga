@@ -13,9 +13,7 @@ import re
 import struct
 import subprocess
 import time
-import urllib.parse
-import urllib.request
-from mcp import ClientSession
+from bridge_client import ClientSession, capture_png
 from mcp.client.streamable_http import streamablehttp_client
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -32,7 +30,7 @@ async def main(args):
         for i, c in enumerate(row)
     }
     mapping.update({"-": "0x0b", ",": "0x38", "\n": "0x44", " ": "0x40"})
-    async with streamablehttp_client("http://127.0.0.1:55010/mcp") as (r, w, _):
+    async with streamablehttp_client("http://127.0.0.1:55110/mcp") as (r, w, _):
         async with ClientSession(r, w) as session:
             await session.initialize()
 
@@ -88,33 +86,7 @@ async def main(args):
                     await key(mapping[char])
 
             async def capture(title, filename):
-                url = "http://127.0.0.1:55010/api/screenshot?" + urllib.parse.urlencode(
-                    {"window": title}
-                )
-                # A screenshot transfer can outlast its HTTP request on the
-                # physical bridge. Retry the read without repeating UI actions.
-                for attempt in range(2):
-                    try:
-                        with urllib.request.urlopen(url, timeout=60) as response:
-                            data = json.load(response)
-                        break
-                    except TimeoutError:
-                        if attempt:
-                            raise
-                        await asyncio.sleep(5)
-                subprocess.run(
-                    [
-                        "sips",
-                        "-s",
-                        "format",
-                        "png",
-                        data["path"],
-                        "--out",
-                        str(out / filename),
-                    ],
-                    check=True,
-                    capture_output=True,
-                )
+                await capture_png(session, out / filename, title)
 
             async def push(local, remote):
                 await call(

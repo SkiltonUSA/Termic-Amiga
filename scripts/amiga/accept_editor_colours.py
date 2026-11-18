@@ -32,6 +32,6 @@ async def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--binary', type=Path, required=True)
-    parser.add_argument('--bridge', default='http://127.0.0.1:55010/mcp')
+    parser.add_argument('--bridge', default='http://127.0.0.1:55110/mcp')
     parser.add_argument('--output', type=Path, default=Path('.context/features/editor-native.log'))
     asyncio.run(main(parser.parse_args()))

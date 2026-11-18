@@ -74,7 +74,7 @@ async def exercise(root,out,fixture,shell,push,call,state,click,capture,menu,arg
     await menu('26');p=await state(queue)
     await key('13') # Resume
     relay_args=codex_relay.parser().parse_args([])
-    async with codex_relay.Bridge('http://127.0.0.1:55010/mcp',fixture+'/Relay') as bridge:
+    async with codex_relay.Bridge('http://127.0.0.1:55110/mcp',fixture+'/Relay') as bridge:
         for _ in range(40):
             try:raw=await bridge.read('request.json')
             except ConnectionError:raw=None

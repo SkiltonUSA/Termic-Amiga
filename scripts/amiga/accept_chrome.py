@@ -8,13 +8,13 @@ validated with synthetic dragging; these controls use Termic's own event handler
 
 import asyncio, json, re, subprocess, urllib.request
 from pathlib import Path
-from mcp import ClientSession
+from bridge_client import ClientSession, capture_png
 from mcp.client.streamable_http import streamablehttp_client
 
 
 async def main(args):
     Path(".context").mkdir(exist_ok=True)
-    async with streamablehttp_client("http://127.0.0.1:55010/mcp") as (r, w, _):
+    async with streamablehttp_client("http://127.0.0.1:55110/mcp") as (r, w, _):
         async with ClientSession(r, w) as s:
             await s.initialize()
 
@@ -135,22 +135,7 @@ async def main(args):
             )
             foreground = await state()
             assert foreground["front"] and foreground["active"], foreground
-            with urllib.request.urlopen(
-                "http://127.0.0.1:55010/api/screenshot", timeout=55
-            ) as r:
-                d = json.load(r)
-            subprocess.run(
-                [
-                    "sips",
-                    "-s",
-                    "format",
-                    "png",
-                    d["path"],
-                    "--out",
-                    ".context/chrome-tested.png",
-                ],
-                check=True,
-            )
+            await capture_png(s, Path(".context/chrome-tested.png"), None)
             if args.close_at_end:
                 await click(original["x"] + 20, original["y"] + 20)
                 result = await call(

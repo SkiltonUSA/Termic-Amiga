@@ -135,19 +135,20 @@ class RelayLock:
 
 
 class Bridge:
-    def __init__(self, url, root='Termic:Relay'):
+    def __init__(self, url, root='Termic:Relay', reservation_path=None):
         if not re.fullmatch(r'[A-Za-z0-9:_/-]+', root):
             raise ValueError('Invalid Amiga relay drawer')
         self.url, self.root = url, root.rstrip('/')
+        self.reservation_path = reservation_path
         self.stack = AsyncExitStack()
         self.lock = asyncio.Lock()
 
     async def __aenter__(self):
-        from mcp import ClientSession
+        from bridge_client import ClientSession
         from mcp.client.streamable_http import streamablehttp_client
         try:
             read, write, _ = await self.stack.enter_async_context(streamablehttp_client(self.url))
-            self.session = await self.stack.enter_async_context(ClientSession(read, write))
+            self.session = await self.stack.enter_async_context(ClientSession(read, write, bridge_url=self.url, reservation_path=self.reservation_path))
             await self.session.initialize()
             return self
         except BaseException:
@@ -158,6 +159,9 @@ class Bridge:
 
     async def __aexit__(self, *args):
         await self.stack.__aexit__(*args)
+
+    async def release_if_idle(self):
+        return await self.session.release_if_idle()
 
     def path(self, name):
         if not re.fullmatch(r'[a-zA-Z0-9.-]+', name):
@@ -711,7 +715,7 @@ async def serve(args):
     retry_delay = 2
     while True:
         try:
-            async with Bridge(args.bridge, args.relay_drawer) as bridge:
+            async with Bridge(args.bridge, args.relay_drawer, args.state_dir / 'bridge-reservation.json') as bridge:
                 connected = False
                 while True:
                     raw = await bridge.read('request.json')
@@ -735,6 +739,7 @@ async def serve(args):
                                 ok = False
                             print('Task completed.' if ok else 'Task failed or stopped.', flush=True)
                             if args.once: return 0 if ok else 1
+                    await bridge.release_if_idle()
                     await asyncio.sleep(.5)
         except Exception as error:
             if not connection_failure(error): raise
@@ -766,7 +771,7 @@ async def main(args):
 
 def parser():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--bridge', default='http://127.0.0.1:55010/mcp')
+    p.add_argument('--bridge', default='http://127.0.0.1:55110/mcp')
     p.add_argument('--relay-drawer', default='Termic:Relay')
     p.add_argument('--codex', default=shutil.which('codex') or 'codex')
     p.add_argument('--claude', default=shutil.which('claude') or 'claude')

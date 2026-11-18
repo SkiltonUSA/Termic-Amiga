@@ -20,7 +20,28 @@ if len(sys.argv)>1 and sys.argv[1]=='--server':
          'model':'','thread':'','readonly':True,'limit':2,'guidance':[],
          'reply_slots':bool(int(sys.argv[4]))}
     files={root+'/request.json':json.dumps(job).encode()}; frames=[]; first=[True]; checksum_error=[True]
-    mcp=FastMCP('fixture-mailbox',host='127.0.0.1',port=int(sys.argv[2]))
+    mcp=FastMCP('Amiga-MCP',host='127.0.0.1',port=int(sys.argv[2]))
+    reserved=[False]
+    @mcp.tool()
+    def amiga_bridge_status()->str:
+        return json.dumps({'enabled':True,'active':None,'queued':0,
+                           'reservation':{'label':'fixture'} if reserved[0] else None})
+    @mcp.tool()
+    def amiga_bridge_reserve(label:str)->str:
+        assert not reserved[0]
+        reserved[0]=True
+        (state/'reserved').touch()
+        return json.dumps({'token':'synthetic-bundle-token'})
+    @mcp.tool()
+    def amiga_bridge_release(token:str,confirmed_idle:bool)->str:
+        assert reserved[0] and token=='synthetic-bundle-token' and confirmed_idle
+        reserved[0]=False
+        (state/'released').touch()
+        return '{}'
+    @mcp.tool()
+    def amiga_list_ports()->str:
+        assert reserved[0]
+        return 'No Termic workers'
     @mcp.tool()
     def amiga_list_dir(path:str)->str:
         assert path==root
@@ -36,6 +57,7 @@ if len(sys.argv)>1 and sys.argv[1]=='--server':
         return '\n'.join(f'{offset+i:08x}  '+raw[i:i+16].hex(' ').ljust(47)+'   fixture' for i in range(0,len(raw),16))
     @mcp.tool()
     def amiga_write_file(path:str,offset:int,hex_data:str)->str:
+        assert reserved[0]
         assert path.startswith(root+'/') and path.endswith('.in.tmp')
         files[path]=files.get(path,b'')[:offset]+bytes.fromhex(hex_data)
         return 'Write command sent'
@@ -97,11 +119,13 @@ else:
                     time.sleep(.2)
                 else:raise AssertionError('Packaged proxy did not consume the fixture task: '+(state/'proxy.log').read_text())
                 (state/'proxy.stop').touch();worker.wait(timeout=15)
+                assert (state/'reserved').exists() and (state/'released').exists()
+                assert not (state/'bridge-reservation.json').exists()
                 evidence=json.loads((state/'mailbox-passed.json').read_text())
                 assert evidence['task_pickup'] and evidence['ordered_replies'] and evidence['provider_failure_reported']
                 assert evidence['kinds'][0]=='ping' and evidence['kinds'][-1]=='done' and 'text' in evidence['kinds']
                 assert 'Processing claude task.' in (state/'proxy.log').read_text()
-                print('Packaged task pickup, ordered mailbox replies and provider-failure completion passed.')
+                print('Packaged reservations, idle release, task pickup, ordered replies and provider-failure completion passed.')
             finally:
                 for process in (worker,server):
                     if process and process.poll() is None:

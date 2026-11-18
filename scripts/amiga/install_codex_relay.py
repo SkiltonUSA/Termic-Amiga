@@ -23,7 +23,7 @@ def main():
     python = venv / 'bin/python'
     subprocess.run([str(python), '-m', 'pip', 'install', '--disable-pip-version-check', 'mcp==1.30.0'], check=True)
     script = args.directory / 'codex_relay.py'
-    for name in ['codex_relay.py', 'cli_relay.py', 'relay_mcp.py', 'host_process.py']:
+    for name in ['codex_relay.py', 'cli_relay.py', 'relay_mcp.py', 'host_process.py', 'git_service.py', 'bridge_client.py']:
         shutil.copyfile(Path(__file__).with_name(name), args.directory / name)
     command = [str(python), str(script), '--codex', args.codex, '--state-dir', str(args.directory)]
     subprocess.run(command + ['--check'], check=True)

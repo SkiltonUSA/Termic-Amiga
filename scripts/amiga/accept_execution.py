@@ -165,5 +165,5 @@ if __name__ == '__main__':
     parser.add_argument('--worker', type=Path, required=True)
     parser.add_argument('--profile', required=True)
     parser.add_argument('--stop-probe', type=Path, required=True)
-    parser.add_argument('--bridge', default='http://127.0.0.1:55010/mcp')
+    parser.add_argument('--bridge', default='http://127.0.0.1:55110/mcp')
     asyncio.run(main(parser.parse_args()))

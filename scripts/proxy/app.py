@@ -10,6 +10,7 @@ import sys
 if not getattr(sys, 'frozen', False):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'amiga'))
 import codex_relay
+from bridge_client import DEFAULT_BRIDGE
 from host_process import executable_command
 
 VERSION = '0.1.0 Beta'
@@ -29,13 +30,15 @@ def find_agent(name):
 
 
 def read_config(state):
-    defaults = {'bridge': 'http://127.0.0.1:55010/mcp', 'autostart': True,
+    defaults = {'bridge': DEFAULT_BRIDGE, 'autostart': True,
                 **{name: find_agent(name) for name in PROVIDERS}}
     path = state / 'proxy.json'
     if path.exists():
         saved = json.loads(path.read_text())
         for key in defaults:
             if key in saved and type(saved[key]) is type(defaults[key]): defaults[key] = saved[key]
+    if defaults['bridge'].rstrip('/') in ('http://127.0.0.1:55010/mcp', 'http://localhost:55010/mcp'):
+        defaults['bridge'] = DEFAULT_BRIDGE
     return defaults
 
 
@@ -112,7 +115,7 @@ def gui():
         def __init__(self, state, fixture=False):
             super().__init__()
             self.state, self.fixture = state, fixture
-            self.config = read_config(state) if not fixture else {'bridge': 'http://127.0.0.1:55010/mcp',
+            self.config = read_config(state) if not fixture else {'bridge': DEFAULT_BRIDGE,
                 'autostart': False, **{p: p for p in PROVIDERS}}
             self.setWindowTitle('Termic AI Proxy'); self.resize(860, 680)
             self.relay = QProcess(self); self.relay.finished.connect(self.finished)
@@ -124,7 +127,7 @@ def gui():
             layout.addWidget(title)
             layout.addWidget(QLabel('Connect your Amiga to Codex, Claude and Cursor on this computer.'))
             connection = QGroupBox('Amiga connection'); form = QFormLayout(connection); form.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
-            self.bridge = QLineEdit(self.config['bridge']); form.addRow('DevBench MCP URL', self.bridge)
+            self.bridge = QLineEdit(self.config['bridge']); form.addRow('Amiga bridge MCP URL', self.bridge)
             self.auto = QCheckBox('Start the proxy when this app opens'); self.auto.setChecked(self.config['autostart'])
             form.addRow(self.auto); layout.addWidget(connection)
             group = QGroupBox('AI agents'); grid = QGridLayout(group)

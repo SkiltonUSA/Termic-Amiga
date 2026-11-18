@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MCP stdio connector to TermicMCP through an existing DevBench MCP bridge.
+"""MCP stdio connector to TermicMCP through the Amiga-MCP bridge.
 
 Does not start a listener, alter agent registrations, or print credentials.
 Install the Python `mcp` package in the interpreter used by your MCP client.
@@ -11,14 +11,33 @@ from pathlib import Path
 import sys
 import tempfile
 import uuid
-from mcp import ClientSession
+from bridge_client import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 
 LIMIT = 65536
 
+async def read_request(bridge):
+    pending = asyncio.create_task(asyncio.to_thread(sys.stdin.buffer.readline, LIMIT + 2))
+    reported = False
+    while not pending.done():
+        await asyncio.wait({pending}, timeout=.5)
+        # A native job can finish after its JSON-RPC response. Release while
+        # waiting for input, never in the middle of a multi-step request.
+        if not pending.done():
+            try:
+                await bridge.release_if_idle()
+            except Exception:
+                # Keep the recovery token and the pending stdin read. Exiting
+                # here would strand the reader thread during asyncio shutdown.
+                if not reported:
+                    print('Bridge reservation retained; idle check failed.', file=sys.stderr)
+                    reported = True
+    return await pending
+
+
 async def main(args):
     async with streamablehttp_client(args.bridge) as (reader, writer, _):
-        async with ClientSession(reader, writer) as bridge:
+        async with ClientSession(reader, writer, bridge_url=args.bridge, reservation_path=args.reservation_file) as bridge:
             await bridge.initialize()
 
             async def call(name, data):
@@ -29,7 +48,7 @@ async def main(args):
                 return text
 
             while True:
-                raw = await asyncio.to_thread(sys.stdin.buffer.readline, LIMIT + 2)
+                raw = await read_request(bridge)
                 if not raw:
                     break
                 request = None
@@ -63,10 +82,12 @@ async def main(args):
                     # Do not echo request bodies, credentials or bridge internals.
                     response = {'jsonrpc': '2.0', 'id': request.get('id') if isinstance(request, dict) else None,
                                 'error': {'code': -32603, 'message': 'Amiga MCP request failed. Check the bridge, TermicMCP installation and Agent access settings.'}}
+                await bridge.release_if_idle()
                 sys.stdout.write(json.dumps(response, separators=(',', ':')) + '\n')
                 sys.stdout.flush()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--bridge', default='http://127.0.0.1:55010/mcp')
+    parser.add_argument('--bridge', default='http://127.0.0.1:55110/mcp')
+    parser.add_argument('--reservation-file', type=Path, help='Private recovery file for this connector instance')
     asyncio.run(main(parser.parse_args()))

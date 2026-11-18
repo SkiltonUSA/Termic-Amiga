@@ -82,5 +82,5 @@ async def main(args):
    if not (await root.read('result.txt')):await control({'panel':'close'})
 if __name__=='__main__':
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--binary',type=Path,required=True)
- p.add_argument('--probe',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--server',default='http://127.0.0.1:55010/mcp')
+ p.add_argument('--probe',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--server',default='http://127.0.0.1:55110/mcp')
  asyncio.run(main(p.parse_args()))

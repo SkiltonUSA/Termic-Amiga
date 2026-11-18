@@ -65,7 +65,7 @@ async def exercise(root, out, fixture, shell, push, call, state, click, capture,
         await key('42') # Tab launches selected host-agent profile
     relay_args = codex_relay.parser().parse_args([])
     try:
-        async with codex_relay.Bridge(args.bridge if hasattr(args, 'bridge') else 'http://127.0.0.1:55010/mcp', fixture + '/Relay') as bridge:
+        async with codex_relay.Bridge(args.bridge if hasattr(args, 'bridge') else 'http://127.0.0.1:55110/mcp', fixture + '/Relay') as bridge:
             async def run(text):
                 await prompt(text)
                 for _ in range(30):

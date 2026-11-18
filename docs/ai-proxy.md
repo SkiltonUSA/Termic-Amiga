@@ -90,9 +90,31 @@ Official installation and usage references:
 
 ## Bridge connection
 
-The default bridge is `http://127.0.0.1:55010/mcp`. DevBench must already be
-running and connected to the Amiga. The proxy does not start a second bridge
-or configure the serial connection.
+All Amiga-facing clients use `http://127.0.0.1:55110/mcp`, the Amiga-MCP
+reservation gateway. Amiga-MCP and its connected DevBench backend must already
+be running. DevBench remains on port 55010 behind the gateway; clients must
+not bypass it. The physical Amiga TCP port is unchanged. The proxy does not
+start either service. Saved proxy settings using the old localhost port are
+migrated on launch; custom endpoints are preserved.
+
+The proxy, stdio connector and hardware acceptance scripts reserve protected
+operations automatically. Idle polling does not hold a reservation. After a
+task, the proxy releases only when the gateway is enabled with an empty queue
+and no Termic job ports remain. Another client's reservation is respected;
+the proxy waits and reconnects without replaying an interrupted task.
+
+The proxy keeps its recovery token privately in `bridge-reservation.json`
+beside `proxy.json` and resumes its own reservation on reconnect. Other
+clients save private recovery files in the host's Termic-Amiga support
+folder under `bridge-reservations`; a retained reservation's path is printed
+to stderr. Tokens must not be posted in logs or committed. An uncertain
+failure retains the reservation. Inspect gateway status and finish hardware
+cleanup before resuming with that token and explicitly releasing it. Clients
+never enable a paused gateway or remove another client's reservation.
+Hardware tests remain responsible for stopping any applications they launch;
+closing an MCP session alone does not prove those applications have stopped.
+Screenshot clients use `amiga_screenshot` through MCP; port 55110 does not
+provide DevBench's REST screenshot route.
 
 The proxy can connect to a bridge on another host. Transfers use MCP file
 read/write operations and verify uploads by CRC32, so no shared filesystem

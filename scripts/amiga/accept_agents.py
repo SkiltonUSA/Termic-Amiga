@@ -8,7 +8,7 @@ import argparse, asyncio, json, re, shutil, subprocess, sys, time, zlib
 from codex_relay import Bridge, decode_checksum
 from pathlib import Path
 import accept_workflow
-from mcp import ClientSession
+from bridge_client import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 ROOT=Path(__file__).resolve().parents[2]
 PROD='SD032G:Dev/Termic'
@@ -20,7 +20,7 @@ async def main(args):
     for name in ('passed.json','editor-workflow-passed.json','restored.json'):
         (out/name).unlink(missing_ok=True)
     fixture=PROD+'/Acceptance/agents-'+str(int(time.time()))
-    async with streamablehttp_client('http://127.0.0.1:55010/mcp') as (r,w,_):
+    async with streamablehttp_client('http://127.0.0.1:55110/mcp') as (r,w,_):
         async with ClientSession(r,w) as s:
             await s.initialize()
             async def call(n,a):

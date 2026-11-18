@@ -25,10 +25,12 @@ It creates `~/Applications/Termic Amiga Codex.command`. Double-click that launch
 and leave its Terminal window open. Ctrl C stops the relay. It does not modify
 login items, system startup or your normal Codex configuration.
 
-The existing DevBench bridge must already be running at
-`http://127.0.0.1:55010/mcp`. For a different address, run the script with
+The existing Amiga-MCP gateway must already be running at
+`http://127.0.0.1:55110/mcp`. For a different address, run the script with
 `--bridge URL`. File transfers use MCP operations directly, without a shared
-filesystem. No second DevBench bridge is started. Claude/Cursor tasks use a
+filesystem. The DevBench backend stays on port 55010; clients connect to 55110.
+No second bridge is started. Reservation handling and recovery are described
+in [AI proxy](ai-proxy.md#bridge-connection). Claude/Cursor tasks use a
 private authenticated loopback adapter described in the proxy documentation.
 
 On the Amiga:

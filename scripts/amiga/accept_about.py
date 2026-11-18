@@ -5,10 +5,8 @@ import asyncio
 import json
 import re
 import subprocess
-import urllib.parse
-import urllib.request
 from pathlib import Path
-from mcp import ClientSession
+from bridge_client import ClientSession, capture_png
 from mcp.client.streamable_http import streamablehttp_client
 
 
@@ -18,7 +16,7 @@ async def main():
     ).group(1)
     out = Path(".context/amiga-about")
     out.mkdir(exist_ok=True)
-    async with streamablehttp_client("http://127.0.0.1:55010/mcp") as (r, w, _):
+    async with streamablehttp_client("http://127.0.0.1:55110/mcp") as (r, w, _):
         async with ClientSession(r, w) as session:
             await session.initialize()
 
@@ -50,25 +48,7 @@ async def main():
                 await asyncio.sleep(0.7)
 
             async def capture(title, name):
-                with urllib.request.urlopen(
-                    "http://127.0.0.1:55010/api/screenshot?"
-                    + urllib.parse.urlencode({"window": title}),
-                    timeout=60,
-                ) as response:
-                    data = json.load(response)
-                subprocess.run(
-                    [
-                        "sips",
-                        "-s",
-                        "format",
-                        "png",
-                        data["path"],
-                        "--out",
-                        str(out / name),
-                    ],
-                    check=True,
-                    capture_output=True,
-                )
+                await capture_png(session, out / name, title)
 
             for local, remote in [
                 ("TermicNativeMUI", "TermicAbout"),

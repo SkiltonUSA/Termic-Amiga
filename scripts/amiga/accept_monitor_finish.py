@@ -84,7 +84,7 @@ async def exercise(root,out,fixture,project,shell,push,call,state,click,capture,
     await write('build-command.txt','Echo Intentional early-exit regression\nQuit 0\n')
     before=await call('amiga_checksum',{'path':project+'/Program'})
     await queue_current(False)
-    async with Bridge('http://127.0.0.1:55010/mcp',fixture+'/Relay') as bridge:
+    async with Bridge('http://127.0.0.1:55110/mcp',fixture+'/Relay') as bridge:
         for _ in range(40):
             try:raw=await bridge.read('request.json')
             except ConnectionError:raw=None

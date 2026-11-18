@@ -26,7 +26,7 @@ async def main(options):
     assert fixture.startswith('SD032G:Dev/Termic/Acceptance/execution-') and fixture.rsplit('-',1)[-1].isdigit()
     lock=RelayLock(default_state())
     try:
-        async with Bridge('http://127.0.0.1:55010/mcp') as bridge:
+        async with Bridge('http://127.0.0.1:55110/mcp') as bridge:
             assert await bridge.read('request.json') is None
             parent=fixture
             fixture += '/arexx-'+provider+'-'+str(int(time.time()))

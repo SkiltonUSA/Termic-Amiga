@@ -3,14 +3,14 @@
 
 import asyncio, json, subprocess, time, urllib.request, urllib.parse
 from pathlib import Path
-from mcp import ClientSession
+from bridge_client import ClientSession, capture_png
 from mcp.client.streamable_http import streamablehttp_client
 
 
 async def main():
     out = Path(".context/amiga-colours")
     out.mkdir(exist_ok=True)
-    async with streamablehttp_client("http://127.0.0.1:55010/mcp") as (r, w, _):
+    async with streamablehttp_client("http://127.0.0.1:55110/mcp") as (r, w, _):
         async with ClientSession(r, w) as s:
             await s.initialize()
 
@@ -93,24 +93,7 @@ async def main():
             )
             await asyncio.sleep(2)
             await key("0x51")
-            url = "http://127.0.0.1:55010/api/screenshot?" + urllib.parse.urlencode(
-                {"window": "Termic Amiga Workspace"}
-            )
-            with urllib.request.urlopen(url, timeout=60) as response:
-                data = json.load(response)
-            subprocess.run(
-                [
-                    "sips",
-                    "-s",
-                    "format",
-                    "png",
-                    data["path"],
-                    "--out",
-                    str(out / "editor.png"),
-                ],
-                check=True,
-                capture_output=True,
-            )
+            await capture_png(s, out / "editor.png", "Termic Amiga Workspace")
             (out / "passed.json").write_text(
                 json.dumps({"fixture": fixture, "saved_source_exact": True})
             )

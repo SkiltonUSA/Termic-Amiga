@@ -35,6 +35,7 @@ class ReconnectTests(unittest.IsolatedAsyncioTestCase):
                 if self.number == 0: raise ConnectionRefusedError('fixture address')
                 return self
             async def __aexit__(self, *args): self.closed = True
+            async def release_if_idle(self): return True
             async def read(self, name):
                 nonlocal reads
                 if self.number == 1: return json.dumps(first)
@@ -106,6 +107,7 @@ class ReconnectTests(unittest.IsolatedAsyncioTestCase):
             def __init__(self, *args): pass
             async def __aenter__(self): return self
             async def __aexit__(self, *args): pass
+            async def release_if_idle(self): return True
             async def read(self, name): return '{}'
         with patch.object(relay, 'Bridge', Invalid):
             with self.assertRaises(ValueError): await relay.serve(relay.parser().parse_args([]))

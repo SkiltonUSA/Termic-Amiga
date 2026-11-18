@@ -99,8 +99,8 @@ Example request:
 ```
 
 For a client on another computer, run scripts/amiga/mcp_bridge.py with a Python
-environment containing the `mcp` package. It uses an already-running DevBench
-bridge; it neither starts that service nor changes its access policy. The bridge
+environment containing the `mcp` package. It uses the already-running Amiga-MCP
+gateway; it neither starts that service nor changes its access policy. The bridge
 and connector must share the host filesystem used for temporary transfers.
 Requests and replies use temporary files that the connector removes afterwards.
 
@@ -113,14 +113,19 @@ and Python environment:
     "termic-amiga": {
       "command": "/path/to/venv/bin/python",
       "args": ["/path/to/Termic-Amiga/scripts/amiga/mcp_bridge.py",
-               "--bridge", "http://127.0.0.1:55010/mcp"]
+               "--bridge", "http://127.0.0.1:55110/mcp"]
     }
   }
 }
 ```
 
 This is a stdio connection, not an HTTP endpoint at that bridge URL for Termic
-clients: the URL belongs to DevBench, which transports requests to TermicMCP.
+clients: the URL belongs to Amiga-MCP, which transports requests to TermicMCP
+through its DevBench backend. The connector reserves protected operations
+and releases between requests once Termic workers are idle. Use
+`--reservation-file /private/path/connector.json` to reuse a known recovery
+file for one connector instance; do not share it across running clients. See
+[bridge connection and recovery](ai-proxy.md#bridge-connection).
 Configure the command in the client's MCP settings. Desktop Termic peer discovery,
 pairing codes, peer_call and automatic Claude/Codex registration are not ported.
 

@@ -67,7 +67,7 @@ async def exercise(root, out, fixture, shell, push, call, state, click, capture,
         await key('50'); await key('20',('67',)); await key('41')
         # Synthetic instruction; the test acts as the host, with no inference.
         await key('10'); await key('42')
-        async with Bridge('http://127.0.0.1:55010/mcp',fixture+'/Relay') as bridge:
+        async with Bridge('http://127.0.0.1:55110/mcp',fixture+'/Relay') as bridge:
             for _ in range(30):
                 raw=await bridge.read('request.json')
                 if raw:break

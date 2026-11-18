@@ -192,7 +192,7 @@ async def accept(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--server', default='http://127.0.0.1:55010/mcp')
+    parser.add_argument('--server', default='http://127.0.0.1:55110/mcp')
     parser.add_argument('--drawer', default='SD032G:Dev/Termic/Acceptance')
     parser.add_argument('--binary', type=Path, required=True)
     parser.add_argument('--probe', type=Path, required=True)

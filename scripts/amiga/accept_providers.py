@@ -43,7 +43,7 @@ async def exercise(root, out, fixture, shell, push, call, state, click, capture,
         await key('20', ('67',)); await key('41'); await key('34', ('67',)); await key('42')
     results = {}
     try:
-        async with codex_relay.Bridge('http://127.0.0.1:55010/mcp', fixture + '/Relay') as bridge:
+        async with codex_relay.Bridge('http://127.0.0.1:55110/mcp', fixture + '/Relay') as bridge:
             async def request(text):
                 await prompt(text)
                 for _ in range(30):

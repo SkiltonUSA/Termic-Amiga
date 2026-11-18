@@ -48,7 +48,7 @@ async def main(options):
     fixture = parent + '/build-' + provider + '-' + str(int(time.time()))
     lock = RelayLock(default_state())
     try:
-        async with Bridge('http://127.0.0.1:55010/mcp') as bridge:
+        async with Bridge('http://127.0.0.1:55110/mcp') as bridge:
             assert await bridge.read('request.json') is None, 'A task owns the relay'
             await bridge.shell('MakeDir ' + fixture + '\nCopy Termic:TermicAgent ' + fixture +
                                '/TermicAgent\nCopy ' + parent + '/agent-profile ' + fixture +

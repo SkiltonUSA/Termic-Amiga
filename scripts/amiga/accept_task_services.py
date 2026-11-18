@@ -22,7 +22,7 @@ async def main(args):
     fixture=args.projects_root.rstrip('/')+'/accept-services-'+str(int(time.time()))
     lock=RelayLock(default_state())
     try:
-        async with Bridge('http://127.0.0.1:55010/mcp') as b:
+        async with Bridge('http://127.0.0.1:55110/mcp') as b:
             assert await b.read('request.json') is None
             async def write(name,text):
                 local=out/name;local.write_text(text)
