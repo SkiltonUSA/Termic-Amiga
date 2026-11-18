@@ -1,6 +1,6 @@
 # Termic Amiga
 
-**Native MUI development workspace for AmigaOS. Version 0.1.2 Beta.**
+**Native MUI development workspace for AmigaOS. Version 0.1.3 Beta.**
 
 This repository contains the Amiga implementation, separated from the desktop
 [Termic project](https://github.com/simion/termic). It runs on the Amiga using
@@ -10,19 +10,19 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 
 ## Downloads
 
-- [Native Amiga application and SDK kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/Termic-Amiga-0.1.2-beta.lha)
-  and [pinned AmiPkg entry](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/termic-amiga.json).
-- [Standalone Process Monitor](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/Termic-Process-Monitor-0.1.2-beta.lha),
+- [Native Amiga application and SDK kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-Amiga-0.1.3-beta.lha)
+  and [pinned AmiPkg entry](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/termic-amiga.json).
+- [Standalone Process Monitor](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-Process-Monitor-0.1.3-beta.lha),
   including source and a Workbench icon.
-- AI Proxy for [Apple Silicon macOS](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-AI-Proxy-macOS.zip)
-  or [Windows 11 x64](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-AI-Proxy-Windows11.zip).
+- AI Proxy for [Apple Silicon macOS](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-AI-Proxy-macOS.zip)
+  or [Windows 11 x64](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-AI-Proxy-Windows11.zip).
 
-The latest source restores the original three-column layout using native
+The 0.1.3 Beta package restores the original three-column layout using native
 MUI 5 tabs and window controls, with a compact layout for smaller windows.
-The published 0.1.2 archive predates this UI update; see
-[interface details](docs/amiga-interface.md).
+See [interface details](docs/amiga-interface.md). The companion proxies use
+Amiga-MCP at `http://127.0.0.1:55110/mcp`.
 Read the installation requirements below before upgrading an existing drawer.
-[Release notes and checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.1.2-beta)
+[Release notes and checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.1.3-beta)
 include verification details.
 
 ## Features

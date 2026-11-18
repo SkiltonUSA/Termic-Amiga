@@ -1,4 +1,4 @@
-# Termic Process Monitor 0.1.2 Beta
+# Termic Process Monitor 0.1.3 Beta
 
 Native MUI 5 application for AmigaOS 3.2, built through Termic's Kanban queue.
 The task inventory covers the Amiga Exec CPU (68060 on the configured TF4060).

@@ -11,8 +11,8 @@ Proxy build `11fb72f` includes host Git worktrees, native MicroPython tools and
 a 15-minute native build reply budget. Other tool replies retain a 3-minute
 limit; cancellation stays available and timed-out builds are never replayed.
 Verified bundles are available as
-[macOS Apple Silicon download](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-AI-Proxy-macOS.zip)
-and [Windows 11 x64 download](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-AI-Proxy-Windows11.zip).
+[macOS Apple Silicon download](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-AI-Proxy-macOS.zip)
+and [Windows 11 x64 download](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-AI-Proxy-Windows11.zip).
 Both passed 47 portable tests, packaging, MCP smoke, both mailbox modes and
 desktop lifecycle checks. Update the native worker and proxy together to use
 the new commands. Older peers retain their compatible transport but do not gain

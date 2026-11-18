@@ -42,12 +42,12 @@ named TermicNative, TermicAgent, TermicMCP, TermicStorage and TermicCheck.
 ```sh
 python3 scripts/amiga/package_native.py \
   --downloads downloads --binaries binaries \
-  --output Termic-Amiga-0.1.0-beta.lha --lha /path/to/lha
+  --output Termic-Amiga-0.1.3-beta.lha --lha /path/to/lha
 
 python3 scripts/amiga/package_amipkg.py \
-  --archive Termic-Amiga-0.1.0-beta.lha \
-  --archive-url https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.0-beta/Termic-Amiga-0.1.0-beta.lha \
-  --version 0.1.0-beta --output termic-amiga.json
+  --archive Termic-Amiga-0.1.3-beta.lha \
+  --archive-url https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-Amiga-0.1.3-beta.lha \
+  --version 0.1.3-beta --output termic-amiga.json
 ```
 
 The URL must identify the exact bytes uploaded. Use a new output filename for
@@ -59,7 +59,7 @@ Clone the upstream authoring catalog and client separately, then validate:
 
 ```sh
 python3 scripts/amiga/validate_amipkg.py \
-  --archive Termic-Amiga-0.1.0-beta.lha --entry termic-amiga.json \
+  --archive Termic-Amiga-0.1.3-beta.lha --entry termic-amiga.json \
   --catalog /path/to/amiga-pkg --client /path/to/amipkg --lha /path/to/lha
 ```
 

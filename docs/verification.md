@@ -1176,3 +1176,34 @@ The final executable and six source/manual files were installed with CRC32
 verification and a rollback backup. Termic reopened successfully, and
 TermicCheck reported zero missing dependencies. The native version remains
 0.1.2 Beta; the published release archive was not replaced.
+
+## 0.1.3 Beta AmiPkg release (17 November 2026)
+
+Rebuilt TermicNative, TermicAgent, TermicStorage, TermicMCP, TermicCheck and
+ProcessMonitor with VBCC for 68020, including a fresh TLS object. All six
+outputs have Amiga Hunk headers and the 0.1.3 Beta version string. Both
+Workbench icons specify a 262144-byte stack. All 94 portable tests passed.
+The native archive includes the MUI 5 layout and editor changes previously
+verified on the A4000TX, plus pinned SDK and MicroPython inputs.
+
+Upstream AmiPkg authoring validation reported zero errors and the expected
+pre/post-install-script review warning. The scripts were reviewed. The real
+AmiPkg parser, resolver, version comparator and recipe planner passed under
+ASan/UBSan, including dependency order/minima, missing-dependency rejection,
+68020 CPU floor, copy-plan execution, byte identity, blank credentials and
+archive hash checks. Both LHA archives passed integrity testing.
+
+Companion Mac and Windows proxy artifacts come from successful GitHub Actions
+run 44218789237 at source commit 207eccaa92f5284435a4b238b615b38e254e4aa7.
+Both platforms passed portable tests, bundled GUI/MCP smoke tests, reservation
+and mailbox tests, and desktop startup/reconnect/stop checks. Their displayed
+proxy version remains 0.1.0 Beta; native Termic has its own version number.
+These builds connect through Amiga-MCP port 55110.
+
+The bridge was paused during release preparation. A fresh on-Amiga install,
+execution of these newly versioned binaries and AmigaDOS pre/post scripts
+were not repeated. Host staging validation does not establish installed
+system-library versions or authenticated API operation. The AmiPkg JSON is
+published as a pinned entry for catalog review, not submitted to or signed
+into the public AmiPkg catalog. Existing installation drawers are refused
+by its fresh-install preflight; use the documented backup/upgrade procedure.
