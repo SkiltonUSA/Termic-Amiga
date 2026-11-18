@@ -1087,3 +1087,32 @@ The deployed executable and GUI source matched their staged checksums, with a
 verified rollback copy retained. Termic reopened with its native title bar and
 TermicCheck reported zero missing dependencies. The version remains 0.1.2 Beta;
 the published release archive is unchanged.
+
+## Compact Projects and Tasks action rows
+
+Projects now has one row of three icons (New, Rename, Import Folder), and
+Tasks has one row of five (New, Rename, Kanban, Queue, Mark Done). The buttons
+use 24x24 frames with hand-drawn 16px glyphs and full hover labels. Other
+workbench toolbars retain their existing sizes.
+
+The native MUI acceptance matrix passed from 320x240 through 1024x800,
+including repeated compact/wide transitions. It checks the expected button
+counts, shared top edge, non-overlap, pane containment and hover help, alongside
+existing source, cursor and dirty-state preservation checks. Compact Projects
+and Tasks screenshots and the wide workspace were captured on the Amiga with
+synthetic content and visually inspected. All auxiliary-window size checks
+also passed. This is automated hardware verification, not a human test.
+
+The fixture suppresses DOS requesters in its own process so optional preferences
+do not block it when the normal workspace is closed. The host runner checks
+the relay using an absolute installation path and retries transient screenshot
+probe failures up to three times, retaining foreground and complete-row checks.
+A first capture run encountered a bridge command error; the subsequent complete
+acceptance run passed. The workspace and native fixtures cross-built without
+warnings, and all 83 portable tests passed.
+
+The installed executable and five accompanying source/manual files matched
+staged checksums after replacement. A verified rollback copy was retained,
+Termic reopened successfully with its native title bar, and TermicCheck
+reported zero missing dependencies. The version remains 0.1.2 Beta; the
+published release archive is unchanged.

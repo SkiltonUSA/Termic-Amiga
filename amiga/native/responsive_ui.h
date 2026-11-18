@@ -1,6 +1,6 @@
 enum { UI_LAYOUT=6101,UI_VIEW,UI_PAGE };
 static Object *workspace_body,*workspace_row,*workspace_view,*workspace_left,*workspace_files;
-static Object *project_pane,*task_pane,*file_pane,*cli_pane,*workspace_center;
+static Object *project_pane,*task_pane,*file_pane,*cli_pane,*workspace_center,*task_actions,*project_actions;
 static Object *workspace_balance_a,*workspace_balance_b,*files_balance;
 static Object *workspace_tabs,*workspace_brand,*workspace_extra,*workspace_small_actions;
 static Object *agent_compose,*activity_caption,*instruction_caption,*profile_caption,*files_hint;

@@ -2,7 +2,8 @@
  * tooltips and the button frame; no external images or fonts are required. */
 enum { AI_SAVE, AI_RUN, AI_STOP, AI_BUILD, AI_SETTINGS, AI_INFO, AI_QUIT,
        AI_NEW, AI_RENAME, AI_FOLDER, AI_SEARCH, AI_REFRESH, AI_DONE, AI_TRASH,
-       AI_COPY, AI_UP, AI_DOWN, AI_PROMPT, AI_KEYS, AI_INSERT, AI_CANCEL, AI_AGENT };
+       AI_COPY, AI_UP, AI_DOWN, AI_PROMPT, AI_KEYS, AI_INSERT, AI_CANCEL, AI_AGENT,
+       AI_KANBAN, AI_QUEUE, AI_SMALL=0x100 };
 static struct MUI_CustomClass *action_icon_class;
 static int action_icon_kind(const char *text,int id)
 {
@@ -47,9 +48,11 @@ static ULONG action_icon_dispatch(__reg("a0") struct IClass *cl,
     ULONG result=DoSuperMethodA(cl,obj,msg);
     if(msg->MethodID==MUIM_AskMinMax) {
         struct MUI_MinMax *mm=((struct MUIP_AskMinMax *)msg)->MinMaxInfo;
+        ULONG kind=0;LONG size;
+        get(obj,MUIA_UserData,&kind);size=(kind&AI_SMALL)?16:20;
         /* Area accounts for frame/insets, but has no intrinsic contents. */
-        mm->MinWidth+=20;mm->DefWidth+=20;mm->MaxWidth+=20;
-        mm->MinHeight+=20;mm->DefHeight+=20;mm->MaxHeight+=20;
+        mm->MinWidth+=size;mm->DefWidth+=size;mm->MaxWidth+=size;
+        mm->MinHeight+=size;mm->DefHeight+=size;mm->MaxHeight+=size;
         return 0;
     }
     if(msg->MethodID==MUIM_Draw && (((struct MUIP_Draw *)msg)->flags&MADF_DRAWOBJECT)) {
@@ -60,6 +63,37 @@ static ULONG action_icon_dispatch(__reg("a0") struct IClass *cl,
         x=_mleft(obj)+(_mwidth(obj)-20)/2+!!selected;
         y=_mtop(obj)+(_mheight(obj)-20)/2+!!selected;
         SetAPen(rp,_pens(obj)[MPEN_TEXT]);SetDrMd(rp,JAM1);
+        if(kind&AI_SMALL) {
+            /* Hand-drawn 16px glyphs keep one-pixel strokes crisp. */
+            x=_mleft(obj)+(_mwidth(obj)-16)/2+!!selected;
+            y=_mtop(obj)+(_mheight(obj)-16)/2+!!selected;
+            switch(kind&~AI_SMALL) {
+            case AI_NEW:
+                ai_box(rp,x,y,2,1,13,14);
+                RectFill(rp,x+4,y+7,x+11,y+8);RectFill(rp,x+7,y+4,x+8,y+11);break;
+            case AI_RENAME:
+                ai_line(rp,x,y,3,12,11,4);ai_line(rp,x,y,4,13,12,5);
+                ai_line(rp,x,y,11,3,13,5);ai_line(rp,x,y,2,14,5,13);
+                ai_line(rp,x,y,2,15,13,15);break;
+            case AI_FOLDER:
+                ai_box(rp,x,y,1,5,14,13);ai_box(rp,x,y,2,2,7,5);
+                ai_line(rp,x,y,2,7,13,7);break;
+            case AI_KANBAN:
+                ai_box(rp,x,y,0,1,15,14);
+                ai_line(rp,x,y,5,1,5,14);ai_line(rp,x,y,10,1,10,14);
+                for(i=0;i<3;i++)ai_line(rp,x,y,2+5*i,4,3+5*i,4);
+                ai_line(rp,x,y,2,7,3,7);ai_line(rp,x,y,7,7,8,7);break;
+            case AI_QUEUE:
+                for(i=0;i<3;i++) {
+                    ai_box(rp,x,y,1,2+5*i,3,4+5*i);
+                    ai_line(rp,x,y,6,3+5*i,14,3+5*i);
+                }break;
+            case AI_DONE:
+                ai_line(rp,x,y,2,7,6,12);ai_line(rp,x,y,6,12,14,2);
+                ai_line(rp,x,y,2,8,6,13);ai_line(rp,x,y,6,13,14,3);break;
+            }
+            SetAPen(rp,pen);SetDrMd(rp,mode);return result;
+        }
         switch(kind) {
         case AI_SAVE:
             ai_box(rp,x,y,3,2,17,18);ai_box(rp,x,y,6,2,14,8);
@@ -127,13 +161,18 @@ static ULONG action_icon_dispatch(__reg("a0") struct IClass *cl,
     }
     return result;
 }
-static Object *action_icon(int kind,const char *help)
+static Object *action_icon_sized(int kind,const char *help,int small)
 {
     if(!action_icon_class)action_icon_class=__termic_mui_class(MUIMasterBase,NULL,MUIC_Area,NULL,0,(APTR)action_icon_dispatch);
     if(!action_icon_class)return NULL;
     return NewObject(action_icon_class->mcc_Class,NULL,ButtonFrame,
-        MUIA_FixWidth,32,MUIA_FixHeight,30,MUIA_InnerLeft,4,MUIA_InnerRight,4,
-        MUIA_InnerTop,3,MUIA_InnerBottom,3,MUIA_Background,MUII_ButtonBack,
+        MUIA_FixWidth,small?24:32,MUIA_FixHeight,small?24:30,
+        MUIA_InnerLeft,small?2:4,MUIA_InnerRight,small?2:4,
+        MUIA_InnerTop,small?2:3,MUIA_InnerBottom,small?2:3,MUIA_Background,MUII_ButtonBack,
         MUIA_InputMode,MUIV_InputMode_RelVerify,MUIA_CycleChain,1,
-        MUIA_UserData,kind,MUIA_ShortHelp,help,TAG_DONE);
+        MUIA_UserData,kind|(small?AI_SMALL:0),MUIA_ShortHelp,help,TAG_DONE);
+}
+static Object *action_icon(int kind,const char *help)
+{
+    return action_icon_sized(kind,help,FALSE);
 }

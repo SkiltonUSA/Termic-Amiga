@@ -5,6 +5,7 @@
 #define main termic_workspace_main
 #include "../gui.c"
 #undef main
+#include <dos/dosextens.h>
 static int failed;
 #define CHECK(x) do{if(!(x)){failed=__LINE__;goto done;}}while(0)
 static const char *fixture_source="/* Resize demo: unsaved source */\n#include <stdio.h>\nint main(void)\n{\n    puts(\"Hello Amiga\");\n    return 0;\n}\n";
@@ -37,11 +38,26 @@ static int geometry(Object *window,int width,int height)
  {char p[PATH_SIZE],s[512];snprintf(s,sizeof(s),"wanted=%dx%d actual=%dx%d min=%dx%d max=%dx%d border=%d flags=%08lx mode=%d",width,height,(int)w->Width,(int)w->Height,(int)w->MinWidth,(int)w->MinHeight,(int)w->MaxWidth,(int)w->MaxHeight,(int)w->BorderTop,(unsigned long)w->Flags,layout_compact);join(p,project_root,"geometry.txt");save_text(p,s,512);}
  return w->Width==width && w->Height==height && w->BorderTop>0 && (w->Flags&WFLG_SIZEGADGET);
 }
+static int icon_row_valid(Object *row,Object *pane,int expected)
+{
+ struct List *children=(struct List *)value(row,MUIA_Group_ChildList);
+ APTR childstate=children->lh_Head;Object *child;int count=0;LONG top=-1,right=-1;
+ while((child=NextObject(&childstate)))if(value(child,MUIA_UserData)&AI_SMALL) {
+  if(_mwidth(child)>24 || _mheight(child)>24)return 0;
+  if(count && (_mtop(child)!=top || _mleft(child)<=right))return 0;
+  if(!(char *)value(child,MUIA_ShortHelp))return 0;
+  top=_mtop(child);right=_mleft(child)+_mwidth(child)-1;count++;
+ }
+ return count==expected && right<_mleft(pane)+_mwidth(pane);
+}
 int main(int argc,char **argv)
 {
  char path[PATH_SIZE],report[2048],*text;int i,j,n=0,ticks=0;Object *shown=NULL;
  static const int sizes[][2]={{320,240},{340,280},{480,320},{640,480},{800,600},{1024,800},{340,280},{1024,800}};
  if(argc!=2 || strlen(argv[1])>120 || !strstr(argv[1],"/Acceptance/"))return 20;
+ /* Optional Termic preferences may be unavailable when the workspace is
+  * closed. A fixture must fail/fall back instead of opening volume requesters. */
+ ((struct Process *)FindTask(NULL))->pr_WindowPtr=(APTR)-1;
  strcpy(project_root,argv[1]);strcpy(current,argv[1]);strcpy(project,argv[1]);strcpy(opened,"main.c");
  MUIMasterBase=OpenLibrary("muimaster.library",21);IntuitionBase=(struct IntuitionBase *)OpenLibrary("intuition.library",37);
  GfxBase=(struct GfxBase *)OpenLibrary("graphics.library",37);DiskfontBase=OpenLibrary("diskfont.library",37);
@@ -89,6 +105,8 @@ int main(int argc,char **argv)
       CHECK(_mleft(profile_fast)+_mwidth(profile_fast)<=_mleft(workspace_center)+_mwidth(workspace_center));
     }
    }
+   if(!layout_compact || j==5)CHECK(icon_row_valid(project_actions,project_pane,3));
+   if(!layout_compact || j==6)CHECK(icon_row_valid(task_actions,task_pane,5));
    CHECK(value(workspace_center,MUIA_ShowMe)==(!layout_compact || j<5));
    CHECK(value(workspace_files,MUIA_ShowMe)==(!layout_compact || j==7 || j==8));
    CHECK(value(workspace_left,MUIA_ShowMe)==(!layout_compact || j==5 || j==6));

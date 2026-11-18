@@ -117,6 +117,12 @@ Settings, magnifier for Find, speech bubble for Prompts and a keyboard for
 Shortcuts. Dialog Save/Use/Cancel use floppy/check/cross symbols. Library
 management uses new, duplicate, trash, refresh and arrow symbols.
 
+The Tasks panel has one row of five 24x24 buttons with 16px glyphs: New,
+Rename, Kanban (columns), Queue (list) and Mark Done (tick). Each has a full
+action name in its hover help. Projects uses the same compact size for its
+single row of New, Rename and Import Folder buttons. Other toolbars keep
+their existing size.
+
 Hover for the action name and applicable shortcut. Native MUI handles focus,
 pressed and disabled states; the menu strip retains descriptive names.
 The icons are drawn locally with the current MUI text pen, without an icon

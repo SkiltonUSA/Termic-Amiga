@@ -41,6 +41,9 @@ The source editor and Files retain light text on black.
 6. After a successful build, press F7 to run Program.
 
 New task makes an independent copy of the selected workspace's source.
+Projects uses one compact icon row: New, Rename and Import Folder.
+The Tasks panel uses one compact icon row: New, Rename, Kanban, Queue
+and Mark Done. Hover over each icon for its action name.
 At small sizes, including 340x280, the selector shows one workspace pane.
 At 800x500 and above, Projects/Tasks sit left, the tabbed work page sits
 in the centre, and Files above CLI sit right. Instructions and agent

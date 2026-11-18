@@ -13,7 +13,7 @@ async def main(args):
  out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
  stage='SD032G:Dev/Termic/Acceptance/scaling-'+str(int(time.time()))
  (out/'stage.json').write_text(json.dumps({'stage':stage}))
- async with Bridge(args.server) as b:
+ async with Bridge(args.server,'SD032G:Dev/Termic/Relay') as b:
   assert 'TermicJob.' not in await b.call('amiga_list_ports',{}),'Worker active'
   assert await b.read('request.json') is None,'Relay busy'
   root=Bridge(args.server,stage);root.session=b.session
@@ -39,26 +39,30 @@ async def main(args):
    except PublicationUncertain:pass
   async def capture(panel,name):
    for _ in range(3):
-    await b.shell(stage+'/ChromeProbe front "'+TITLES[panel]+'"')
-    await asyncio.sleep(1)
-    before=await b.shell(stage+'/ChromeProbe query "'+TITLES[panel]+'"')
-    if 'front=1' not in before:continue
-    reply=await b.session.call_tool('amiga_screenshot',{'window':TITLES[panel]})
-    raw='\n'.join(getattr(c,'text','') for c in reply.content)
-    match=re.search(r'Screenshot saved: (.+) \((\d+)x(\d+), (RLE|truecolor), (\d+) rows received\)',raw)
-    after=await b.shell(stage+'/ChromeProbe query "'+TITLES[panel]+'"')
-    if not reply.isError and match and match[3]==match[5] and 'front=1' in after:
-     source=Path(match[1]);target=out/name
-     if source.suffix=='.png':shutil.copyfile(source,target)
-     else:subprocess.run(['sips','-s','format','png',str(source),'--out',str(target)],check=True,capture_output=True)
-     print('Captured '+name,flush=True);return
+    try:
+     await b.shell(stage+'/ChromeProbe front "'+TITLES[panel]+'"')
+     await asyncio.sleep(1)
+     before=await b.shell(stage+'/ChromeProbe query "'+TITLES[panel]+'"')
+     if 'front=1' not in before:continue
+     reply=await b.session.call_tool('amiga_screenshot',{'window':TITLES[panel]})
+     raw='\n'.join(getattr(c,'text','') for c in reply.content)
+     match=re.search(r'Screenshot saved: (.+) \((\d+)x(\d+), (RLE|truecolor), (\d+) rows received\)',raw)
+     after=await b.shell(stage+'/ChromeProbe query "'+TITLES[panel]+'"')
+     if not reply.isError and match and match[3]==match[5] and 'front=1' in after:
+      source=Path(match[1]);target=out/name
+      if source.suffix=='.png':shutil.copyfile(source,target)
+      else:subprocess.run(['sips','-s','format','png',str(source),'--out',str(target)],check=True,capture_output=True)
+      print('Captured '+name,flush=True);return
+    except (ConnectionError,TimeoutError) as error:
+     print('Retrying capture '+name+': '+str(error),flush=True)
+     await asyncio.sleep(1)
    raise AssertionError('Incomplete capture '+name)
   try:
    await wait('ready.txt',lambda text:text=='MATRIX_PASS');print('Native size/page matrix passed',flush=True)
    states=[]
    for panel,width,height,view,shot in [
     ('main',340,280,1,'editor-340x280.png'),('main',340,280,0,'agent-340x280.png'),
-    ('main',340,280,7,''),('main',340,280,8,'cli-340x280.png'),('main',340,280,4,'settings-340x280.png'),
+    ('main',340,280,5,'projects-340x280.png'),('main',340,280,6,'tasks-340x280.png'),('main',340,280,7,''),('main',340,280,8,'cli-340x280.png'),('main',340,280,4,'settings-340x280.png'),
     ('main',640,480,1,''),('main',1024,800,1,'workspace-1024x800.png'),
     ('main',1024,800,0,'agent-1024x800.png'),
     *[(p,340,280,1,'') for p in ('agents','access','board','queue','review','scratchpad','git','monitor')]]:

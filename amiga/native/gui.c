@@ -176,6 +176,12 @@ static Object *button(const char *s, int id)
     notify(o, MUIA_Pressed, FALSE, id);
     return o;
 }
+static Object *sidebar_button(const char *help,int id,int kind)
+{
+    Object *o=action_icon_sized(kind,help,TRUE);
+    if(o)notify(o,MUIA_Pressed,FALSE,id);
+    return o;
+}
 static Object *entry(unsigned max)
 {
     return StringObject, StringFrame, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal,
@@ -1339,13 +1345,18 @@ static int build_ui(void)
         return 0;
     project_pane=VGroup,GroupFrame,InnerSpacing(2,2),MUIA_Group_Spacing,2,
         Child,label("Projects"),Child,list(&projects),Child,projectname=entry(120),
-        Child,HGroup,Child,button("New project",NEWPROJECT),Child,button("Rename",RENAMEPROJECT),
-        Child,HVSpace,End,Child,HGroup,Child,button("Import source drawer...",IMPORTPROJECT),Child,HVSpace,End,End;
+        Child,project_actions=HGroup,MUIA_Group_Spacing,2,
+        Child,sidebar_button("New project",NEWPROJECT,AI_NEW),
+        Child,sidebar_button("Rename project",RENAMEPROJECT,AI_RENAME),
+        Child,sidebar_button("Import source drawer...",IMPORTPROJECT,AI_FOLDER),Child,HVSpace,End,End;
     task_pane=VGroup,GroupFrame,InnerSpacing(2,2),MUIA_Group_Spacing,2,
         Child,label("Tasks"),Child,list(&tasks),Child,taskname=entry(120),
-        Child,HGroup,Child,button("New task",NEWTASK),Child,button("Rename",RENAMETASK),
-        Child,HVSpace,End,
-        Child,HGroup,Child,button("Kanban",KB_OPEN),Child,button("Queue",Q_OPEN),Child,button("Mark done",MARKDONE),Child,HVSpace,End,End;
+        Child,task_actions=HGroup,MUIA_Group_Spacing,2,
+        Child,sidebar_button("New task",NEWTASK,AI_NEW),
+        Child,sidebar_button("Rename task",RENAMETASK,AI_RENAME),
+        Child,sidebar_button("Kanban board",KB_OPEN,AI_KANBAN),
+        Child,sidebar_button("Task queue",Q_OPEN,AI_QUEUE),
+        Child,sidebar_button("Mark task done",MARKDONE,AI_DONE),Child,HVSpace,End,End;
     workspace_left=mui_viewport(VGroup,Child,project_pane,Child,task_pane,End);
     set(workspace_left,MUIA_Weight,22);
     file_pane=VGroup,GroupFrame,InnerSpacing(2,2),MUIA_Group_Spacing,2,

@@ -52,7 +52,7 @@ include verification details.
 - Project-local AGENTS.md and Termic SKILL.md guidance loaded by the API worker.
 - Configurable prompt/transcript shortcuts with conflict checks, Defaults and Save/Use/Cancel.
 - Persistent workspace selection, task status, model settings and an About window.
-- Compact action icons with tooltips, native menus and Right-Amiga shortcuts.
+- Compact action icons with tooltips, single-row Projects/Tasks controls, native menus and Right-Amiga shortcuts.
 - Editor commands in the menu strip, crisp Helvetica/Courier fonts and native framed panels.
 - Save/Use/Cancel preferences and shared Amiga IFF text clipboard.
 - Linked AmigaGuide manual available with Help or Help > Contents... .
