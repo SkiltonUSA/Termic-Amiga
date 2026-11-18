@@ -5,7 +5,7 @@ Amiga task composer to Codex, Claude Code or Cursor on your host computer.
 It bundles Python, Qt and the MCP client. The three vendor CLIs and the
 DevBench bridge are separate prerequisites.
 
-![Termic AI Proxy with synthetic account status](screenshots/ai-proxy.png)
+![Termic AI Proxy with synthetic account status](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/ai-proxy.png)
 
 Proxy build `11fb72f` includes host Git worktrees, native MicroPython tools and
 a 15-minute native build reply budget. Other tool replies retain a 3-minute

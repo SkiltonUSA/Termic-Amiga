@@ -5,7 +5,7 @@ Codex uses its ChatGPT sign-in on the Mac. Source reads, edits and compilation
 execute on the Amiga through the existing DevBench MCP bridge. No API key or
 ChatGPT access/refresh token is sent to the Amiga.
 
-![Codex on Mac profile in MUI](screenshots/codex-profile.png)
+![Codex on Mac profile in MUI](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/codex-profile.png)
 
 For the standalone desktop application and Claude/Cursor support, see
 [Termic AI Proxy](ai-proxy.md). The command-line launcher below is optional.

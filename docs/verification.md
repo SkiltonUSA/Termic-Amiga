@@ -1233,3 +1233,35 @@ No target connection or installation was attempted during this packaging run.
 Physical acceptance of offline tasks, the Processors tab and fresh-install
 AmigaDOS scripts remains pending. The other hardware-validation session was
 not interrupted. A package validation pass is not a physical Amiga test.
+
+
+### 0.1.4 Beta documentation gallery (18 November 2026)
+
+Captured 22 native views from the production MUI widgets on the physical
+Amiga, plus the Mac proxy's built-in screenshot fixture. The gallery covers
+Tiny selection/profile, the workspace, Codex/Claude/Cursor, MCP preferences,
+prompts, shortcuts, About, Kanban, queue, review, broadcast, Processors,
+optional ZZ9000 details and three 340x280 views. Images were visually inspected.
+All data are synthetic; Tiny inference and live process sampling were not run.
+The native application and release packages were not replaced.
+
+The capture runner verifies transferred fixture bytes, foreground windows,
+complete screenshot rows, source preservation and Tiny's default selection.
+The shortcut reference rejected an oversized geometry request; resuming at its
+native size passed. Broadcast was retaken with light instruction text. Only
+its first line is visible in the retained capture; the fixture now colours
+each line, with a final multiline retake still pending.
+
+MultiView opened the current guide. Its long requested ARexx port name was
+truncated; the fixture now uses a short name. A subsequent attempt timed out
+on ChromeProbe front after a window-resize request. The gateway auto-paused,
+and guide cleanup could not be verified. No further target commands were
+sent through an alternate connection. The user was asked to inspect/close
+the guide or reboot and restart AmigaBridge. Guide capture remains pending;
+the revised helper leaves MultiView at its native size and checks foreground
+through window enumeration. That revised guide path is not yet validated.
+
+All 100 host tests passed in the configured Python environment; fixture
+cross-compilation and Python syntax checks passed. An initial run with the
+system Python lacked the MCP dependencies and was rerun in that environment.
+These checks do not establish release installation or model inference.

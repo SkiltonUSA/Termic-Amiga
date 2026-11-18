@@ -6,7 +6,11 @@ This repository contains the Amiga implementation, separated from the desktop
 [Termic project](https://github.com/simion/termic). It runs on the Amiga using
 MUI and native 68k tools. It does not require the desktop React/Tauri application.
 
-![Termic Amiga with CLI beneath Files](docs/screenshots/workspace-cli.png)
+![Termic Amiga with CLI beneath Files](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/workspace-cli.png)
+
+Current screenshots use the 0.1.4 Beta production widgets on the Amiga with
+synthetic demonstration data. [Full screenshot gallery](docs/screenshots.md)
+includes Tiny, Processors, ZZ9000 details and compact layouts.
 
 ## Downloads
 
@@ -32,13 +36,17 @@ selection. Its runtime and model are bundled; inference needs no API key,
 network or host proxy. Tiny answers short questions and has no coding tools.
 The processor monitor now occupies the main **Processors** tab.
 
+![Tiny offline profile and its documented limits](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/tiny-profile.png)
+
 The separately downloadable [Termic-trained candidate](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Tiny-Termic-experimental-kit.lha)
 and [training checkpoint](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Tiny-Termic-training-checkpoint.zip)
 are experimental and do not replace the bundled model. Unseen-question
 accuracy was 31/71 (43.7%); see the [model report](amiga/tiny-training/candidate/MODEL_CARD.md).
 
-All 100 host tests and local AmiPkg checks passed. Physical Amiga installation
-and acceptance of the new Processors tab remain pending. The companion
+All 100 host tests and local AmiPkg checks passed. The documentation gallery
+exercises the production widgets with synthetic data on the physical Amiga.
+Installation of the release package, offline inference and live Processors
+sampling still require release acceptance. The companion
 proxies are unchanged from 0.1.3 and retain their existing download links.
 
 ## Features
@@ -73,20 +81,20 @@ proxies are unchanged from 0.1.3 and retain their existing download links.
 - Save/Use/Cancel preferences and shared Amiga IFF text clipboard.
 - Linked AmigaGuide manual available with Help or Help > Contents... .
 
-![Live response and tool feedback during a synthetic running task](docs/screenshots/live-feedback.png)
+![Tiny selected in the Agent pane, with cyan and amber demonstration activity](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/live-feedback.png)
 
-![About Termic Amiga](docs/screenshots/about.png)
+![About Termic Amiga](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/about.png)
 
-![Amiga preferences with Save, Use and Cancel](docs/screenshots/preferences.png)
+![Amiga preferences with Save, Use and Cancel](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/preferences.png)
 
 See [Prompts, instructions and keyboard shortcuts](docs/prompts-and-instructions.md)
 for the prompt library, project guidance and screenshot-style key bindings.
 
-![Termic prompt library with black editor and action icons](docs/screenshots/prompts.png)
+![Termic prompt library with black editor and shipped defaults](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/prompts.png)
 
-![Active keyboard shortcuts](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/keyboard-shortcuts.png)
+![Active keyboard shortcuts](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/keyboard-shortcuts.png)
 
-[Shortcut preferences](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/shortcut-preferences.png) support Assign, Defaults, Save, Use and Cancel.
+[Shortcut preferences](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/shortcut-preferences.png) support Assign, Defaults, Save, Use and Cancel.
 
 See [Agent execution on the Amiga](docs/agent-execution.md) for the shared
 tools, execution results and hardware detection. Cursor collects slow operations
@@ -109,18 +117,18 @@ Start with [Termic AI Proxy for macOS and Windows 11](docs/ai-proxy.md) for
 Codex, Claude and Cursor setup, downloads and model selection.
 [Codex relay details](docs/codex-relay.md) describe the ChatGPT integration.
 
-![Termic AI Proxy desktop application](docs/screenshots/ai-proxy.png)
+![Termic AI Proxy desktop application](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/ai-proxy.png)
 
-![Claude profile with Amiga model selection](docs/screenshots/claude-profile.png)
+![Claude profile with Amiga model selection](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/claude-profile.png)
 
-![Cursor profile with Amiga model selection](docs/screenshots/cursor-profile.png)
+![Cursor profile with Amiga model selection](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/cursor-profile.png)
 
 See [Agents, CLI, scripts and MCP](docs/agents-and-mcp.md) for setup, client connections
 and differences from desktop Termic.
 
-![Native agent profiles with separate credentials and access settings](docs/screenshots/agents.png)
+![Native agent profiles with separate credentials and access settings](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/agents.png)
 
-![Amiga MCP access with Save, Use and Cancel](docs/screenshots/agent-access.png)
+![Amiga MCP access with Save, Use and Cancel](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/agent-access.png)
 
 [Amiga interface conventions](docs/amiga-interface.md) describes the menu,
 preferences and clipboard behavior and its remaining limitations.
@@ -128,11 +136,11 @@ preferences and clipboard behavior and its remaining limitations.
 See [Task workflow](docs/task-workflow.md) for the Kanban board, queue, edit review,
 notes, compiler locations and Git worktree controls.
 
-![Kanban task dragged from Review to Done after a native build](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/kanban-dragged.png)
+![Kanban board with demonstration tasks in each column](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/kanban.png)
 
-![Coloured unified change review on a black background](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/review-diff.png)
+![Coloured unified change review on a black background](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/review-diff.png)
 
-See [broadcast instructions](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/broadcast.png) and the [parallel worker queue](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/parallel-queue.png).
+See [broadcast instructions](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/broadcast.png) and the [parallel worker queue](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/parallel-queue.png).
 
 ## Integrated Process Monitor
 
@@ -155,7 +163,7 @@ RAM boards and an optional ARM debug owner are reported. The installed legacy
 firmware does not expose ARM processes or per-process telemetry; the app labels
 those values unavailable. It does not reset or replace ARM firmware.
 
-![Process Monitor with synthetic tasks and disabled process controls](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.2-beta/process-monitor.png)
+![Integrated Processors tab with synthetic tasks and disabled process controls](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/processors.png)
 
 ## Requirements and installation
 
@@ -171,7 +179,10 @@ chapters, an index and optional ToolsDaemon Workbench launcher instructions.
 Install `Termic.guide` beside `TermicNative`; it opens in MultiView.
 **Shift-Help** opens About. MagicMenu and ToolsDaemon are optional and unbundled.
 
-![AmigaGuide contents on Workbench](docs/screenshots/guide.png)
+The guide screenshot refresh is pending a bridge recovery.
+The [current 0.1.4 Beta manual](amiga/native/Termic.guide) includes Offline Tiny.
+
+![Earlier AmigaGuide contents capture](docs/screenshots/guide.png)
 
 See the [native installation guide](amiga/native/ReadMe) for installation layout,
 SDK setup, builds, project storage, shortcuts and limits. Dependency archives
