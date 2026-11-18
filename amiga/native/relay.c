@@ -80,7 +80,7 @@ int relay_message(struct RelayState *s,const char *json,char **reply)
 /* This target's C runtime fails fopen(a/r+) on the tested filesystem.
  * Use bounded backup-and-replace writes and close after each message so the
  * GUI can read progress. A full/unreadable transcript is never truncated. */
-static int append_transcript(const char *text)
+int append_transcript(const char *text)
 {
     char *old=read_text("transcript.txt",RESPONSE_LIMIT),*combined;
     size_t n=old?strlen(old):0,m=strlen(text);int ok;BPTR l;

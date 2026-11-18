@@ -27,7 +27,7 @@ Codex, Claude, Cursor or OpenAI when those capabilities are needed.
 
 ## Verification status
 
-The host suite passes 100 tests, including profile migration, Tiny question
+The host suite passes 101 tests, including profile migration, Tiny question
 bounds, transcript recording, cancellation and failure handling. Native
 application and MUI lifecycle/scaling test binaries cross-compile successfully.
 The unchanged Tiny engine passes the upstream integer oracle: all 19,493
@@ -36,9 +36,20 @@ match those values in Musashi, including prefill and greedy/sampled answers.
 These checks establish numerical parity, not speed on a physical Amiga.
 
 The offline LHA passes archive integrity checks and AmiPkg's parser, dependency
-resolver and fresh local install plan. Target installation, offline task
-execution, cancellation and the revised Processors tab still need physical
-Amiga acceptance. Version 0.1.4 Beta packages these changes; the older 0.1.3 release remains available.
+resolver and fresh local install plan. The physical Amiga now passes offline question execution and repeated transcript
+writes: `What is the capital of Peru?` returns `Lima.` with exit code 0,
+and a second run retains both answers. Cancellation and the revised Processors
+tab still need physical Amiga acceptance. Version 0.1.4 Beta packages these changes; the older 0.1.3 release remains available.
+
+## Exit code 20 after an answer
+
+The original 0.1.4 Beta worker could print Tiny's answer and then fail while
+opening `transcript.txt` in C append mode. On the tested project volume this
+returns AmigaDOS error 211, even for a new file. The corrected worker uses the
+same bounded backup-and-replace transcript writer as the relay, retains prior
+answers, and reports a transcript-saving failure explicitly. It does not alter
+Tiny's model or improve the accuracy of its answers. The original 0.1.4 release
+archives predate this correction; use a worker built from the corrected source.
 
 ## Preparing an offline kit
 

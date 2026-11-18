@@ -34,6 +34,7 @@ int main(void) {
     def test_worker_input_transcript_failures_and_cancellation(self):
         worker = (ROOT/'amiga/native/worker.c').read_text()
         implementation = 'static int run_tiny' + worker.split('static int run_tiny',1)[1].split('char *project_execute',1)[0]
+        append = (ROOT/'amiga/native/relay.c').read_text().split('int append_transcript',1)[1].split('static int publish',1)[0]
         code = r'''
 #include <assert.h>
 #include <stdio.h>
@@ -46,6 +47,13 @@ int main(void) {
 typedef long LONG;
 typedef char *STRPTR;
 #define DeleteFile(path) remove(path)
+#include <sys/stat.h>
+typedef int BPTR;
+#define ACCESS_READ 0
+#define ERROR_OBJECT_NOT_FOUND 205
+static BPTR Lock(STRPTR path,int mode){struct stat st;(void)mode;return stat(path,&st)==0;}
+static void UnLock(BPTR l){(void)l;}
+static int IoErr(void){return ERROR_OBJECT_NOT_FOUND;}
 static int calls,fail,stopped,stop_after;
 int cancel_requested(void){return stopped;}
 static LONG run_binary_input(const char *command,const char *args,const char *input) {
@@ -56,7 +64,7 @@ static LONG run_binary_input(const char *command,const char *args,const char *in
  if(stop_after)stopped=1;
  assert(save_text(".command.log", "Lima.\n",100));return fail?20:0;
 }
-''' + implementation + r'''
+''' + 'int append_transcript' + append + implementation + r'''
 int main(void) {
  struct AgentProfile p;char *text;
  memset(&p,0,sizeof(p));strcpy(p.model,"tiny-2.1");strcpy(p.command,"Termic:Tools/Tiny/tiny68k");
@@ -68,12 +76,20 @@ int main(void) {
  assert(!read_text(".tiny-input.bak",100));
  text=read_text("transcript.txt",1000);assert(text && strstr(text,"Lima."));free(text);
  text=read_text("main.c",100);assert(text && !strcmp(text,"original source"));free(text);
- remove("transcript.txt");fail=1;assert(run_tiny(&p)!=0 && calls==2);
+ assert(run_tiny(&p)==0 && calls==2);
+ text=read_text("transcript.txt",1000);
+ assert(text && strstr(strstr(text,"Lima.")+5,"Lima."));free(text);
+ /* Existing unreadable/full transcripts must survive a failed append. */
+ {FILE *f=fopen("transcript.txt","wb");int i;assert(f);
+  for(i=0;i<RESPONSE_LIMIT;i++)fputc('x',f);assert(!fclose(f));}
+ assert(run_tiny(&p)==20 && calls==3);
+ text=read_text("transcript.txt",RESPONSE_LIMIT);assert(text && strlen(text)==RESPONSE_LIMIT && text[0]=='x');free(text);
+ remove("transcript.txt");fail=1;assert(run_tiny(&p)!=0 && calls==4);
  assert(!read_text("transcript.txt",1000));
- fail=0;stop_after=1;assert(run_tiny(&p)!=0 && calls==3);
+ fail=0;stop_after=1;assert(run_tiny(&p)!=0 && calls==5);
  assert(!read_text("transcript.txt",1000));
- stop_after=stopped=0;strcpy(p.model,"unavailable");assert(run_tiny(&p)!=0 && calls==3);
- strcpy(p.model,"tiny-2.1");assert(save_text("task.txt","",10));assert(run_tiny(&p)!=0 && calls==3);
+ stop_after=stopped=0;strcpy(p.model,"unavailable");assert(run_tiny(&p)!=0 && calls==5);
+ strcpy(p.model,"tiny-2.1");assert(save_text("task.txt","",10));assert(run_tiny(&p)!=0 && calls==5);
  return 0;
 }
 '''

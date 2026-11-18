@@ -197,7 +197,7 @@ static LONG run_binary(const char *binary,const char *arguments)
 static int run_tiny(const struct AgentProfile *profile)
 {
     char question[74],*task=read_text("task.txt",8192),*answer;
-    FILE *history;LONG result=20;
+    char *entry;LONG result=20;
     if(strcmp(profile->model,"tiny-2.1")) {
         puts("Tiny supports model tiny-2.1. Choose it in Agents settings.");goto done;
     }
@@ -215,10 +215,15 @@ static int run_tiny(const struct AgentProfile *profile)
     }
     answer=read_text(".command.log",8192);
     if(!answer || !*answer){free(answer);result=20;puts("Tiny returned no answer.");goto done;}
-    history=fopen("transcript.txt","a");
-    if(!history){free(answer);result=20;goto done;}
-    fprintf(history,"Task:\n%s\nTiny 2.1 (68k):\n%s\n",task,answer);
-    if(fclose(history))result=20;
+    entry=malloc(strlen(task)+strlen(answer)+32);
+    if(!entry){free(answer);result=20;puts("Not enough memory to save Tiny's answer.");goto done;}
+    sprintf(entry,"Task:\n%s\nTiny 2.1 (68k):\n%s\n",task,answer);
+    if(!append_transcript(entry)) {
+        free(entry);free(answer);result=20;
+        puts("Tiny answered, but Termic could not save the transcript. The answer remains in Agent activity and .command.log.");
+        goto done;
+    }
+    free(entry);
     free(answer);
     puts("Tiny finished. Its answer is in Agent activity; no project files were changed.");
 done:
