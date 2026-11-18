@@ -14,7 +14,7 @@ static int picker_row[PROFILE_MAX], picker_count;
 static const char *picker_names[PROFILE_MAX + 1];
 static const char *yesno[] = {"Off", "On", NULL};
 static const char *launcher_yolo[] = {"YOLO Off", "YOLO On", NULL};
-static const char *kinds[] = {"OpenAI API", "Amiga agent CLI", "Amiga CLI", "ARexx", "MicroPython", "Codex on Mac", "Claude on Mac", "Cursor on Mac", NULL};
+static const char *kinds[] = {"OpenAI API", "Amiga agent CLI", "Amiga CLI", "ARexx", "MicroPython", "Codex on Mac", "Claude on Mac", "Cursor on Mac", "Tiny 2.1 (local 68k)", NULL};
 static const char *roles[] = {"Edit, build and run", "Read files and hardware only", NULL};
 static const char *filters[] = {"All", "API / CLI agents", "CLI / Scripts", NULL};
 static const char *profile_tabnames[] = {"General", "Launch / Sessions", "Environment",
@@ -38,7 +38,8 @@ enum
     PF_ADDPYTHON,
     PF_ADDCODEX,
     PF_ADDCLAUDE,
-    PF_ADDCURSOR
+    PF_ADDCURSOR,
+    PF_ADDTINY
 };
 static Object *cycle(const char **choices)
 {
@@ -60,6 +61,7 @@ static void profiles_picker_refresh(void)
         join(path, current, "agent-profile");
         id = read_text(path, 31);
     }
+    if(!id){id=malloc(5);if(id)strcpy(id,PROFILE_DEFAULT);}
     picker_count = 0;
     for (i = 0; i < profile_live.count; i++)
         if (profile_live.items[i].visible || (id && !strcmp(id, profile_live.items[i].id)))
@@ -144,24 +146,27 @@ static void profile_show(int index)
     set(profile_role, MUIA_Cycle_Active, p->readonly);
     set(profile_resume, MUIA_Cycle_Active, p->resume);
     set(profile_usage, MUIA_Cycle_Active, p->usage);
+    set(profile_resume,MUIA_Disabled,p->kind==PROFILE_TINY);
     sprintf(n, "%d", p->steps);
     set(profile_steps, MUIA_String_Contents, n);
     sprintf(n, "%d", p->tokens);
     set(profile_tokens, MUIA_String_Contents, n);
     set(profile_env, MUIA_TextEditor_Contents, p->env);
-    set(profile_model, MUIA_Disabled, p->kind != 0 && !profile_is_relay(p->kind));
+    set(profile_model, MUIA_Disabled, p->kind != 0 && p->kind != PROFILE_TINY && !profile_is_relay(p->kind));
     set(profile_keyfield, MUIA_Disabled, p->kind != 0);
     set(profile_role, MUIA_Disabled, p->kind != 0 && !profile_is_relay(p->kind));
     set(profile_steps, MUIA_Disabled, p->kind != 0 && !profile_is_relay(p->kind));
     set(profile_tokens, MUIA_Disabled, p->kind != 0);
     set(profile_usage, MUIA_Disabled, p->kind != 0);
     set(profile_commandfield, MUIA_Disabled, p->kind == 0 || profile_is_relay(p->kind));
-    set(profile_args, MUIA_Disabled, p->kind == 0 || profile_is_relay(p->kind));
-    set(profile_yolo, MUIA_Disabled, p->kind == 0 || profile_is_relay(p->kind));
-    set(profile_resume_args, MUIA_Disabled, p->kind == 0 || profile_is_relay(p->kind));
-    set(profile_env, MUIA_Disabled, p->kind == 0 || profile_is_relay(p->kind));
+    set(profile_args, MUIA_Disabled, p->kind == PROFILE_TINY || p->kind == 0 || profile_is_relay(p->kind));
+    set(profile_yolo, MUIA_Disabled, p->kind == PROFILE_TINY || p->kind == 0 || profile_is_relay(p->kind));
+    set(profile_resume_args, MUIA_Disabled, p->kind == PROFILE_TINY || p->kind == 0 || profile_is_relay(p->kind));
+    set(profile_env, MUIA_Disabled, p->kind == PROFILE_TINY || p->kind == 0 || profile_is_relay(p->kind));
     set(profile_info, MUIA_Text_Contents,
-        p->kind == 0
+        p->kind == PROFILE_TINY
+            ? "TINY 2.1 by WollyMonjac, local tiny68k. Model: tiny-2.1. No API key.\nShort questions (72 ASCII characters), no file/build tools or conversation memory."
+            : p->kind == 0
             ? "Direct OpenAI API. Blank model uses the main Settings model.\nBlank key retains "
               "this profile's credential. Copies need their own key."
             : profile_is_relay(p->kind) ? "Mac agent through the MCP relay. Sign in on the Mac; no Amiga API key.\nBlank model uses the Mac default. Steps limits tool calls. Start the Mac relay before sending."
@@ -178,7 +183,7 @@ static void profile_refresh(int selected)
     DoMethod(profile_list, MUIM_List_Clear);
     profile_rows = 0;
     for (i = 0; i < profile_draft.count; i++)
-        if (filter == 0 || (filter == 1 && (profile_draft.items[i].kind < 2 || profile_is_relay(profile_draft.items[i].kind))) ||
+        if (filter == 0 || (filter == 1 && (profile_draft.items[i].kind == PROFILE_TINY || profile_draft.items[i].kind < 2 || profile_is_relay(profile_draft.items[i].kind))) ||
             (filter == 2 && (profile_draft.items[i].kind >= 2 && profile_draft.items[i].kind <= 4)))
         {
             if (i == selected)
@@ -336,7 +341,8 @@ static void profile_event(int id)
     else
     {
         index = profile_add(&profile_draft,
-                            id == PF_ADDCLAUDE ? 6
+                            id == PF_ADDTINY ? PROFILE_TINY
+                            : id == PF_ADDCLAUDE ? 6
                             : id == PF_ADDCURSOR ? 7
                             : id == PF_ADDCODEX ? 5
                             : id == PF_ADDREXX ? 3
@@ -370,7 +376,7 @@ static Object *build_profiles_window(void)
     MUIA_Window_Width,1060,MUIA_Window_Height,600,WindowContents,VGroup,InnerSpacing(10,10),
     Child,HGroup,Child,label("\33bAgents / CLI / Scripts"),Child,HVSpace,Child,button("Add Codex",PF_ADDCODEX),Child,button("Add Claude",PF_ADDCLAUDE),Child,button("Add Cursor",PF_ADDCURSOR),Child,button("Reset built-ins",PF_RESET),End,
     Child,label("Configure API agents, CLI commands, ARexx and MicroPython scripts. Save keeps changes; Use lasts until reboot."),
-    Child,HGroup,Child,button("Add API",PF_ADDAPI),Child,button("Add CLI",PF_ADDTERM),Child,button("Add ARexx",PF_ADDREXX),Child,button("Add MicroPython",PF_ADDPYTHON),Child,button("Duplicate",PF_COPY),Child,button("Remove",PF_REMOVE),End,
+    Child,HGroup,Child,button("Add Tiny",PF_ADDTINY),Child,button("Add API",PF_ADDAPI),Child,button("Add CLI",PF_ADDTERM),Child,button("Add ARexx",PF_ADDREXX),Child,button("Add MicroPython",PF_ADDPYTHON),Child,button("Duplicate",PF_COPY),Child,button("Remove",PF_REMOVE),End,
     Child,HGroup,Child,VGroup,MUIA_Weight,24,Child,profile_filter=cycle(filters),Child,list(&profile_list),End,
     Child,VGroup,MUIA_Weight,76,Child,profile_tabs=MUI_NewObject(titles?MUIC_Group:MUIC_Register,
     titles?TAG_IGNORE:MUIA_Register_Titles,profile_tabnames,MUIA_Group_PageMode,TRUE,

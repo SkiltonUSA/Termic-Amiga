@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "job_finish.h"
+#include "tiny_profile.h"
 const char version_tag[] = TERMIC_VERSION_TAG("TermicAgent");
 const char stack_size[] = "$STACK:262144";
 int cancel_requested(void)
@@ -144,7 +145,7 @@ int project_source_allowed(const char *path)
 /* Execute a fixed binary in this worker process. RunCommand delivers a
  * cooperative Ctrl-C to the actual command and returns its real exit code.
  * No shell parses an agent-supplied script name. */
-static LONG run_binary(const char *binary, const char *arguments)
+static LONG run_binary_input(const char *binary, const char *arguments, const char *input_path)
 {
     BPTR segment, input, output, old_input, old_output, old_error, cwd, home, file_lock, old_home;
     char old_name[256];
@@ -156,7 +157,7 @@ static LONG run_binary(const char *binary, const char *arguments)
         printf("Cannot load %s (DOS error %ld).\n", binary, (long)IoErr());
         return -1;
     }
-    input = Open((STRPTR)"NIL:", MODE_OLDFILE);
+    input = Open((STRPTR)input_path, MODE_OLDFILE);
     output = Open((STRPTR)".command.log", MODE_NEWFILE);
     if (!input || !output) {
         if (input) Close(input);
@@ -188,6 +189,43 @@ static LONG run_binary(const char *binary, const char *arguments)
     if (text) { fputs(text, stdout); free(text); }
     fflush(stdout);
     return rc;
+}
+static LONG run_binary(const char *binary,const char *arguments)
+{
+    return run_binary_input(binary,arguments,"NIL:");
+}
+static int run_tiny(const struct AgentProfile *profile)
+{
+    char question[74],*task=read_text("task.txt",8192),*answer;
+    FILE *history;LONG result=20;
+    if(strcmp(profile->model,"tiny-2.1")) {
+        puts("Tiny supports model tiny-2.1. Choose it in Agents settings.");goto done;
+    }
+    if(!tiny_question(task,question)) {
+        puts("Tiny needs one short question, up to 72 printable ASCII characters. Use another agent for coding tasks.");goto done;
+    }
+    if(cancel_requested())goto done;
+    if(!save_text(".tiny-input",question,73))goto done;
+    puts("Tiny 2.1 by WollyMonjac, running locally on the 68k CPU. No network or file tools.");
+    fflush(stdout);
+    result=run_binary_input(profile->command,"\"Termic:Tools/Tiny/tiny.t68\" -ask\n",".tiny-input");
+    if(cancel_requested()){puts("Tiny stopped.");result=20;goto done;}
+    if(result) {
+        puts("Tiny could not finish. Install tiny68k and tiny.t68 in Termic:Tools/Tiny; see docs/tiny.md.");goto done;
+    }
+    answer=read_text(".command.log",8192);
+    if(!answer || !*answer){free(answer);result=20;puts("Tiny returned no answer.");goto done;}
+    history=fopen("transcript.txt","a");
+    if(!history){free(answer);result=20;goto done;}
+    fprintf(history,"Task:\n%s\nTiny 2.1 (68k):\n%s\n",task,answer);
+    if(fclose(history))result=20;
+    free(answer);
+    puts("Tiny finished. Its answer is in Agent activity; no project files were changed.");
+done:
+    DeleteFile((STRPTR)".tiny-input");
+    DeleteFile((STRPTR)".tiny-input.new");
+    DeleteFile((STRPTR)".tiny-input.bak");
+    free(task);return (int)result;
 }
 char *project_execute(const char *action, const char *path)
 {
@@ -360,6 +398,7 @@ static int run_profile(void)
     }
     p=&r->items[i];
     if(p->kind==0) { free(r); return run_agent(); }
+    if(p->kind==PROFILE_TINY) {rc=run_tiny(p);free(r);return rc;}
     if(profile_is_relay(p->kind)) { free(r); return run_relay(); }
     if ((p->kind == 3 || p->kind == 4) && !*p->args) {
         puts("Enter a script path and arguments in Launch / Sessions. Use a CLI for interactive input.");

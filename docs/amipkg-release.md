@@ -29,7 +29,8 @@ login or API access. `TermicCheck --gui` checks only CPU, OS, MUI and TextEditor
 
 For an existing installation, close Termic and finish workers, back up the
 installation, and replace only program binaries, Source, ReadMe, Termic.guide
-and build/install scripts. Preserve Config, Projects, task drawers, Prompts,
+and build/install scripts. Copy the bundled Tools/Tiny drawer as well when
+upgrading from a version without Tiny. Preserve Config, Projects, task drawers, Prompts,
 ENV settings and keys. Run the dependency checker afterwards. The fresh-install
 recipe intentionally does not automate upgrades into a populated drawer.
 
@@ -38,18 +39,23 @@ recipe intentionally does not automate upgrades into a populated drawer.
 Supply original archives matching `amiga/native/sdk-lock.json`, the pinned
 MicroPython files under `downloads/MicroPython`, and compiled Hunk binaries
 named TermicNative, TermicAgent, TermicMCP, TermicStorage and TermicCheck.
+The current source also requires the offline Tiny drawer built using
+[the Tiny instructions](tiny.md); older release archives predate Tiny.
 
 ```sh
 python3 scripts/amiga/package_native.py \
-  --downloads downloads --binaries binaries \
-  --output Termic-Amiga-0.1.3-beta.lha --lha /path/to/lha
+  --downloads downloads --binaries binaries --tiny /path/to/Tiny \
+  --output Termic-Amiga-preview.lha --lha /path/to/lha
 
 python3 scripts/amiga/package_amipkg.py \
-  --archive Termic-Amiga-0.1.3-beta.lha \
-  --archive-url https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-Amiga-0.1.3-beta.lha \
-  --version 0.1.3-beta --output termic-amiga.json
+  --archive Termic-Amiga-preview.lha \
+  --archive-url https://example.com/Termic-Amiga-preview.lha \
+  --version 0.1.3-tiny-preview --output termic-amiga.json
 ```
 
+The example URL is a placeholder for local validation, not a download.
+For publication, select a new release version and use its actual archive URL;
+do not reuse the published 0.1.3 URL for changed bytes.
 The URL must identify the exact bytes uploaded. Use a new output filename for
 each build; neither script silently replaces an existing archive/entry. The kit
 is built from tracked templates and verified inputs, never a live installation.
@@ -59,7 +65,7 @@ Clone the upstream authoring catalog and client separately, then validate:
 
 ```sh
 python3 scripts/amiga/validate_amipkg.py \
-  --archive Termic-Amiga-0.1.3-beta.lha --entry termic-amiga.json \
+  --archive Termic-Amiga-preview.lha --entry termic-amiga.json \
   --catalog /path/to/amiga-pkg --client /path/to/amipkg --lha /path/to/lha
 ```
 

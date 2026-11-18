@@ -58,6 +58,7 @@ class MCPTests(unittest.TestCase):
         self.assertEqual(replies[1]['id'],2)
     def test_tasks_files_scratchpads(self):
         task=self.create()
+        self.assertEqual((task/'agent-profile').read_text(),'tiny')
         self.assertEqual((task/'main.c').read_text(),(self.cwd/'Projects/demo/main.c').read_text())
         self.assertFalse(self.call('file_write',project='demo',task='fixture',path='main.c',content='/* changed */')['isError'])
         self.assertTrue((task/'main.c.bak').exists())

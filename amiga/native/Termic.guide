@@ -2,6 +2,7 @@
 @INDEX Index
 @NODE MAIN "Termic Amiga - User Guide"
 @{b}Termic Amiga 0.1.3 Beta@{ub}
+Current source: offline Tiny and integrated Processors tab.
 Native MUI development workspace for AmigaOS 3.2 / 68020+.
 
   @{"Getting started" LINK Start}       @{"Installation" LINK Install}
@@ -16,6 +17,7 @@ Native MUI development workspace for AmigaOS 3.2 / 68020+.
   @{"Codex on Mac" LINK Codex}          @{"Prompts" LINK Prompts}
   @{"Kanban and queue" LINK TaskFlow}    @{"Review and notes" LINK ReviewNotes}
   @{"Branches and worktrees" LINK HostGit}
+  @{"Offline Tiny" LINK TINY}
   @{"Alphabetical index" LINK Index}
 
 Use Contents to return here, Index for topics, Retrace to go back,
@@ -27,7 +29,7 @@ This manual does not execute commands. Type examples in an Amiga Shell.
 Termic uses MUI 5 native window controls. Drag the title to move it;
 use the lower-right sizing gadget to resize, and the native zoom gadget
 to enlarge or restore it. Closing saves the workspace first.
-Native MUI tabs choose Agent, Editor, Build / CLI, Changes and Settings.
+Native MUI tabs choose Agent, Editor, Build / CLI, Changes, Settings and Processors.
 A compact selector also offers Projects, Tasks, Files and CLI panes.
 Hover over an icon for its action name.
 The source editor and Files retain light text on black.
@@ -770,13 +772,14 @@ Native amiga-git itself does not support worktrees.
 @NODE activitymonitor "Activity / Process Monitor"
 @{b}Activity / Process Monitor@{ub}
 
-Open Tools > Process Monitor... or press Right Amiga I.
-F4 also opens Activity when the agent prompt has focus.
+Tools > Process Monitor... or Right Amiga I selects the Processors tab.
+F4 also selects it when the agent prompt has focus.
 ZZ9000... shows optional board/ARM information; Hide ZZ9000 closes that panel.
 It starts hidden and does not query the board while hidden. This button does
 not enable ARM compute offload. Unsupported metrics remain unavailable.
-The resizable monitor is part of Termic; agent jobs and editing continue.
-Opening it again activates the existing window. Closing it stops sampling.
+The resizable monitor is part of the main Termic window; jobs and editing
+continue. The Agent button returns to the conversation. Hiding the tab stops
+sampling; a previously confirmed service restart continues to be supervised.
 
 CPU is a statistical VBlank estimate, refreshed every second. Memory shows
 partial tracked allocations, not total heap or RSS. The summary shows global
@@ -792,10 +795,29 @@ Stop selected asks for confirmation and sends cooperative CTRL-C. Protected
 system/Termic tasks and stale identities are refused. There is no forced kill.
 Restart service uses optional services.txt beside TermicNative. Definitions
 are never executed on load. See the bundled process-monitor README for syntax.
-Closing Activity cancels pending restart supervision.
+Quitting Termic cancels pending restart supervision.
 
 ZZ9000 AutoConfig boards and the optional ARM owner port are reported.
 ARM process/load/memory/dependency metrics remain unavailable through the
 current monitor interface. Shared RAM size does not measure ARM heap usage.
 No firmware is changed and an absent owner port does not establish ARM idle.
+@ENDNODE
+
+@NODE TINY "Offline Tiny agent"
+TINY 2.1 by WollyMonjac, using the tiny68k Amiga port.
+Select Tiny 2.1, model tiny-2.1, beneath Task instructions.
+Tiny is the default for tasks without an explicit saved agent selection.
+Existing task selections are preserved.
+
+Ask one short question (up to 72 printable ASCII characters).
+The answer appears in Agent activity. Stop uses normal task cancellation.
+No network, API key, host proxy or ZZ9000 is needed. No automatic cloud fallback.
+Runtime: Termic:Tools/Tiny/tiny68k. Model: Termic:Tools/Tiny/tiny.t68.
+Tiny has no code editing/build tools or conversation memory.
+
+Keep Tools/Tiny/LICENSE and DATA_LICENSES.md with the model.
+Upstream source and training kit: https://github.com/WollyMonjac/Tiny-2.1
+Amiga inference port: https://github.com/SkiltonUSA/tiny68k
+Training is a separate host task; the bundled model is ready for offline use.
+The optional ZZ9000 details button does not offload Tiny inference.
 @ENDNODE

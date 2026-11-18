@@ -124,6 +124,7 @@ struct Job
 #include "activity_scroll.h"
 
 static struct ActivityView activity;
+static int monitor_fixture;
 static int transcript_pending;
 static void editor_recolour(void);
 static int colour_pending,colour_delay;
@@ -1113,7 +1114,7 @@ static int task_uses_relay(const char *task)
 {
     char path[PATH_SIZE],*id;int n;
     join(path,task,"agent-profile");id=read_value(path,31);
-    n=profile_find(&profile_live,id?id:"openai");free(id);
+    n=profile_find(&profile_live,id?id:PROFILE_DEFAULT);free(id);
     /* Unknown profiles must not bypass serialization. Worker reports the error. */
     return n<0 || profile_is_relay(profile_live.items[n].kind);
 }
@@ -1343,7 +1344,7 @@ static void workspace_fonts(void)
 }
 static int build_ui(void)
 {
-    Object *body,*agent,*editpage,*buildpage,*changes,*settings,*toolbar;
+    Object *body,*agent,*editpage,*buildpage,*changes,*settings,*toolbar,*processorpage;
     struct Screen *screen;
     LONG initial_width=1000,initial_height=700;
     workspace_class=__termic_mui_class(MUIMasterBase,NULL,MUIC_Group,NULL,sizeof(struct WorkspaceData),(APTR)workspace_dispatch);
@@ -1415,11 +1416,13 @@ static int build_ui(void)
         Child,button("Test verified HTTPS",PROBE),Child,label("Project drawer (restart to apply)"),Child,projectdrawer=entry(180),
         Child,label("Build command (must produce Program.new)"),Child,buildcommand=entry(512),Child,HGroup,Child,button("Save build command",SAVEBUILD),Child,HVSpace,End,
         Child,HGroup,Child,button("Save",SAVECONFIG),Child,button("Use",USECONFIG),Child,button("Cancel",CANCELCONFIG),Child,HVSpace,End,Child,HVSpace,End;
+    processorpage=termic_monitor_page(app,monitor_fixture);
+    if(!processorpage)return 0;
     workspace_tabs=MUI_NewObject("Title.mui",Child,label("Agent"),Child,label("Editor"),
-        Child,label("Build / CLI"),Child,label("Changes"),Child,label("Settings"),TAG_DONE);
+        Child,label("Build / CLI"),Child,label("Changes"),Child,label("Settings"),Child,label("Processors"),TAG_DONE);
     if(!workspace_tabs)return 0;
     pages=PageGroup,Child,workspace_tabs,Child,mui_viewport(agent),Child,mui_viewport(editpage),Child,mui_viewport(buildpage),
-        Child,mui_viewport(changes),Child,mui_viewport(settings),End;
+        Child,mui_viewport(changes),Child,mui_viewport(settings),Child,mui_viewport(processorpage),End;
     workspace_center=VGroup,MUIA_Weight,65,MUIA_Group_Spacing,2,Child,heading=elastic_label("Termic workspace"),Child,pages,End;
     toolbar=HGroup,MUIA_Group_Spacing,2,Child,workspace_brand=label("TERMIC / AMIGA " TERMIC_VERSION),
         Child,workspace_view=cycle(workspace_views),Child,HVSpace,Child,button("Build",BUILD),Child,button("Run",RUN),
@@ -1451,6 +1454,7 @@ static int build_ui(void)
     if (!win)
         return 0;
     DoMethod(app, OM_ADDMEMBER, win);
+    termic_monitor_attach(win);
     profile_window=build_profiles_window();
     if(!profile_window) return 0;
     access_window=build_access_window();
@@ -1582,6 +1586,7 @@ int main(int argc, char **argv)
             storage_failed = 1;
         }
     }
+    monitor_fixture=argc==2 && !strcmp(argv[1],"--activity-fixture");
     if (!build_ui())
     {
         puts("MUI 5.0 and TextEditor.mcc 15.56 are required. Run TermicCheck.");
@@ -1640,7 +1645,7 @@ int main(int argc, char **argv)
     activity_scroll_bottom(transcript);
     flow_startup();
     keymap_load();
-    if(argc==2 && !strcmp(argv[1],"--activity-fixture"))termic_monitor_open(app,1);
+    if(monitor_fixture)workspace_select(9);
     while (!done)
     {
         update_menus();
@@ -1651,12 +1656,13 @@ int main(int argc, char **argv)
             char *name;
             if(workspace_event(id))continue;
             if(id==TM_ACTIVITY_OPEN) {
-                if(!termic_monitor_open(app,0))message("Cannot open Activity monitor.");
+                workspace_select(9);
                 continue;
             }
+            if(id==5805){workspace_select(0);continue;}
             if(termic_monitor_event(id))continue;
             if(id>=AC_OPEN && id<=AC_CANCEL) {access_event(id);continue;}
-            if(id>=PF_OPEN && id<=PF_ADDCURSOR) {profile_event(id);continue;}
+            if(id>=PF_OPEN && id<=PF_ADDTINY) {profile_event(id);continue;}
             if (shortcut_event(id) || broadcast_event(id)) continue;
             if(id>=PL_OPEN && id<=PL_INSERT) {prompts_event(id);continue;}
             if(id==ED_DIAGNOSTIC) {

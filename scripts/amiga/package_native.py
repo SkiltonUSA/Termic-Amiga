@@ -36,12 +36,23 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--downloads", type=Path, required=True)
     parser.add_argument("--binaries", type=Path, required=True)
+    parser.add_argument("--tiny", type=Path, required=True, help="Offline runtime drawer produced by build_tiny.py")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--lha", default="lha")
     parser.add_argument(
         "--download", action="store_true", help="Fetch missing SDK archives"
     )
     args = parser.parse_args()
+    tiny_lock = json.loads((SOURCE / "tiny-lock.json").read_text())
+    tiny_receipt = json.loads((args.tiny / "provenance.json").read_text())
+    for name in ("tiny68k", "tiny.t68", "LICENSE", "DATA_LICENSES.md", "ReadMe"):
+        actual = hashlib.sha256((args.tiny/name).read_bytes()).hexdigest()
+        if actual != tiny_receipt['artifacts'][name]:
+            raise ValueError("Tiny runtime checksum mismatch: " + name)
+    if hashlib.sha256((args.tiny/'tiny.t68').read_bytes()).hexdigest() != tiny_lock['converted_sha256']:
+        raise ValueError("Tiny model does not match the pinned offline model")
+    if (args.tiny/'tiny68k').read_bytes()[:4] != b"\0\0\3\xf3":
+        raise ValueError("Tiny runtime is not an Amiga Hunk executable")
     manifest = json.loads((SOURCE / "sdk-lock.json").read_text())
     args.downloads.mkdir(parents=True, exist_ok=True)
     runtime = args.downloads / "MicroPython"
@@ -95,6 +106,10 @@ def main():
             shutil.copyfile(runtime/name, stage/"Tools/MicroPython"/name)
         (stage/"Tools/MicroPython/micropython").chmod(0o755)
         shutil.copyfile(SOURCE/"micropython-lock.json",stage/"Tools/MicroPython/provenance.json")
+        (stage / "Tools/Tiny").mkdir()
+        for name in ("tiny68k", "tiny.t68", "LICENSE", "DATA_LICENSES.md", "ReadMe", "provenance.json"):
+            shutil.copyfile(args.tiny/name, stage/"Tools/Tiny"/name)
+        (stage/"Tools/Tiny/tiny68k").chmod(0o755)
         (stage / "Config").mkdir()
         (stage / "Config/api-key").write_text("")
         (stage / "Config/model").write_text("gpt-5-mini\n")

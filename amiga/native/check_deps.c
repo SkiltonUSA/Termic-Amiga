@@ -36,6 +36,8 @@ int main(int argc,char **argv)
         check("VBCC driver",file("Termic:SDK/vbcc_bin_amigaos68k/bin/vc"));
         check("VBCC Amiga target",file("Termic:SDK/vbcc_target_m68k-amigaos/config/aos68k"));
         check("NDK headers",file("Termic:SDK/NDK/Include_H/exec/types.h"));
+        check("Offline Tiny runtime",file("Termic:Tools/Tiny/tiny68k"));
+        check("Offline Tiny model",file("Termic:Tools/Tiny/tiny.t68"));
         check("MicroPython",file("Termic:Tools/MicroPython/micropython"));
         check("Native Git",file("Termic:Tools/amiga-git/git"));
         library("amisslmaster.library",5,27);

@@ -218,3 +218,11 @@ The bundled [AI Proxy app](ai-proxy.md) supports macOS and Windows 11; native
 profile labels retain "on Mac" for compatibility. Provider tools are restricted
 to the shared native file, build, execution and hardware-query interface.
 Live cloud access still requires a valid provider login and account entitlement.
+
+## Offline Tiny and default selection
+
+Tiny 2.1 is now the fallback profile for tasks without an `agent-profile`
+file. Existing task selections remain unchanged. Native MCP `task_new`
+defaults to Tiny and `task_send` accepts Tiny or a direct API profile. Tiny
+executes locally with no API key or relay; it answers short questions and
+has no file/build tools. See [offline Tiny setup and limits](tiny.md).

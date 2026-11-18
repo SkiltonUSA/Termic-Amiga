@@ -20,15 +20,19 @@ static void init(struct AgentProfile *p, const char *id, const char *name, int k
 void profiles_defaults(struct AgentProfiles *p)
 {
     memset(p, 0, sizeof(*p));
-    p->count = 2;
+    p->count = 3;
     p->next_id = 1;
     init(&p->items[0], "openai", "OpenAI API", 0);
     init(&p->items[1], "shell", "Amiga CLI", 2);
     strcpy(p->items[1].command, "C:NewShell");
+    init(&p->items[2], PROFILE_DEFAULT, "Tiny 2.1", PROFILE_TINY);
+    strcpy(p->items[2].model, "tiny-2.1");
+    strcpy(p->items[2].command, "Termic:Tools/Tiny/tiny68k");
+    p->items[2].readonly = 1; p->items[2].resume = p->items[2].usage = 0;
 }
 int profile_builtin(const struct AgentProfile *p)
 {
-    return !strcmp(p->id, "openai") || !strcmp(p->id, "shell");
+    return !strcmp(p->id, "openai") || !strcmp(p->id, "shell") || !strcmp(p->id, PROFILE_DEFAULT);
 }
 static int single(const char *s)
 {
@@ -68,7 +72,7 @@ void profile_session(const struct AgentProfile *p, char *out)
 int profile_valid(const struct AgentProfile *p)
 {
     const char *s = p->id, *e;
-    if (!*s || !*p->name || p->kind < 0 || p->kind > 7 || p->steps < 1 || p->steps > 32 ||
+    if (!*s || !*p->name || p->kind < 0 || p->kind > PROFILE_TINY || p->steps < 1 || p->steps > 32 ||
         p->tokens < 256 || p->tokens > 16384 || p->visible < 0 || p->visible > 1 ||
         p->readonly < 0 || p->readonly > 1 || p->resume < 0 || p->resume > 1 || p->usage < 0 ||
         p->usage > 1)
@@ -137,9 +141,14 @@ int profile_add(struct AgentProfiles *p, int kind, int copy)
              kind == 0   ? "New API agent"
              : kind == 1 ? "New Amiga CLI"
                          : kind == 2 ? "New CLI"
-             : kind == 3 ? "New ARexx script" : kind == 4 ? "New MicroPython script" : kind == 6 ? "Claude on Mac" : kind == 7 ? "Cursor on Mac" : "Codex on Mac",
+             : kind == PROFILE_TINY ? "Tiny 2.1" : kind == 3 ? "New ARexx script" : kind == 4 ? "New MicroPython script" : kind == 6 ? "Claude on Mac" : kind == 7 ? "Cursor on Mac" : "Codex on Mac",
              kind);
     if (copy < 0) {
+        if (kind == PROFILE_TINY) {
+            strcpy(p->items[i].model,"tiny-2.1");
+            strcpy(p->items[i].command,"Termic:Tools/Tiny/tiny68k");
+            p->items[i].readonly=1;p->items[i].resume=p->items[i].usage=0;
+        }
         if (kind == 2) strcpy(p->items[i].command, "C:NewShell");
         if (kind == 3) { strcpy(p->items[i].command, "SYS:Rexxc/RX"); strcpy(p->items[i].args, "Termic:Examples/hello.rexx"); }
         if (kind == 4) { strcpy(p->items[i].command, "Termic:Tools/MicroPython/micropython"); strcpy(p->items[i].args, "Termic:Examples/hello.py"); }
@@ -207,6 +216,8 @@ int profiles_parse(struct AgentProfiles *p, const char *json)
     i = profile_find(tmp, "shell");
     if (i < 0 || tmp->items[i].kind != 2)
         goto done;
+    i = profile_find(tmp, PROFILE_DEFAULT);
+    if (i >= 0 && tmp->items[i].kind != PROFILE_TINY) goto done;
     *p = *tmp;
     ok = 1;
 done:
@@ -261,6 +272,12 @@ int profiles_load(struct AgentProfiles *p)
     free(s);
     if (ok) {
         int cli = profile_find(p, "shell");
+        if(profile_find(p,PROFILE_DEFAULT)<0 && p->count<PROFILE_MAX) {
+            struct AgentProfile *a=&p->items[p->count++];
+            init(a,PROFILE_DEFAULT,"Tiny 2.1",PROFILE_TINY);
+            strcpy(a->model,"tiny-2.1");strcpy(a->command,"Termic:Tools/Tiny/tiny68k");
+            a->readonly=1;a->resume=a->usage=0;
+        }
         if (cli >= 0 && !strcmp(p->items[cli].name, "Amiga Shell"))
             strcpy(p->items[cli].name, "Amiga CLI");
     }
@@ -287,7 +304,7 @@ int profile_selected(struct AgentProfiles *p)
     char *id = read_text(TERMIC_PROJECT "agent-profile", 31);
     int i;
     if (!id)
-        return profile_find(p, "openai");
+        return profile_find(p, PROFILE_DEFAULT);
     id[strcspn(id, "\r\n")] = 0;
     i = profile_find(p, id);
     free(id);
@@ -297,7 +314,7 @@ int profile_command(const struct AgentProfile *p, int yolo, int resume, char *ou
                     unsigned size)
 {
     int n;
-    if (!profile_valid(p) || (p->kind == 0 || profile_is_relay(p->kind)) || !*p->command)
+    if (!profile_valid(p) || (p->kind == 0 || p->kind == PROFILE_TINY || profile_is_relay(p->kind)) || !*p->command)
         return 0;
     n = snprintf(out, size, "\"%s\" %s %s %s", p->command, p->args, yolo ? p->yolo : "",
                  resume ? p->resume_args : "");

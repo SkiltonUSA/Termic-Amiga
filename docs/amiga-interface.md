@@ -139,13 +139,13 @@ The icons are drawn locally with the current MUI text pen, without an icon
 font, image files or another class dependency. Agent-type selectors and
 command-palette entries keep their descriptive labels.
 
-## Activity window
+## Processors tab
 
-Tools > Process Monitor... (Right Amiga I) opens the integrated native
-process monitor. View > Activity / processes remains an alternative entry.
-F4 opens it from the agent prompt. It is a child window of
-Termic's MUI application, with its own asynchronous timer, so the workspace
-and job queue continue servicing events. Reopening activates the same window.
+The Processors tab contains the integrated native process monitor.
+Tools > Process Monitor... (Right Amiga I) selects that tab. View > Activity / processes remains an alternative entry.
+F4 selects it from the agent prompt. The page lives inside the main workspace
+window; no separate application or child window is launched. Its asynchronous
+timer lets the workspace and job queue continue servicing events.
 
 The inventory lists all Exec tasks, executable names, task addresses, states,
 priorities, stack sizes, partial tracked memory and sampled CPU. Native MUI
@@ -153,8 +153,9 @@ column separators and aligned headings distinguish each field; numeric columns
 align right and the name column expands with the window. Address order
 is stable; CPU and memory sort descending, name ascending. Selection follows
 task identity. Pause stops sampling and freezes the display while confirmed
-service restart supervision continues. Closing removes the interrupt sampler,
-timer, fonts and window; closing Termic performs the same cleanup.
+service restart supervision continues. Switching tabs stops CPU sampling,
+while pending service restarts still complete. Returning resumes sampling
+unless paused. Closing Termic releases the sampler and timer.
 
 The existing cooperative stop and opt-in service restart protections apply.
 Service definitions are read from `services.txt` beside `TermicNative`.

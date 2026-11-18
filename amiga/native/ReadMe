@@ -1,10 +1,24 @@
 TERMIC AMIGA WORKSPACE
 
 Native MUI development workspace for AmigaOS 3.x: projects and independent
-source-copy tasks, embedded source editing, cloud-agent conversations,
+source-copy tasks, embedded source editing, offline Tiny and cloud agents,
 local builds, program execution, AmigaDOS commands and local Git review.
 The application and compiler run on the Amiga. No Mac, Docker, DevBench or
 LAN model server is needed at runtime.
+
+OFFLINE TINY
+Tiny 2.1 is the default for tasks without a saved agent selection. Existing
+selections and credentials are preserved. Ask one short question, up to
+72 printable ASCII characters, such as "What is the capital of Peru?".
+Tiny runs on the Amiga 68k CPU using Tools/Tiny/tiny68k and Tools/Tiny/tiny.t68.
+Both are bundled: no internet connection, API key, Mac proxy or ZZ9000 is
+needed for inference. The reply appears in Agent activity. There is no
+automatic cloud fallback. Tiny is a small factual question-answering model;
+it cannot edit files, run builds or remember conversations. Select another
+agent for coding tasks. Stop requests cooperative cancellation.
+TINY 2.1 is by WollyMonjac; the Amiga engine is SkiltonUSA/tiny68k.
+Keep Tools/Tiny/LICENSE and DATA_LICENSES.md with the model. See the Tiny
+node in Termic.guide for usage and the upstream training sources.
 
 REQUIREMENTS
 68020+, AmigaOS 3.2, MUI 5.0, TextEditor.mcc 15.56, Fast RAM, VBCC and NDK.
@@ -57,7 +71,7 @@ The traditional Amiga tag uses major.minor; FULL also shows the complete
 native version and its Beta designation.
 
 WORKSPACE
-Native MUI tabs select Agent, Editor, Build / CLI, Changes and Settings.
+Native MUI tabs select Agent, Editor, Build / CLI, Changes, Settings and Processors.
 At 340x280 a top selector also offers Projects, Tasks, Files and CLI as
 full-width panes. At 800x500 and above, Projects/Tasks sit on the left,
 the tabbed work page in the centre, and Files above CLI on the right.
@@ -270,7 +284,9 @@ its next request. Named guidance is readable but not writable through agent
 file tools. The Files list lets you edit it yourself with backup saves.
 
 Right Amiga K or Help > Keyboard shortcuts opens the black reference window.
-Right Amiga I opens Tools > Process Monitor from any workspace page.
+Right Amiga I or Tools > Process Monitor selects the embedded Processors tab.
+No separate monitor application or window is launched. Sampling pauses while
+the tab is hidden; a previously confirmed service restart still completes.
 Its optional ZZ9000 button shows/hides board information; it is off initially.
 This display option does not enable ARM compute offload.
 Default prompt keys: Tab sends, Shift Tab cycles profiles, Ctrl J adds a newline,

@@ -7,7 +7,7 @@ import argparse,asyncio,json,re,shutil,subprocess,time
 from pathlib import Path
 from codex_relay import Bridge,PublicationUncertain
 TITLES={'main':'Termic: MUI scaling demo','agents':'Termic: Agents, CLI and Scripts',
- 'access':'Termic: Agent access','board':'Termic: Kanban board','queue':'Termic: Task queue','monitor':'Termic: Activity',
+ 'access':'Termic: Agent access','board':'Termic: Kanban board','queue':'Termic: Task queue','monitor':'Termic: MUI scaling demo',
  'review':'Termic: Review agent changes','scratchpad':'Termic: Scratchpads','git':'Termic: Git branches and worktrees'}
 async def main(args):
  out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
@@ -62,10 +62,10 @@ async def main(args):
    states=[]
    for panel,width,height,view,shot in [
     ('main',340,280,1,'editor-340x280.png'),('main',340,280,0,'agent-340x280.png'),
-    ('main',340,280,5,'projects-340x280.png'),('main',340,280,6,'tasks-340x280.png'),('main',340,280,7,''),('main',340,280,8,'cli-340x280.png'),('main',340,280,4,'settings-340x280.png'),
+    ('main',340,280,5,'projects-340x280.png'),('main',340,280,6,'tasks-340x280.png'),('main',340,280,7,''),('main',340,280,8,'cli-340x280.png'),('main',340,280,4,'settings-340x280.png'),('main',340,280,9,'processors-340x280.png'),
     ('main',640,480,1,''),('main',1024,800,1,'workspace-1024x800.png'),
     ('main',1024,800,0,'agent-1024x800.png'),
-    *[(p,340,280,1,'') for p in ('agents','access','board','queue','review','scratchpad','git','monitor')]]:
+    *[(p,340,280,9 if p=='monitor' else 1,'') for p in ('agents','access','board','queue','review','scratchpad','git','monitor')]]:
     frame=dict(panel=panel,width=width,height=height,view=view)
     await control(frame)
     raw=await wait('state.json',lambda s:all(json.loads(s).get(k)==v for k,v in frame.items()))

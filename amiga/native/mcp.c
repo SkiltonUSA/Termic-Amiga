@@ -466,12 +466,12 @@ static cJSON *run_tool(const struct Tool *tool, cJSON *args)
         struct AgentProfiles *p = calloc(1, sizeof(*p));
         int i;
         if (!agent)
-            agent = "openai";
+            agent = PROFILE_DEFAULT;
         if (!p || !profiles_load(p) || (i = profile_find(p, agent)) < 0 ||
-            p->items[i].kind != 0)
+            (p->items[i].kind != 0 && p->items[i].kind != PROFILE_TINY))
         {
             free(p);
-            return content("Choose a direct API agent profile.", 1);
+            return content("Choose Tiny or a direct API agent profile.", 1);
         }
         free(p);
         if (!segment(id) || !project_path(str(args, "project"), base))
@@ -561,11 +561,11 @@ static cJSON *run_tool(const struct Tool *tool, cJSON *args)
         pathjoin(path, sizeof(path), task, "agent-profile");
         id = read_text(path, 31);
         if (!p || !id || !profiles_load(p) || (n = profile_find(p, id)) < 0 ||
-            p->items[n].kind != 0)
+            (p->items[n].kind != 0 && p->items[n].kind != PROFILE_TINY))
         {
             free(p);
             free(id);
-            return content("Task requires a direct API profile.", 1);
+            return content("Task requires Tiny or a direct API profile.", 1);
         }
         free(p);
         free(id);

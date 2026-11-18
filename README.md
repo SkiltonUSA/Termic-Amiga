@@ -25,6 +25,13 @@ Read the installation requirements below before upgrading an existing drawer.
 [Release notes and checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.1.3-beta)
 include verification details.
 
+## Source additions after 0.1.3 Beta
+
+The current source adds [offline Tiny 2.1](docs/tiny.md) as the default agent
+for tasks without a saved selection, and embeds the processor monitor in the
+main **Processors** tab. The release downloads above predate these additions.
+Tiny answers short questions locally; it does not provide coding-agent tools.
+
 ## Features
 
 - Projects and independent source-copy task workspaces.

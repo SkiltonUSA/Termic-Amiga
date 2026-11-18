@@ -12,8 +12,11 @@ int main(void)
     int n;
     assert(p && q);
     profiles_defaults(p);
-    assert(p->count == 2);
+    assert(p->count == 3);
     assert(!profile_remove(p, 0));
+    assert(!profile_remove(p, 2));
+    assert(profile_selected(p)==2 && p->items[2].kind==PROFILE_TINY);
+    assert(!profile_command(&p->items[2],1,1,command,sizeof(command)));
     n = profile_add(p, 0, 0);
     strcpy(p->items[n].model, "fixture-model");
     strcpy(p->items[n].name, "Fixture account");
@@ -21,10 +24,10 @@ int main(void)
     json = profiles_json(p);
     assert(json && profiles_parse(q, json));
     free(json);
-    assert(q->count == 3 && q->items[2].readonly &&
-           !strcmp(q->items[2].model, "fixture-model"));
+    assert(q->count == 4 && q->items[3].readonly &&
+           !strcmp(q->items[3].model, "fixture-model"));
     assert(!profiles_parse(q, "{\"version\":99,\"profiles\":[]}"));
-    assert(q->count == 3);
+    assert(q->count == 4);
     strcpy(p->items[n].id, "../api-key");
     assert(!profiles_json(p));
     strcpy(p->items[n].id, "custom-1");
@@ -55,7 +58,14 @@ int main(void)
     json = profiles_json(p);
     assert(save_text("Config/agents.json", json, PROFILE_LIMIT));
     free(json);
-    assert(profiles_load(q) && q->count == 2);
+    assert(profiles_load(q) && q->count == 3);
+    /* Existing two-profile registries gain Tiny without changing their IDs. */
+    p->count=2;json=profiles_json(p);assert(json);
+    assert(save_text("Config/agents.json",json,PROFILE_LIMIT));free(json);
+    assert(profiles_load(q) && q->count==3 && profile_find(q,"tiny")==2);
+    assert(profile_selected(q)==2);
+    assert(save_text("agent-profile","openai",31));assert(profile_selected(q)==0);
+    assert(remove("agent-profile")==0);
     assert(save_text("Env/agents.json", "broken", 32));
     assert(!profiles_load(q));
     profiles_defaults(p);

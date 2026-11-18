@@ -1,6 +1,8 @@
 #ifndef TERMIC_PROFILES_H
 #define TERMIC_PROFILES_H
 #define PROFILE_MAX 32
+#define PROFILE_TINY 8
+#define PROFILE_DEFAULT "tiny"
 #define PROFILE_LIMIT 196608
 struct AgentProfile
 {

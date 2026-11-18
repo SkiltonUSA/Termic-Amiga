@@ -62,11 +62,13 @@ int main(int argc,char **argv)
  MUIMasterBase=OpenLibrary("muimaster.library",21);IntuitionBase=(struct IntuitionBase *)OpenLibrary("intuition.library",37);
  GfxBase=(struct GfxBase *)OpenLibrary("graphics.library",37);DiskfontBase=OpenLibrary("diskfont.library",37);
  CHECK(MUIMasterBase && IntuitionBase && GfxBase && DiskfontBase);
- i=build_ui();
+ monitor_fixture=1;i=build_ui();
  snprintf(report,sizeof(report),"class=%ld app=%ld win=%ld profiles=%ld access=%ld board=%ld queue=%ld review=%ld pads=%ld git=%ld body=%ld center=%ld pages=%ld",(long)!!workspace_class,(long)!!app,(long)!!win,(long)!!profile_window,(long)!!access_window,(long)!!board_window,(long)!!queue_window,(long)!!change_window,(long)!!pad_window,(long)!!git_window,(long)!!workspace_body,(long)!!workspace_center,(long)!!pages);
  join(path,project_root,"diagnostics.txt");save_text(path,report,2048);
  CHECK(i);set(win,MUIA_Window_Title,"Termic: MUI scaling demo");
  profiles_defaults(&profile_live);profiles_picker_refresh();
+ CHECK(value(profile_picker,MUIA_Cycle_Active)==2);
+ CHECK(profile_live.items[picker_row[2]].kind==PROFILE_TINY);
  set(model,MUIA_String_Contents,"example-model");set(projectdrawer,MUIA_String_Contents,"Work:Projects");
  set(buildcommand,MUIA_String_Contents,"vc main.c -o Program.new");
  set(heading,MUIA_Text_Contents,"Demo project / Resize task");
@@ -82,7 +84,7 @@ int main(int argc,char **argv)
  SetAttrs(source,MUIA_TextEditor_HasChanged,TRUE,MUIA_TextEditor_CursorY,2,MUIA_TextEditor_CursorX,3,TAG_DONE);set(prompt,MUIA_TextEditor_HasChanged,TRUE);CHECK(same_source());
  for(i=0;i<sizeof(sizes)/sizeof(sizes[0]);i++) {
   CHECK(geometry(win,sizes[i][0],sizes[i][1]));
-  for(j=0;j<9;j++) {
+  for(j=0;j<10;j++) {
    workspace_select(j);pump();CHECK(same_source());
    {struct Window *w=(struct Window *)value(win,MUIA_Window_Window);
     if(j==1) {
@@ -99,6 +101,10 @@ int main(int argc,char **argv)
     set(pages,MUIA_Group_ActivePage,(j+1)%5);pump();
     CHECK(value(workspace_view,MUIA_Cycle_Active)==(j+1)%5);CHECK(same_source());
     workspace_select(j);pump();
+   }
+   if(j==9) {
+    set(pages,MUIA_Group_ActivePage,0);pump();CHECK(layout_view==0);
+    set(pages,MUIA_Group_ActivePage,5);pump();CHECK(layout_view==9 && same_source());
    }
    CHECK(value(workspace_tabs,MUIA_ShowMe));
    CHECK(value(workspace_view,MUIA_ShowMe)==layout_compact);
@@ -162,17 +168,11 @@ int main(int argc,char **argv)
    else if(!strcmp(which,"scratchpad"))shown=pad_window;
    else if(!strcmp(which,"git"))shown=git_window;
    else if(!strcmp(which,"monitor")) {
-    struct List *windows;APTR state;Object *o;
-    CHECK(termic_monitor_open(app,1));
-    windows=(struct List *)value(app,MUIA_Application_WindowList);state=windows->lh_Head;
-    while((o=NextObject(&state))) {
-     char *title=(char *)value(o,MUIA_Window_Title);
-     if(title && !strcmp(title,"Termic: Activity")){shown=o;break;}
-    }
-    CHECK(shown!=win);
+    workspace_select(9);pump();
+    CHECK(value(pages,MUIA_Group_ActivePage)==5);
    }
    CHECK(cJSON_IsNumber(width) && cJSON_IsNumber(height) && width->valueint>=340 && height->valueint>=240);
-   if(cJSON_IsNumber(view) && view->valueint>=0 && view->valueint<9)workspace_select(view->valueint);
+   if(cJSON_IsNumber(view) && view->valueint>=0 && view->valueint<10)workspace_select(view->valueint);
    set(shown,MUIA_Window_Open,TRUE);CHECK(geometry(shown,width->valueint,height->valueint));
    set(shown,MUIA_Window_Activate,TRUE);WindowToFront((struct Window *)value(shown,MUIA_Window_Window));pump();
    CHECK(same_source());

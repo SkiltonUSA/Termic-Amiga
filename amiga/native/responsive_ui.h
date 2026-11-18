@@ -6,7 +6,7 @@ static Object *workspace_tabs,*workspace_brand,*workspace_extra,*workspace_small
 static Object *agent_compose,*profile_actions,*profile_buttons,*activity_caption,*instruction_caption;
 static int layout_compact=-1,layout_view=-1;
 static const char *workspace_views[]={"Agent","Editor","Build log","Changes","Settings",
-    "Projects","Tasks","Files","CLI",NULL};
+    "Projects","Tasks","Files","CLI","Processors",NULL};
 static struct MUI_CustomClass *workspace_class;
 struct WorkspaceData {struct MUI_EventHandlerNode events;};
 static ULONG workspace_dispatch(__reg("a0") struct IClass *cl,__reg("a2") Object *obj,__reg("a1") Msg msg)
@@ -55,8 +55,9 @@ static void workspace_layout(void)
     set(workspace_files,MUIA_ShowMe,!compact || view==7 || view==8);
     set(file_pane,MUIA_ShowMe,!compact || view==7);
     set(cli_pane,MUIA_ShowMe,!compact || view==8);
-    set(workspace_center,MUIA_ShowMe,!compact || view<5);
-    if(view<5)SetAttrs(pages,MUIA_NoNotify,TRUE,MUIA_Group_ActivePage,view,TAG_DONE);
+    set(workspace_center,MUIA_ShowMe,!compact || view<5 || view==9);
+    termic_monitor_visible(view==9);
+    if(view<5 || view==9)SetAttrs(pages,MUIA_NoNotify,TRUE,MUIA_Group_ActivePage,view==9?5:view,TAG_DONE);
     DoMethod(workspace_body,MUIM_Group_ExitChange);
     layout_view=view;layout_compact=compact;
 }
@@ -68,7 +69,7 @@ static void workspace_select(int view)
 }
 static int workspace_event(ULONG id)
 {
-    if(id==UI_PAGE){workspace_select(value(pages,MUIA_Group_ActivePage));return 1;}
+    if(id==UI_PAGE){int page=value(pages,MUIA_Group_ActivePage);workspace_select(page==5?9:page);return 1;}
     if(id==UI_VIEW || id==UI_LAYOUT){workspace_layout();return 1;}
     return 0;
 }

@@ -1,0 +1,17 @@
+{
+  "source_repository": "https://github.com/SkiltonUSA/tiny68k",
+  "source_commit": "8fb3c887b1fe6755f2d07d0736d3fb147cf03ba6",
+  "upstream_repository": "https://github.com/WollyMonjac/Tiny-2.1",
+  "upstream_commit": "49348445661ffc9106f243afb4eafe499a51e286",
+  "model": "tiny-2.1",
+  "max_question": 72,
+  "files": {
+    "src/tiny68k.c": "29e620f5a4c25ee283c69f902ccedb3d5fd89b8e1d3c7be07a3aa75b5c8f62db",
+    "src/matmul68k.s": "c6a4c8aaaeb3e951e777b0c29b93f0610e3197aec35d15f6bab13bf534dd8ebd",
+    "src/prefix_kv.h": "8cc5c448909dffeba086952fbb9bded57c0f088f734b057bf88113af280bcf89",
+    "dos/TINY.BIN": "4b603237070ad9084433537bf8d6c7470d0fc583e6a4f1f03c00cd17264e7095",
+    "LICENSE": "9773b974303fbbb5d522cb4f33f8b8431100a9d0c0ce8994b6c1de2af9dc8598",
+    "DATA_LICENSES.md": "0a7c16b5ad7830e73a8098b9e417385b3a7a5c676a1996a1369bdd25ee9bbb79"
+  },
+  "converted_sha256": "894fdaf6d351563de08c698c86bfbebdd791a50c3d4256f23a7e8632d2e7b56d"
+}

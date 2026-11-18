@@ -52,6 +52,11 @@ def main():
         assert (installed/'Config/api-key').read_bytes()==b''
         for name in ('TermicNative','TermicAgent','TermicMCP','TermicCheck','TermicStorage'):
             assert (installed/name).read_bytes()[:4]==b'\0\0\x03\xf3'
+        tiny = installed/'Tools/Tiny'
+        assert (tiny/'tiny68k').read_bytes()[:4] == b'\0\0\3\xf3'
+        lock = json.loads((ROOT/'amiga/native/tiny-lock.json').read_text())
+        assert hashlib.sha256((tiny/'tiny.t68').read_bytes()).hexdigest() == lock['converted_sha256']
+        assert (tiny/'LICENSE').is_file() and (tiny/'DATA_LICENSES.md').is_file()
         assert (installed/'Termic.guide').read_text().startswith('@DATABASE')
         assert not list(installed.rglob('queue.json')) and not list(installed.rglob('job.log'))
         print(output.splitlines()[-1])

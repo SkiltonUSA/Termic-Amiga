@@ -211,7 +211,7 @@ class NativeProtocolTests(unittest.TestCase):
                         "" if mode == 6 else "test-key\n"
                     )
                     (work / "Config/agents.json").unlink(missing_ok=True)
-                    (work / "Project/agent-profile").unlink(missing_ok=True)
+                    (work / "Project/agent-profile").write_text("openai")
                     original = "/* fixture source */\n"
                     (work / "Project/main.c").write_text(original)
                     (work / "Project/session.txt").unlink(missing_ok=True)

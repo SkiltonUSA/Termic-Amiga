@@ -21,8 +21,8 @@ Use a 262144-byte stack, including the Workbench icon's Stack setting.
 
 ## Integrated Termic window
 
-The same monitor is linked into TermicNative. Open Tools > Process Monitor...
-(Right Amiga I), or F4 from the agent prompt. The child MUI window shares the
+The same monitor is linked into TermicNative. Select the Processors tab or Tools > Process Monitor...
+(Right Amiga I), or F4 from the agent prompt. The integrated Processors tab shares the
 workspace event loop; jobs and editing continue. CPU/Memory sorts descend,
 Name ascends, and Address restores stable ordering. Pause stops sampling;
 confirmed service restarts continue. Closing releases the sampler and timer.
@@ -110,3 +110,7 @@ Implementation references: Exec's
 The interrupt server returns zero with Z set and performs no allocation or OS
 calls. Task identity checks use bounded traversals while scheduling is forbidden;
 only counter copying/reset briefly disables interrupts.
+
+The embedded monitor has no separate window or executable. Switching away
+pauses CPU sampling; a pending confirmed service restart still completes.
+The Agent button returns to the Agent tab. ZZ9000 details remain optional.
