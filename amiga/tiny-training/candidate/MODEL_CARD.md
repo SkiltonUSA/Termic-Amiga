@@ -87,5 +87,5 @@ editing, build tools, live hardware access or conversation memory.
 TINY 2.1 is by WollyMonjac; the integer Amiga port is SkiltonUSA/tiny68k.
 Keep `LICENSE` and `DATA_LICENSES.md` with the model. The initial checkpoint
 and replay include mledoze/countries (ODbL) and Periodic-Table-JSON
-(CC BY-SA 3.0) information. Termic-specific QA uses this repository's MIT
+(CC BY-SA 3.0) information. Termic-specific QA uses this repository's AGPL-3.0
 licensed documentation. Full upstream pins are in `../upstream-lock.json`.

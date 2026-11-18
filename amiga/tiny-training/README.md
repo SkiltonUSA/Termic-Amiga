@@ -87,5 +87,5 @@ Tiny 2.1 and the trainer are by WollyMonjac; the integer Amiga port is by
 SkiltonUSA/tiny68k. Retain the upstream MIT `LICENSE` and `DATA_LICENSES.md`
 with derived models. The initial checkpoint and replay include information
 from mledoze/countries (ODbL) and Periodic-Table-JSON (CC BY-SA 3.0).
-The additional Termic documentation QA is covered by this repository's MIT
+The additional Termic documentation QA is covered by this repository's AGPL-3.0
 license. See each fact's `source` for its documented behavior.
