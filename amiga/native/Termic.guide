@@ -841,6 +841,7 @@ above requiring a host connection. There is no automatic provider fallback.
 Target profile model, permissions, step limits and resume settings apply.
 Choose a read-only target to keep the handoff read-only too.
 Replies appear in the same activity transcript; Tiny stays selected.
+After success, memory retains its last 1024 characters for later recall.
 The original task instructions are preserved. Stop cancels the relay job.
 
 READ-ONLY PROJECT ACCESS

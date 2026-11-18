@@ -61,7 +61,7 @@ char *list_project_sources(void){char *p=malloc(8);strcpy(p,"main.c\n");return p
 int run_relay_handoff(const char *id,const char *task) {
  assert(!strcmp(id,"codex"));assert(strstr(task,"Current user request:"));
  assert(strstr(task,"Use MUI 5"));assert(strstr(task,"original source"));
- assert(strlen(task)<=8192);handoffs++;return 0;
+ assert(strlen(task)<=8192);handoffs++;assert(append_transcript("HOST_REPLY_MEMORY_MARKER\n"));return 0;
 }
 #include "tiny_assistant.h"
 int cancel_requested(void){return stopped;}
@@ -119,6 +119,7 @@ int main(void) {
  assert(tiny_local("/handoff unknown run")==-1 && handoffs==0);
  assert(tiny_local("/handoff codex Review without edits.")==1 && handoffs==1);
  assert(tiny_local("/agents")==1);
+ text=tiny_recall("HOST_REPLY_MEMORY_MARKER");assert(text && strstr(text,"Tiny: ") && strstr(text,"HOST_REPLY_MEMORY_MARKER"));free(text);
  assert(save_text("Termic:Termic.guide","@NODE MAIN \"Contents\"\nGuide contents.\n@ENDNODE\n@NODE YOLO \"YOLO mode\"\nYOLO enables faster agent execution.\n@ENDNODE\n",1000));
  text=tiny_docs("what does yolo mean");assert(text && strstr(text,"[YOLO]") && strstr(text,"faster"));free(text);
  assert(tiny_local("/docs yolo")==1);

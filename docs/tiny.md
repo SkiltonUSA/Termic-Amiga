@@ -97,14 +97,21 @@ model, permissions, step limit and session-resume settings apply. Credentials
 remain on the host. Read-only Tiny access does not change the target profile's
 permissions; choose a read-only target for a read-only handoff.
 
-Replies and progress appear in the same activity transcript. The task's Tiny
+Replies and progress appear in the same activity transcript. After a successful
+handoff, memory also retains the last 1,024 characters of that transcript for
+recall and later handoffs. The task's Tiny
 selection and original instructions remain unchanged. Stop uses the existing
 relay cancellation path. If the host is unavailable or the ID is invalid,
 Termic reports failure without selecting another provider. Direct API and local
 CLI profiles are not handoff targets in this implementation.
 
 The original 0.1.4 Beta archives and MUI guide update predate these local-assistant
-features. They require the updated worker, guide and source from this revision.
+features. Install the separate
+[Tiny assistant update](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-Tiny-Assistant-Update.lha)
+over a complete 0.1.4 Beta installation after backing it up and closing Termic.
+The update includes the worker, MUI application, MCP helper, guide and matching
+sources. Its [SHA-256 checksum](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-Tiny-Assistant-Update.sha256)
+is published alongside it.
 
 ## Verification status
 
@@ -112,9 +119,15 @@ The local-assistant commands, memory bounds, corrupt-state preservation,
 read-only path rejection and handoff context construction pass host tests.
 The worker and MUI application cross-compile. The written physical acceptance
 runner is `scripts/amiga/accept_tiny_assistant.py`; its synthetic provider
-fixtures check relay handoffs without a live provider login. Physical acceptance
-of these new features and target installation are pending: the bridge paused
-on the initial port-list request, before the fixture was launched.
+fixtures check relay handoffs without a live provider login. On the physical
+Amiga, 28 command runs passed across the initial and handoff-memory checks:
+guide lookup, source listing/reading, memory across separate worker processes,
+recall, explicit notes, forgetting, rejected paths/writes, all three provider
+handoffs, host failure propagation and recall of the host's reply. Source
+contents, task instructions and the Tiny profile selection were preserved.
+Handoffs used synthetic host replies; these checks do not establish live
+provider authentication or answer quality. The updated MUI guide was also
+opened and captured on the Amiga with isolated documentation data.
 
 The following results describe the earlier Tiny inference/transcript fix:
 

@@ -32,11 +32,14 @@ async def main(args):
     async with Bridge(DEFAULT_BRIDGE,fixture,reservation_path=args.reservation) as b:
         ports=await b.call('amiga_list_ports',{})
         assert 'TermicJob.' not in ports and 'TermicCodexRelay' not in ports
-        await b.shell('MakeDir '+fixture+'\nMakeDir '+fixture+'/Config\nMakeDir '+fixture+'/Relay')
+        for directory in [fixture,fixture+'/Config',fixture+'/Relay']:
+            await b.shell('If NOT EXISTS '+directory+'\n MakeDir '+directory+'\nEndIf')
         async def put(name,data):
             local=out/name.replace('/','-');local.write_bytes(data.encode() if isinstance(data,str) else data)
             await b.call('amiga_push_file',{'local_path':str(local),'amiga_path':fixture+'/'+name})
-            await b.verify_file(name,local.read_bytes())
+            parent,_,leaf=name.rpartition('/')
+            view=Bridge(DEFAULT_BRIDGE,fixture+'/'+parent if parent else fixture);view.session=b.session
+            await view.verify_file(leaf,local.read_bytes())
         await put('TermicAgent',worker.read_bytes());await put('FixtureAgent',test_worker.read_bytes())
         await put('Config/agents.json',json.dumps({'version':1,'next_id':1,'profiles':profiles}))
         await put('agent-profile','tiny');await put('main.c','/* TINY_READ_ONLY_FIXTURE */\nint main(void) { return 0; }\n')
@@ -71,19 +74,23 @@ async def main(args):
             results.append({'command':command,'exit':int(result),'log':log})
             print(command,'exit',result.strip(),flush=True)
             return log
-        await run('/help')
-        assert 'Offline guide:' in await run('/docs yolo')
-        assert 'main.c' in await run('/files')
-        assert 'TINY_READ_ONLY_FIXTURE' in await run('/read main.c')
-        await run('/remember Use MUI 5')
-        assert 'TINY_READ_ONLY_FIXTURE' in await run('/history')
-        assert 'Use MUI 5' in await run('/recall MUI')
-        for command in ['/read ../main.c','/read SYS:secret.txt','/read transcript.txt','/write main.c replacement','/handoff tiny build']:
-            await run(command,20)
+        if not args.handoffs_only:
+            await run('/help')
+            assert 'Offline guide:' in await run('/docs yolo')
+            assert 'main.c' in await run('/files')
+            assert 'TINY_READ_ONLY_FIXTURE' in await run('/read main.c')
+            await run('/remember Use MUI 5')
+            assert 'TINY_READ_ONLY_FIXTURE' in await run('/history')
+            assert 'Use MUI 5' in await run('/recall MUI')
+            for command in ['/read ../main.c','/read SYS:secret.txt','/read transcript.txt','/write main.c replacement','/handoff tiny build']:
+                await run(command,20)
+        else:
+            await run("/remember Use MUI 5")
         # Refresh the source excerpt after negative tests have consumed turns.
         await run('/read main.c')
         for provider in ['codex','claude','cursor']:
             await run('/handoff test-'+provider+' Review the source without editing it.',provider=provider)
+        assert 'Synthetic cursor handoff verified' in await run('/recall Synthetic cursor')
         await run('/handoff test-codex Review without changes.',20,provider='codex',status='failed')
         await run('/forget')
         assert 'No matching saved context' in await run('/history')
@@ -92,6 +99,6 @@ async def main(args):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--reservation',type=Path);p.add_argument('--fixture',required=True);p.add_argument('--worker',type=Path,required=True)
+    p.add_argument('--handoffs-only',action='store_true');p.add_argument('--reservation',type=Path);p.add_argument('--fixture',required=True);p.add_argument('--worker',type=Path,required=True)
     p.add_argument('--fixture-worker',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
     asyncio.run(main(p.parse_args()))

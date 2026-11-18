@@ -12,6 +12,14 @@ is independent of the native 0.1.4 Beta release. The native MUI 5 guide uses the
 including Offline Tiny. Its screenshots show the guide update after the
 original 0.1.4 Beta package; the original release archive is unchanged.
 
+## Tiny local assistant update
+
+The updated MUI guide documents offline lookup, read-only project access,
+saved task context and explicit host-agent handoff. This capture uses the
+current guide; older profile screenshots below show the original release.
+
+![Tiny local assistant commands in the MUI 5 guide](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/tiny-local-guide.png)
+
 ## Workspace and Tiny
 
 ### Editable source, projects, tasks, Files and CLI

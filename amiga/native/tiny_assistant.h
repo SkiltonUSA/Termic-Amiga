@@ -181,7 +181,13 @@ static int tiny_local(const char *task)
   if(context && !cancel_requested()) {
    printf("Explicit handoff to %s. Sending request and saved Tiny context; target profile permissions apply.\n",r->items[selected].name);
    fflush(stdout);rc=run_relay_handoff(arg,context);
-   if(!rc && !tiny_remember_turn(line,"Handed to the selected host agent; see the activity transcript for its result."))puts("Handoff completed, but Tiny memory could not be updated.");
+   if(!rc) {
+    char *history=read_text("transcript.txt",RESPONSE_LIMIT);
+    const char *recent=history?history+(strlen(history)>1024?strlen(history)-1024:0):
+        "Handoff completed; see the activity transcript for its result.";
+    if(!tiny_remember_turn(line,recent))puts("Handoff completed, but Tiny memory could not be updated.");
+    free(history);
+   }
   }else puts("Handoff not started. Use /agents, then /handoff ID request (up to 3000 characters). Check Tiny memory with /history.");
   free(context);free(r);free(arg);return rc? -1:1;
  }

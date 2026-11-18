@@ -45,8 +45,10 @@ Current source also adds **offline guide lookup, read-only project access,
 persistent task memory and explicit Codex/Claude/Cursor handoff**. Select Tiny
 and enter `/help`, `/docs yolo`, `/files`, `/read main.c` or `/history` in Task
 instructions. See the [command reference and handoff limits](docs/tiny.md#local-commands).
-These additions require the updated worker and guide; the original 0.1.4 Beta
-archives and earlier MUI guide update predate them.
+Install the separate [Tiny assistant update](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-Tiny-Assistant-Update.lha)
+over a complete 0.1.4 Beta installation. The original archives and earlier MUI
+guide update predate these features. See the command reference for installation
+steps, memory limits and exactly what an explicit handoff sends.
 The processor monitor now occupies the main **Processors** tab.
 
 ![Tiny offline profile and its documented limits](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/tiny-profile.png)
