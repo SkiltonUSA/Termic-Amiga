@@ -522,6 +522,7 @@ int main(int argc, char **argv)
     {
         char *command = read_text("command.txt", 1024);
         printf("Working directory: %s\n",directory_name);
+        if(command)printf("> %s\n",command);
         if (command && *command)
         {
             size_t n = strlen(command);

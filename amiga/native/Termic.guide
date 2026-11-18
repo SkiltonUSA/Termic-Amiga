@@ -171,12 +171,21 @@ own Quit action before the worker can finish. See @{"Troubleshooting" LINK Troub
 @ENDNODE
 
 @NODE Shell "CLI, ARexx and MicroPython"
-The CLI panel directly below Files provides a mode selector and command field.
+The CLI panel directly below Files has a black editable command console,
+a mode selector and a separate command field. Type after the final > prompt
+and press Return to run a command directly in the console. Escape restores
+the prompt if you edited the output above it. Only the final single-line
+command is executable; output history and multiline pastes are not executed.
+An unfinished command is preserved when new job output arrives. Switching
+projects or tasks clears the draft. The console shows the last 32 KB of log;
+the full log remains in Build / CLI and job.log. This is a command runner,
+not an interactive terminal: programs that require stdin are not supported.
 Choose CLI for
 AmigaDOS commands, or ARexx / MicroPython for a script path and arguments.
-Choose Execute
-or press Return in that field. Shift-F3 focuses it directly. Commands run
-in the selected project or task directory, shown below the mode selector.
+Press Return in the separate field to run its text. The Execute/play button
+runs the inline draft if nonempty, otherwise the separate field. Shift-F3
+focuses the separate field directly. Commands run in the selected project or
+task directory, shown below the mode selector.
 The CLI directory name and file access use that same directory. Each command
 starts there; a CD command does not change the next command's starting drawer.
 Output is captured in the log.

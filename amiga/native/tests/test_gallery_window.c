@@ -58,7 +58,7 @@ static int gallery_seed(void)
  set(projectname,MUIA_String_Contents,"Hello Amiga");set(taskname,MUIA_String_Contents,"Offline questions");
  set(source,MUIA_TextEditor_Contents,demo_source);set(prompt,MUIA_TextEditor_Contents,"what is the capital of peru\n");
  set(transcript,MUIA_TextEditor_Contents,"\33P[79C8FF]Tiny 2.1: offline question answering\n\n\33P[F2B66D]Demo: Tiny is selected for this task.\n\33P[F2B66D]Runs locally on the Amiga 68k CPU.\n\33P[F2B66D]No API key or Mac proxy is required.\n\n\33P[79C8FF]Enter a short question below to start.\n\33P[F2B66D]Maximum: 72 printable ASCII characters.\n\33P[F2B66D]Use /help for local tools and saved context.\n");
- set(cli_output,MUIA_TextEditor_Contents,"Demo CLI transcript\n\n> Echo Hello Amiga\nHello Amiga\n\nCLI, ARexx and MicroPython\nuse the mode selector above.\n");
+ cli_log("Demo CLI transcript\n\n> Echo Hello Amiga\nHello Amiga\n\nCLI, ARexx and MicroPython\nuse the mode selector above.\n");
  set(cli_directory,MUIA_Text_Contents,"Work:Projects/HelloAmiga");
  set(command,MUIA_String_Contents,"Echo Hello Amiga");
  set(output,MUIA_TextEditor_Contents,"Demonstration build log\n\nvc +aos68k -cpu=68020 -O1 main.c\n  -o Program.new -lamiga\n\nBuild completed.\nProgram.new promoted to Program.\n");
@@ -87,6 +87,55 @@ static int gallery_seed(void)
  set(change_note,MUIA_Text_Contents,"Demonstration diff. Green + added; red - removed; blue headers.");
  shortcut_defaults(shortcut_map);shortcut_ready=1;
  return 1;
+}
+/* Written native acceptance: exercise the production editor, key routing and
+ * worker submission in this isolated Acceptance drawer only. */
+static int gallery_cli_checks(void)
+{
+ char path[PATH_SIZE],*raw;ULONG sigs,id;int i,found;struct IntuiMessage key;
+#define CLI_CHECK(x) do {if(!(x))return __LINE__;}while(0)
+ CLI_CHECK(!value(cli_output,MUIA_TextEditor_ReadOnly));
+ cli_log("Synthetic output\n");
+ set(win,MUIA_Window_ActiveObject,cli_output);
+ DoMethod(cli_output,MUIM_TextEditor_InsertText,"Echo inline-ok >inline-marker.txt",MUIV_TextEditor_InsertText_Cursor);
+ CLI_CHECK(cli_capture() && !strcmp(cli_console.draft,"Echo inline-ok >inline-marker.txt"));
+ join(path,current,"missing-transcript.txt");content(transcript,path,"Synthetic history\n");
+ CLI_CHECK(cli_capture() && !strcmp(cli_console.draft,"Echo inline-ok >inline-marker.txt"));
+ job_output("Synthetic update\n");
+ CLI_CHECK(cli_capture() && !strcmp(cli_console.draft,"Echo inline-ok >inline-marker.txt"));
+ CLI_CHECK(value(cli_output,MUIA_TextEditor_CursorY)==cli_console.row);
+ memset(&key,0,sizeof(key));key.IDCMPWindow=(struct Window *)value(win,MUIA_Window_Window);
+ key.Code=0x44;CLI_CHECK(cli_key_event(&key));found=0;
+ while((id=DoMethod(app,MUIM_Application_NewInput,&sigs))!=0)if(id==CLI_INLINE)found++;
+ CLI_CHECK(found==1);
+ /* History selection does not execute the prompt. */
+ set(cli_output,MUIA_TextEditor_CursorY,0);cli_submit(CLI_INLINE);CLI_CHECK(!any_jobs());
+ set(cli_output,MUIA_TextEditor_CursorY,cli_console.row);cli_submit(CLI_INLINE);
+ CLI_CHECK(any_jobs() && !*cli_console.draft);
+ DoMethod(cli_output,MUIM_TextEditor_InsertText,"Echo draft-kept",MUIV_TextEditor_InsertText_Cursor);
+ cli_submit(CLI_INLINE);CLI_CHECK(cli_capture() && !strcmp(cli_console.draft,"Echo draft-kept"));
+ for(i=0;i<300 && any_jobs();i++){Delay(10);poll_jobs();}
+ CLI_CHECK(!any_jobs() && cli_capture() && !strcmp(cli_console.draft,"Echo draft-kept"));
+ join(path,current,"inline-marker.txt");raw=read_text(path,100);CLI_CHECK(raw && strstr(raw,"inline-ok"));free(raw);
+ /* Return in the separate field ignores the unsubmitted inline draft. */
+ set(command,MUIA_String_Contents,"Echo field-ok >field-marker.txt");cli_submit(CLI_FIELD);
+ CLI_CHECK(any_jobs() && !*(char *)value(command,MUIA_String_Contents));
+ for(i=0;i<300 && any_jobs();i++){Delay(10);poll_jobs();}
+ CLI_CHECK(!any_jobs() && cli_capture() && !strcmp(cli_console.draft,"Echo draft-kept"));
+ join(path,current,"field-marker.txt");raw=read_text(path,100);CLI_CHECK(raw && strstr(raw,"field-ok"));free(raw);
+ /* Editing history or a multiline paste cannot become executable input. */
+ set(cli_output,MUIA_TextEditor_Contents,"edited output\n> Echo forbidden >forbidden.txt");
+ cli_submit(CLI_INLINE);CLI_CHECK(!any_jobs());cli_render();CLI_CHECK(cli_capture());
+ DoMethod(cli_output,MUIM_TextEditor_InsertText,"\nEcho forbidden",MUIV_TextEditor_InsertText_Cursor);
+ cli_submit(CLI_INLINE);CLI_CHECK(!any_jobs());cli_render();
+ join(path,current,"forbidden.txt");CLI_CHECK(!exists(path));
+ cli_console_clear(&cli_console);cli_log("Inline command: passed\nInput field: passed\nDraft kept: passed\n\nType after >.\nReturn runs command.\n");
+ strcpy(cli_console.draft,"Echo Hello Amiga");cli_render();
+ set(command,MUIA_String_Contents,"");
+ message("Type after > and press Return. Commands use the selected workspace.");
+ join(path,project_root,"cli-passed.txt");CLI_CHECK(save_text(path,"CLI_WIDGETS_AND_COMMANDS_PASS",128));
+ return 0;
+#undef CLI_CHECK
 }
 int main(int argc,char **argv)
 {
@@ -151,6 +200,10 @@ int main(int argc,char **argv)
      set(broadcast_note,MUIA_Text_Contents,"Demo source: Hello Amiga / Build greeting");
      DoMethod(broadcast_profiles,MUIM_List_Select,MUIV_List_Select_All,MUIV_List_Select_On,NULL);}
    }
+   if(!strcmp(mode,"cli-test")) {
+    join(path,current,"main.c");REQUIRE(save_text(path,demo_source,1024));
+    fail=gallery_cli_checks();if(fail){cJSON_Delete(r);goto done;}
+   }
    REQUIRE(shown);
    p=cJSON_GetObjectItemCaseSensitive(r,"view");view=cJSON_IsNumber(p)?p->valueint:1;REQUIRE(view>=0 && view<10);
    workspace_select(view);gallery_pump();
@@ -170,6 +223,7 @@ int main(int argc,char **argv)
  }
  REQUIRE(captures>0 && ticks<36000);
 done:
+ cli_console_clear(&cli_console);
  termic_monitor_close();if(app)MUI_DisposeObject(app);guide_free(&guide_doc);
  if(keyeditor_class)__termic_mui_unclass(MUIMasterBase,keyeditor_class);
  if(workspace_class)__termic_mui_unclass(MUIMasterBase,workspace_class);

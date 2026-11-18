@@ -34,6 +34,7 @@ async def main(args):
                 else:raise AssertionError('CLI worker did not finish')
                 values=await v.read_many('job.log','.result','caller-directory.txt','.command.log')
                 assert values['.result'].strip()=='0',values
+                assert '> '+command in values['job.log'],values
                 assert values['caller-directory.txt'].strip().lower().endswith(':dev/termic'),values
                 header=next(line[len('Working directory: '):] for line in values['job.log'].splitlines() if line.startswith('Working directory: '))
                 assert header.lower().endswith(sub.lower()),values

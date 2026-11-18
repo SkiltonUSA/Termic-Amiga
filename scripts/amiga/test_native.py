@@ -11,6 +11,14 @@ SOURCE = ROOT / "amiga/native"
 
 
 class NativeProtocolTests(unittest.TestCase):
+    def test_cli_console(self):
+        with tempfile.TemporaryDirectory() as directory:
+            binary = Path(directory) / 'cli-console'
+            subprocess.run(['cc', '-std=c99', '-Wall', '-Wextra', '-Werror',
+                '-fsanitize=address,undefined', str(SOURCE/'tests/test_cli_console.c'),
+                '-o', str(binary)], check=True)
+            subprocess.run([str(binary)], check=True)
+
     def test_mui_guide_document(self):
         with tempfile.TemporaryDirectory() as directory:
             binary = Path(directory) / 'guide'

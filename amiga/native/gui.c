@@ -11,6 +11,7 @@
 #include "change_review.h"
 #include "diagnostics.h"
 #include "activity_monitor.h"
+#include "cli_console.h"
 #include <ctype.h>
 #include <devices/timer.h>
 #include <dos/dosextens.h>
@@ -53,6 +54,8 @@ static char project_paths[MAX_ITEMS][PATH_SIZE], task_paths[MAX_ITEMS][PATH_SIZE
 static char current[PATH_SIZE], opened[184], project[PATH_SIZE];
 static char project_root[PATH_SIZE] = "Termic:Projects";
 static int project_count, task_count, file_count, loading, source_loaded = 1, prompt_loaded = 1;
+static struct CliConsole cli_console;
+static ULONG cli_key_event(struct IntuiMessage *im);
 static const char *command_modes[] = {"CLI", "ARexx", "MicroPython", NULL};
 
 enum
@@ -113,7 +116,7 @@ enum
     WINDOW_DEPTH,
     WINDOW_ZOOM,
     SHORTCUTS, SHORTCUTSCLOSE, INSTRUCTIONS, HISTORY, HISTORYFIND, HISTORYNEXT,
-    LASTPROMPT, MENTION, COMMANDS, COMMANDSCLOSE, CR_OPEN=5200, SP_OPEN=5400, GT_OPEN=5500
+    LASTPROMPT, MENTION, COMMANDS, COMMANDSCLOSE, CLI_INLINE, CLI_FIELD, CLI_RESET, CR_OPEN=5200, SP_OPEN=5400, GT_OPEN=5500
 };
 struct Job
 {
@@ -223,7 +226,7 @@ static ULONG keyeditor_dispatch(__reg("a0") struct IClass *cl,
     case MUIM_HandleEvent:
         {
             struct IntuiMessage *im=((struct MUIP_HandleEvent *)msg)->imsg;
-            return im && termic_key_event(im)?MUI_EventHandlerRC_Eat:0;
+            return im && (cli_key_event(im) || termic_key_event(im))?MUI_EventHandlerRC_Eat:0;
         }
     }
     return DoSuperMethodA(cl,obj,msg);
@@ -237,7 +240,7 @@ static Object *editor(Object **o, int readonly)
     if(!keyeditor_class)return NULL;
     g = HGroup, Child, *o = NewObject(keyeditor_class->mcc_Class, NULL, InputListFrame, MUIA_Font,
            codefont ? (ULONG)codefont : MUIV_Font_Fixed,
-           (o == &source || o == &prompts_body || o == &transcript || o == &change_text || o == &broadcast_text || o == &guide_text) ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
+           (o == &cli_output || o == &source || o == &prompts_body || o == &transcript || o == &change_text || o == &broadcast_text || o == &guide_text) ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
            MUIA_TextEditor_ReadOnly, readonly, MUIA_TextEditor_ActiveObjectOnClick, TRUE,
            MUIA_TextEditor_ImportHook,
            MUIV_TextEditor_ImportHook_Plain, MUIA_TextEditor_ExportHook,
@@ -273,10 +276,44 @@ static void message(const char *s)
     snprintf(help,sizeof(help),"%s",s);
     SetAttrs(status,MUIA_Text_Contents,s,MUIA_ShortHelp,help,TAG_DONE);
 }
+/* Import only generated colour escapes; exports used for execution are plain. */
+static int cli_capture(void)
+{
+    char *text=(char *)DoMethod(cli_output,MUIM_TextEditor_ExportText);
+    int ok=cli_console_capture(&cli_console,text);
+    if(text)FreeVec(text);
+    return ok;
+}
+static void cli_render(void)
+{
+    char *styled=cli_console_display(&cli_console);
+    if(!styled)return;
+    set(cli_output,MUIA_TextEditor_Contents,styled);free(styled);
+    SetAttrs(cli_output,MUIA_TextEditor_CursorY,cli_console.row,
+        MUIA_TextEditor_CursorX,2+strlen(cli_console.draft),
+        MUIA_TextEditor_Pen,0xffe6edf3UL,TAG_DONE);
+}
+static void cli_log(const char *text)
+{
+    cli_capture();
+    if(cli_console_log(&cli_console,text))cli_render();
+}
+static ULONG cli_key_event(struct IntuiMessage *im)
+{
+    if(!win || !cli_output || im->Code>=0x80 ||
+       im->IDCMPWindow!=(struct Window *)value(win,MUIA_Window_Window) ||
+       (Object *)value(win,MUIA_Window_ActiveObject)!=cli_output)return 0;
+    if(im->Code==0x44 || im->Code==0x43 || im->Code==0x45) {
+        if(!(im->Qualifier&IEQUALIFIER_REPEAT))
+            DoMethod(app,MUIM_Application_ReturnID,im->Code==0x45?CLI_RESET:CLI_INLINE);
+        return 1;
+    }
+    return 0;
+}
 static void job_output(const char *text)
 {
     set(output, MUIA_TextEditor_Contents, text);
-    set(cli_output, MUIA_TextEditor_Contents, text);
+    cli_log(text);
     if(diagnostic_list) {
         int i;set(diagnostic_list,MUIA_List_Quiet,TRUE);DoMethod(diagnostic_list,MUIM_List_Clear);
         diagnostic_count=diagnostics_parse(text,diagnostic_rows,DIAGNOSTIC_MAX);
@@ -561,6 +598,10 @@ static void profiles_picker_refresh(void);
 static void load_workspace(const char *p)
 {
     char path[PATH_SIZE], title[420];
+    if(strcmp(current,p)) {
+        cli_console_clear(&cli_console);
+        set(command,MUIA_String_Contents,"");
+    }
     strcpy(current, p);
     set(cli_directory,MUIA_Text_Contents,current);
     set(cli_directory,MUIA_ShortHelp,current);
@@ -913,6 +954,32 @@ static int launch_at(const char *target, const char *action, int page)
 static void launch(const char *action, int page)
 {
     if(save_current()) launch_at(current,action,page);
+}
+/* Both inputs share the existing asynchronous workspace worker. The play
+ * button uses a nonempty inline draft first; Return in the field uses it alone. */
+static void cli_submit(ULONG id)
+{
+    char path[PATH_SIZE],line[1024];int inline_command=0;
+    if(id!=CLI_FIELD) {
+        if(!cli_capture() || (id==CLI_INLINE &&
+           value(cli_output,MUIA_TextEditor_CursorY)!=cli_console.row)) {
+            message("Type on the final > line. Escape restores the command prompt.");return;
+        }
+        inline_command=id==CLI_INLINE || *cli_console.draft;
+    }
+    snprintf(line,sizeof(line),"%s",inline_command?cli_console.draft:
+        (char *)value(command,MUIA_String_Contents));
+    {const char *p=line;while(*p==' ')p++;if(!*p)return;}
+    if(!*current){message("Select a project or task before running a command.");return;}
+    if(busy(current)){message("A job is already running in this workspace. Your command is kept.");return;}
+    if(!save_current())return;
+    join(path,current,"command.txt");
+    if(!save_text(path,line,1024)){message("Cannot save the command. Your input is kept.");return;}
+    if(launch_at(current,value(command_mode,MUIA_Cycle_Active)==1?"--rexx":
+        value(command_mode,MUIA_Cycle_Active)==2?"--python":"--shell",-1)) {
+        if(inline_command){*cli_console.draft=0;cli_render();}
+        else set(command,MUIA_String_Contents,"");
+    }
 }
 /* Follow the latest activity without disturbing a clipboard selection.
  * Catch up to the bottom when the selection is released. */
@@ -1362,10 +1429,12 @@ static int build_ui(void)
         Child,button("Create file",NEWFILE),Child,button("Refresh files",REFRESH),Child,HVSpace,End,End;
     cli_pane=VGroup,GroupFrame,InnerSpacing(2,2),MUIA_Group_Spacing,2,
         Child,command_mode=cycle(command_modes),
-        Child,cli_directory=elastic_label("Select a project or task"),Child,editor(&cli_output,1),Child,command=entry(1024),
+        Child,cli_directory=elastic_label("Select a project or task"),Child,editor(&cli_output,0),Child,command=entry(1024),
         Child,HGroup,Child,button("Execute",SHELL),Child,button("Cancel job",CANCEL),Child,HVSpace,End,End;
     workspace_files=mui_viewport(VGroup,Child,file_pane,Child,files_balance=BalanceObject,End,Child,cli_pane,End);
     set(workspace_files,MUIA_Weight,23);
+    cli_log("");
+    set(cli_output,MUIA_ShortHelp,"Type after > and press Return to execute. Escape restores the prompt. Output is not an interactive terminal.");
     set(command,MUIA_ShortHelp,"Command or script arguments in the selected workspace. Return executes; Shift F10 stops.");
     agent=VGroup,MUIA_Group_Spacing,3,
         Child,VGroup,MUIA_Weight,80,Child,activity_caption=elastic_label("Activity: Agent (cyan) / Log (amber)"),
@@ -1482,7 +1551,7 @@ static int build_ui(void)
     notify(history_find, MUIA_String_Acknowledge, MUIV_EveryTime, HISTORYNEXT);
     notify(newname, MUIA_String_Acknowledge, MUIV_EveryTime, NEWFILE);
     notify(commit, MUIA_String_Acknowledge, MUIV_EveryTime, GITCOMMIT);
-    notify(command, MUIA_String_Acknowledge, MUIV_EveryTime, SHELL);
+    notify(command, MUIA_String_Acknowledge, MUIV_EveryTime, CLI_FIELD);
     restore_preferences();
     {
         Object *editors[] = {source, prompt, transcript, output, review, cli_output};
@@ -1933,12 +2002,13 @@ int main(int argc, char **argv)
             case PROBE:
                 launch("--probe", 2);
                 break;
+            case CLI_RESET:
+                cli_capture();cli_render();
+                break;
+            case CLI_INLINE:
+            case CLI_FIELD:
             case SHELL:
-                name = (char *)value(command, MUIA_String_Contents);
-                join(path, current, "command.txt");
-                if (!busy(current) && save_text(path, name, 1024))
-                    launch(value(command_mode,MUIA_Cycle_Active)==1 ? "--rexx" :
-                           value(command_mode,MUIA_Cycle_Active)==2 ? "--python" : "--shell", -1);
+                cli_submit(id);
                 break;
             case GITSTATUS:
                 launch("--status", 3);
@@ -2058,6 +2128,7 @@ cleanup:
         DeleteMsgPort(timer_port);
     termic_monitor_close();
     activity_clear(&activity);
+    cli_console_clear(&cli_console);
     if (app)
         MUI_DisposeObject(app);
     guide_free(&guide_doc);

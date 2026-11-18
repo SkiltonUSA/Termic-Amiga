@@ -64,6 +64,7 @@ async def main(args):
    states=[]
    started=not args.start_at
    for panel,width,height,view,shot in [
+    ('cli-test',1024,800,1,'cli-editable.png'),
     ('main',1024,800,1,'workspace-cli.png'),
     ('main',1024,800,0,'live-feedback.png'),
     ('tiny',900,650,0,'tiny-profile.png'),
@@ -93,7 +94,9 @@ async def main(args):
     frame=dict(panel=panel,width=width,height=height,view=view)
     await control(frame)
     raw=await wait('state.json',lambda s:all(json.loads(s).get(k)==v for k,v in frame.items()))
-    state=json.loads(raw);assert state['source_preserved'] and state['tiny_default'];states.append(state)
+    state=json.loads(raw)
+    if panel=='cli-test':assert await root.read('cli-passed.txt')=='CLI_WIDGETS_AND_COMMANDS_PASS'
+    assert state['source_preserved'] and state['tiny_default'];states.append(state)
     print('Verified '+panel+' '+str(width)+'x'+str(height),flush=True)
     if shot:await capture(state['title'],shot)
    (out/'geometry.json').write_text(json.dumps(states,indent=2))

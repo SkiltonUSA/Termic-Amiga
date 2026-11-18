@@ -72,7 +72,7 @@ proxies are unchanged from 0.1.3 and retain their existing download links.
 - Projects/Tasks left, tabbed workspace centre, Files/CLI right; compact panes at 340x280.
 - Source backups, undo/redo, clipboard and search.
 - Native VBCC build/run and explicit AmigaDOS commands with captured output.
-- Persistent CLI panel below Files, with a resizable half-height split, command entry and job output. Commands start in the selected project/task directory, displayed beneath the mode selector.
+- Persistent CLI panel below Files, with a resizable half-height split and a black editable console. Type after `>` and press Return, or use the separate command field; unfinished inline commands survive output updates. Commands start in the selected project/task directory, displayed beneath the mode selector.
 - Native Git initialization, status, diffs, source commits and branch controls.
 - Integrated Process Monitor with native column dividers, CPU/memory sorting and pause/resume.
 - Optional ZZ9000 information button, hidden by default; no ARM compute offload is enabled.
@@ -232,6 +232,13 @@ recovery and CLI output at 1024x800 and 340x280. It temporarily closes the
 normal workspace and restores its preferences, clipboard and geometry. Stop
 the AI Proxy and leave the mouse/keyboard idle during the test. See
 [verification instructions](docs/verification.md#live-mui-development-workflow-16-november-2026).
+
+`accept_gallery.py --only cli-editable.png` verifies the editable console using
+production MUI widgets and a synthetic Acceptance drawer: inline Return routing,
+worker execution, separate-field submission, draft preservation during output,
+and rejection of edited history or multiline input. Compile
+`tests/test_gallery_window.c` with the GUI units and pass `--binary`, `--probe`
+and a new `--output` directory. It captures only synthetic data.
 
 `accept_agents.py --cli-panel-only`, with its required binary arguments, checks
 CLI command entry, success/failure output, editor focus, copy, save/undo and
