@@ -1207,3 +1207,29 @@ system-library versions or authenticated API operation. The AmiPkg JSON is
 published as a pinned entry for catalog review, not submitted to or signed
 into the public AmiPkg catalog. Existing installation drawers are refused
 by its fresh-install preflight; use the documented backup/upgrade procedure.
+
+### 0.1.4 Beta release packaging (18 November 2026)
+
+All six native programs were rebuilt with VBCC for 68020. Their Hunk headers
+and 0.1.4 Beta version strings were checked; the AmigaGuide and monitor About
+text use the same version. All 100 host tests passed.
+
+The main LHA contains the pinned original Tiny 2.1 model/runtime and notices,
+MicroPython, the SDK archives, native binaries and source. AmiPkg validation
+reported zero errors and the expected pre/post-script review warning. Its
+actual C resolver and recipe planner passed dependency order/minima, CPU-floor
+and missing-dependency checks under ASan/UBSan. A fresh host install tree
+matched the copy plan, had blank credentials and retained the correct original
+Tiny model hash. LHA integrity and the experimental checkpoint ZIP CRC checks
+passed. SHA256SUMS pins all five downloadable packages/metadata files.
+
+The trained Termic candidate and its resumable checkpoint are separate backup
+assets, excluded from the install recipe and default model. Their limitations
+remain documented in the candidate model card: 31/71 unseen answers correct
+and incomplete float/reference parity. Host proxy binaries are unchanged from
+0.1.3 and are linked from that release.
+
+No target connection or installation was attempted during this packaging run.
+Physical acceptance of offline tasks, the Processors tab and fresh-install
+AmigaDOS scripts remains pending. The other hardware-validation session was
+not interrupted. A package validation pass is not a physical Amiga test.

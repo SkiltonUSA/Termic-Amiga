@@ -1,6 +1,6 @@
 # Termic Amiga
 
-**Native MUI development workspace for AmigaOS. Version 0.1.3 Beta.**
+**Native MUI development workspace for AmigaOS. Version 0.1.4 Beta.**
 
 This repository contains the Amiga implementation, separated from the desktop
 [Termic project](https://github.com/simion/termic). It runs on the Amiga using
@@ -10,27 +10,36 @@ MUI and native 68k tools. It does not require the desktop React/Tauri applicatio
 
 ## Downloads
 
-- [Native Amiga application and SDK kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-Amiga-0.1.3-beta.lha)
-  and [pinned AmiPkg entry](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/termic-amiga.json).
-- [Standalone Process Monitor](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-Process-Monitor-0.1.3-beta.lha),
+- [Native Amiga application and SDK kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-Amiga-0.1.4-beta.lha)
+  and [pinned AmiPkg entry](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/termic-amiga.json).
+- [Standalone Process Monitor](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-Process-Monitor-0.1.4-beta.lha),
   including source and a Workbench icon.
 - AI Proxy for [Apple Silicon macOS](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-AI-Proxy-macOS.zip)
   or [Windows 11 x64](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-AI-Proxy-Windows11.zip).
 
-The 0.1.3 Beta package restores the original three-column layout using native
-MUI 5 tabs and window controls, with a compact layout for smaller windows.
+The 0.1.4 Beta package includes offline Tiny 2.1 and the integrated Processors
+tab, retaining the three-column MUI 5 workspace and compact window layout.
 See [interface details](docs/amiga-interface.md). The companion proxies use
 Amiga-MCP at `http://127.0.0.1:55110/mcp`.
 Read the installation requirements below before upgrading an existing drawer.
-[Release notes and checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.1.3-beta)
+[Release notes and checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.1.4-beta)
 include verification details.
 
-## Source additions after 0.1.3 Beta
+## New in 0.1.4 Beta
 
-The current source adds [offline Tiny 2.1](docs/tiny.md) as the default agent
-for tasks without a saved selection, and embeds the processor monitor in the
-main **Processors** tab. The release downloads above predate these additions.
-Tiny answers short questions locally; it does not provide coding-agent tools.
+[Offline Tiny 2.1](docs/tiny.md) is the default agent for tasks without a saved
+selection. Its runtime and model are bundled; inference needs no API key,
+network or host proxy. Tiny answers short questions and has no coding tools.
+The processor monitor now occupies the main **Processors** tab.
+
+The separately downloadable [Termic-trained candidate](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Tiny-Termic-experimental-kit.lha)
+and [training checkpoint](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Tiny-Termic-training-checkpoint.zip)
+are experimental and do not replace the bundled model. Unseen-question
+accuracy was 31/71 (43.7%); see the [model report](amiga/tiny-training/candidate/MODEL_CARD.md).
+
+All 100 host tests and local AmiPkg checks passed. Physical Amiga installation
+and acceptance of the new Processors tab remain pending. The companion
+proxies are unchanged from 0.1.3 and retain their existing download links.
 
 ## Features
 
@@ -92,7 +101,7 @@ and recovers lost acknowledgements without repeating builds or executions.
 A real Codex task passed native generation, compilation, execution, review and
 Kanban completion on the A4000TX. These proxy changes are available in the
 [desktop build workflow](https://github.com/SkiltonUSA/Termic-Amiga/actions/workflows/ai-proxy.yml);
-the published 0.1.0 proxy download above predates them. See
+the linked 0.1.3 proxy downloads include them. See
 [verification](docs/verification.md#proxy-reliability-and-real-agent-workflow-15-november-2026)
 for the tested scope.
 

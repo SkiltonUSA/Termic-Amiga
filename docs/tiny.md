@@ -27,7 +27,7 @@ Codex, Claude, Cursor or OpenAI when those capabilities are needed.
 
 ## Verification status
 
-The host suite passes 96 tests, including profile migration, Tiny question
+The host suite passes 100 tests, including profile migration, Tiny question
 bounds, transcript recording, cancellation and failure handling. Native
 application and MUI lifecycle/scaling test binaries cross-compile successfully.
 The unchanged Tiny engine passes the upstream integer oracle: all 19,493
@@ -38,7 +38,7 @@ These checks establish numerical parity, not speed on a physical Amiga.
 The offline LHA passes archive integrity checks and AmiPkg's parser, dependency
 resolver and fresh local install plan. Target installation, offline task
 execution, cancellation and the revised Processors tab still need physical
-Amiga acceptance. The released 0.1.3 binaries have not been replaced.
+Amiga acceptance. Version 0.1.4 Beta packages these changes; the older 0.1.3 release remains available.
 
 ## Preparing an offline kit
 
@@ -46,7 +46,7 @@ The installation drawer includes the runtime, model, README, upstream MIT
 notice, data attribution and a SHA-256 provenance manifest. Once copied to
 `Termic:Tools/Tiny`, it needs no download at launch. `package_native.py --tiny`
 bundles that whole drawer and validates the model and runtime checksums.
-The previously published 0.1.3 Beta release predates this integration.
+The 0.1.4 Beta release includes this offline drawer; 0.1.3 predates it.
 
 For a host build, obtain the tiny68k source revision and upstream model revision
 pinned in `amiga/native/tiny-lock.json`. The original weights are

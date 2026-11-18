@@ -45,17 +45,17 @@ The current source also requires the offline Tiny drawer built using
 ```sh
 python3 scripts/amiga/package_native.py \
   --downloads downloads --binaries binaries --tiny /path/to/Tiny \
-  --output Termic-Amiga-preview.lha --lha /path/to/lha
+  --output Termic-Amiga-0.1.4-beta.lha --lha /path/to/lha
 
 python3 scripts/amiga/package_amipkg.py \
-  --archive Termic-Amiga-preview.lha \
-  --archive-url https://example.com/Termic-Amiga-preview.lha \
-  --version 0.1.3-tiny-preview --output termic-amiga.json
+  --archive Termic-Amiga-0.1.4-beta.lha \
+  --archive-url https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-Amiga-0.1.4-beta.lha \
+  --version 0.1.4-beta --output termic-amiga.json
 ```
 
-The example URL is a placeholder for local validation, not a download.
-For publication, select a new release version and use its actual archive URL;
-do not reuse the published 0.1.3 URL for changed bytes.
+These commands describe the 0.1.4 Beta release. For subsequent builds, select
+a new version and its actual archive URL; never reuse a published URL for
+changed bytes.
 The URL must identify the exact bytes uploaded. Use a new output filename for
 each build; neither script silently replaces an existing archive/entry. The kit
 is built from tracked templates and verified inputs, never a live installation.
@@ -65,7 +65,7 @@ Clone the upstream authoring catalog and client separately, then validate:
 
 ```sh
 python3 scripts/amiga/validate_amipkg.py \
-  --archive Termic-Amiga-preview.lha --entry termic-amiga.json \
+  --archive Termic-Amiga-0.1.4-beta.lha --entry termic-amiga.json \
   --catalog /path/to/amiga-pkg --client /path/to/amipkg --lha /path/to/lha
 ```
 
