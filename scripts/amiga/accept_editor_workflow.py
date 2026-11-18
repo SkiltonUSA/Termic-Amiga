@@ -81,8 +81,8 @@ async def exercise(root, out, fixture, shell, push, call, state, click, capture)
         await key('34', ('67',))  # Edit > Paste.
         if compact_save:
             p = await state(front=True)
-            # Current fixed-size MUI icon row: Build, Run, Save, Stop.
-            await click(p['x'] + p['width'] - 56, p['y'] + p['border'] + 17)
+            # Save inside the Editor frame, beside Find/Next.
+            await click(p['x'] + p['width'] - 28, p['y'] + p['height'] - 50)
         else:
             await key('57')  # F8 Save, while TextEditor owns focus.
         assert (await pull('main.c')).decode() == text, 'Editor did not save exact source bytes'
@@ -133,6 +133,29 @@ async def exercise(root, out, fixture, shell, push, call, state, click, capture)
             if (p['width'], p['height']) == (width, height):return p
         raise AssertionError('Live resize did not reach requested dimensions: ' + str(p))
 
+    async def direct_edit():
+        await resize(340, 280)
+        await key('51')
+        p = await state(front=True)
+        # Focus by mouse, then type raw keys rather than importing a buffer.
+        await click(p['x'] + 60, p['y'] + 140)
+        await key('20', ('67',))
+        mapping = {char: format(start + i, '02x')
+                   for row, start in [('qwertyuiop', 0x10), ('asdfghjkl', 0x20), ('zxcvbnm', 0x31)]
+                   for i, char in enumerate(row)}
+        mapping.update({' ': '40', ';': '29', '\n': '44'})
+        typed = 'int edited;\n'
+        for char in typed:
+            await key(mapping[char])
+        assert (await pull('main.c')).decode() == SOURCE, 'Typing saved before Save was requested'
+        await capture(title, 'editor-unsaved-340x280.png')
+        await click(p['x'] + p['width'] - 28, p['y'] + p['height'] - 50)
+        assert (await pull('main.c')).decode() == typed, 'Editor-frame Save missed typed characters'
+        assert (await pull('main.c.bak')).decode() == SOURCE, 'Save did not retain the previous source'
+        await capture(title, 'editor-saved-340x280.png')
+        await source(SOURCE, compact_save=True)
+        print('Verified mouse focus, direct typing and Editor-frame Save with backup', flush=True)
+
     async def return_to_editor():
         # The cached tab is already Editor. The shortcut must reveal it even
         # when setting the same ActivePage would not generate a notification.
@@ -153,6 +176,7 @@ async def exercise(root, out, fixture, shell, push, call, state, click, capture)
     try:
         await resize(1024, 800)
         await source(SOURCE)
+        await direct_edit()
         await resize(340, 280)
         await return_to_editor()
         await resize(1024, 800)
@@ -187,7 +211,8 @@ async def exercise(root, out, fixture, shell, push, call, state, click, capture)
         await capture(title, 'editor-340x280.png')
         assert (await pull('main.c')).decode() == SOURCE
         report.write_text(json.dumps({'fixture': fixture, 'toolbar_build_run': True,
-            'save_exact_bytes': True, 'failed_build_preserves_program': True,
+            'save_exact_bytes': True, 'mouse_focus_and_direct_typing': True,
+            'editor_frame_save_and_backup': True, 'failed_build_preserves_program': True,
             'compact_save_build_run': True, 'cli_return_and_copy': True,
             'sidebar_to_cached_editor': True,
             'native_window_sizes': [[1024, 800], [340, 280]]}, indent=2))

@@ -3,7 +3,7 @@
 enum { AI_SAVE, AI_RUN, AI_STOP, AI_BUILD, AI_SETTINGS, AI_INFO, AI_QUIT,
        AI_NEW, AI_RENAME, AI_FOLDER, AI_SEARCH, AI_REFRESH, AI_DONE, AI_TRASH,
        AI_COPY, AI_UP, AI_DOWN, AI_PROMPT, AI_KEYS, AI_INSERT, AI_CANCEL, AI_AGENT,
-       AI_KANBAN, AI_QUEUE, AI_SMALL=0x100 };
+       AI_KANBAN, AI_QUEUE, AI_FINDNEXT, AI_SMALL=0x100 };
 static struct MUI_CustomClass *action_icon_class;
 static int action_icon_kind(const char *text,int id)
 {
@@ -20,7 +20,8 @@ static int action_icon_kind(const char *text,int id)
     if(!strcmp(text,"New") || !strcmp(text,"New project") || !strcmp(text,"New task") || !strcmp(text,"Create file"))return AI_NEW;
     if(!strcmp(text,"Rename"))return AI_RENAME;
     if(!strcmp(text,"Import source drawer..."))return AI_FOLDER;
-    if(!strcmp(text,"Find") || !strcmp(text,"Find history") || !strcmp(text,"Next"))return AI_SEARCH;
+    if(!strcmp(text,"Find next"))return AI_FINDNEXT;
+    if(!strcmp(text,"Find") || !strcmp(text,"Find history"))return AI_SEARCH;
     if(!strcmp(text,"Refresh files") || !strncmp(text,"Reset ",6) || !strcmp(text,"Restore missing defaults"))return AI_REFRESH;
     if(!strcmp(text,"Use") || !strcmp(text,"Mark done"))return AI_DONE;
     if(!strcmp(text,"Remove"))return AI_TRASH;
@@ -128,6 +129,11 @@ static ULONG action_icon_dispatch(__reg("a0") struct IClass *cl,
             ai_box(rp,x,y,2,6,18,17);ai_box(rp,x,y,3,3,9,6);ai_line(rp,x,y,3,9,17,9);break;
         case AI_SEARCH:
             DrawEllipse(rp,x+8,y+8,5,5);ai_line(rp,x,y,12,12,18,18);ai_line(rp,x,y,13,12,19,18);break;
+        case AI_FINDNEXT:
+            /* Arrow distinguishes advancing a match from starting a search. */
+            ai_line(rp,x,y,10,2,10,17);ai_line(rp,x,y,11,2,11,17);
+            ai_line(rp,x,y,4,11,10,17);ai_line(rp,x,y,10,17,16,11);
+            ai_line(rp,x,y,4,12,10,18);ai_line(rp,x,y,10,18,16,12);break;
         case AI_REFRESH:
             ai_line(rp,x,y,4,6,8,3);ai_line(rp,x,y,8,3,14,4);ai_line(rp,x,y,14,4,17,8);
             ai_line(rp,x,y,17,8,17,13);ai_line(rp,x,y,17,13,12,17);ai_line(rp,x,y,12,17,6,16);

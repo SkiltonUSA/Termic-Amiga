@@ -116,16 +116,20 @@ Select .c, .h, .txt or .md files in the Files pane. Create file uses the
 filename field; use a simple name with one of these extensions.
 
 C and header files have syntax colours on a black editor background.
-Colours are applied when a file loads, not continuously while typing.
+Colours update after typing without replacing the text or undo history.
 Saved files are plain source without display style codes. Ordinary Save
 retains undo history and keeps the previous file as filename.bak.
 
-Use Project > Save and Edit for Cut, Copy, Paste, Erase, Select All, Undo
-and Redo. These commands live in the menu strip, not an editor button row.
+Click the source text to edit code directly. The floppy icon beside Find/Next
+saves your changes; F8, Right-Amiga-S and Project > Save also work. An asterisk
+before the filename marks unsaved changes. A read-only caption and disabled
+Save icon mean this workspace is busy or the file could not be loaded.
+Use the Edit menu for Cut, Copy, Paste, Erase, Select All, Undo and Redo.
 Menu actions target the focused text editor, including task instructions
 and read-only logs (Copy only). Click in the intended text before editing.
 String fields use their normal MUI editing keys. Unavailable editor menu
-commands are ghosted. Find searches from the start; Next finds a later hit.
+commands are ghosted. Find (magnifier) searches from the start; Find Next
+(down arrow) finds a later hit. Hover over an icon for its action name.
 
 Source files have a 32 KiB limit. Files containing literal ESC bytes or
 unreadable/binary/oversize content are not editable. Instructions have an

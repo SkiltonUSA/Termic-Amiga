@@ -1116,3 +1116,34 @@ staged checksums after replacement. A verified rollback copy was retained,
 Termic reopened successfully with its native title bar, and TermicCheck
 reported zero missing dependencies. The version remains 0.1.2 Beta; the
 published release archive is unchanged.
+
+## Direct source editing and Editor-frame Save
+
+The Editor frame now includes a Save icon beside Find/Next at both compact
+and wide sizes. Clicking the source text allows direct editing. The filename
+shows an asterisk while changes are unsaved; a read-only caption and disabled
+Save icon identify a locked workspace or an unreadable file. F8,
+Right-Amiga-S and Project > Save remain available.
+
+The native input acceptance clicked into the source editor and typed real
+key events without clipboard insertion. It verified that the file on disk
+remained unchanged before Save, that clicking the Editor-frame icon saved
+exactly the typed bytes, and that the previous contents survived in `.bak`.
+Screenshots of the unsaved and saved states were inspected. The same run
+passed source replacement, F8 Save, compact Editor Save, sidebar navigation,
+wide and compact build/run, compiler-error recovery preserving the previous
+program, and CLI execution/copy. The isolated test restored production
+preferences, clipboard, assignment and window geometry. No AI request was
+made. All 83 portable tests passed, and native cross-builds had no warnings.
+
+The size/page matrix also passed from 320x240 through 1024x800, checking
+Save-button containment, unsaved filename state, read-only disabling and
+click-to-focus restoration after unlocking. The two search actions now have
+distinct symbols: Find uses a magnifier, and Find Next uses a down arrow with
+explicit hover help. Their existing search behavior is unchanged.
+
+The final build with distinct search icons passed the complete native layout
+acceptance and its screenshots were inspected. The installed executable and
+five matching source/manual files were checksum verified, a rollback copy was
+retained, and Termic reopened successfully. TermicCheck reported zero missing
+dependencies. The version remains 0.1.2 Beta; no release archive was replaced.

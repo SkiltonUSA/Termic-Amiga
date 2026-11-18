@@ -13,7 +13,7 @@ static void pump(void)
 {
  ULONG sigs,id;int i;
  for(i=0;i<5;i++) {
-  sigs=0;while((id=DoMethod(app,MUIM_Application_NewInput,&sigs))!=0){workspace_event(id);termic_monitor_event(id);}
+  sigs=0;while((id=DoMethod(app,MUIM_Application_NewInput,&sigs))!=0){workspace_event(id);termic_monitor_event(id);if(id==ED_STATUS)source_editor_status();}
   workspace_layout();termic_monitor_poll();Delay(2);
  }
 }
@@ -85,7 +85,12 @@ int main(int argc,char **argv)
   for(j=0;j<9;j++) {
    workspace_select(j);pump();CHECK(same_source());
    {struct Window *w=(struct Window *)value(win,MUIA_Window_Window);
-    if(j==1)CHECK(_mtop(findtext)+_mheight(findtext)<w->Height-w->BorderBottom);
+    if(j==1) {
+     CHECK(_mtop(findtext)+_mheight(findtext)<w->Height-w->BorderBottom);
+     CHECK(_mleft(editor_save)+_mwidth(editor_save)<=_mleft(workspace_center)+_mwidth(workspace_center));
+     CHECK(!value(editor_save,MUIA_Disabled));
+     CHECK(!strncmp((char *)value(filename,MUIA_Text_Contents),"* main.c",8));
+    }
     if(j==8)CHECK(_mtop(command)+_mheight(command)<w->Height-w->BorderBottom);
    }
    if(j<5) {
@@ -112,6 +117,17 @@ int main(int argc,char **argv)
    CHECK(value(workspace_left,MUIA_ShowMe)==(!layout_compact || j==5 || j==6));
   }
  }
+ workspace_select(1);pump();
+ editor_readonly(source,TRUE);pump();
+ CHECK(value(editor_save,MUIA_Disabled));
+ CHECK(strstr((char *)value(filename,MUIA_Text_Contents),"(read only)"));
+ editor_readonly(source,FALSE);pump();
+ CHECK(!value(editor_save,MUIA_Disabled));
+ CHECK(value(source,MUIA_TextEditor_ActiveObjectOnClick));
+ set(source,MUIA_TextEditor_HasChanged,FALSE);pump();
+ CHECK(!strcmp((char *)value(filename,MUIA_Text_Contents),"main.c"));
+ set(source,MUIA_TextEditor_HasChanged,TRUE);pump();CHECK(same_source());
+ CHECK(!strcmp((char *)value(filename,MUIA_Text_Contents),"* main.c"));
  join(path,project_root,"ready.txt");CHECK(save_text(path,"MATRIX_PASS",128));
  for(ticks=0;ticks<18000;ticks++) {
   pump();join(path,project_root,"control.json");text=read_text(path,2048);

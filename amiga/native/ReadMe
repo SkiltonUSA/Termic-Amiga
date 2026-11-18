@@ -65,7 +65,9 @@ Task instructions sit beside agent controls below the activity log. The
 header shows the version and Build, Run, Settings, About and Quit icons.
 Projects uses one compact icon row: New, Rename and Import Folder.
 Tasks uses one compact icon row: New, Rename, Kanban, Queue and Mark Done.
-Hover over an icon for its full action name.
+Hover over an icon for its full action name. Click inside the source editor
+to type code, then use its floppy Save icon beside Find/Next, F8 or
+Right-Amiga-S. An asterisk before the filename marks unsaved changes.
 Native balance dividers adjust column widths and the Files/CLI split.
 F1-F5 select the work pages. Forms and tables scroll when necessary.
 Helvetica 13 controls and Courier 13 source text match the reference UI,

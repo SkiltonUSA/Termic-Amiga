@@ -1,4 +1,4 @@
-enum {ED_CHANGED=5300,ED_DIAGNOSTIC};
+enum {ED_CHANGED=5300,ED_DIAGNOSTIC,ED_STATUS};
 /* Public SetBlock changes presentation without replacing text/undo/cursor.
  * TextEditor 15.56 accepts ffRRGGBB here, as in the Pen attribute. */
 static void editor_recolour(void)

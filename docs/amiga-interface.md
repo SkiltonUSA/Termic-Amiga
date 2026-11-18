@@ -8,7 +8,12 @@ The full workspace remains available beneath the menu strip.
 Edit actions follow the focused TextEditor gadget, including task instructions
 and selectable log output. Single-line fields keep their MUI editing behavior;
 Tab to a button before using application keys that a field consumes.
-Save is available in the compact icon row and Project menu; Undo, Redo,
+Save is available inside the Editor frame beside Find/Next, in the compact
+icon row and in the Project menu. Click the source text to type directly;
+Find uses a magnifier; Find Next uses a down arrow and its own hover label.
+F8 and Right-Amiga-S also save. An asterisk before the filename marks unsaved
+changes. A read-only caption and disabled Editor Save button identify a busy
+workspace or a file that could not be loaded. Undo, Redo,
 Cut, Copy and Paste remain in Edit. The reference layout uses Helvetica 13
 for workspace controls and Courier 13 for source text. If either disk font is
 unavailable, the corresponding MUI font role is used. Settings > MUI Settings

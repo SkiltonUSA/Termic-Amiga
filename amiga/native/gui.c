@@ -42,7 +42,7 @@ const char stack_size[] = "$STACK:262144";
 #define MAX_ITEMS 128
 #define PATH_SIZE 384
 static Object *app, *win, *projects, *tasks, *files, *pages, *source, *prompt, *output, *review,
-    *transcript, *cli_output;
+    *transcript, *cli_output, *editor_save;
 static Object *prompts_body,*diagnostic_list,*diagnostic_view;
 static struct Diagnostic diagnostic_rows[DIAGNOSTIC_MAX];
 static int diagnostic_count;
@@ -250,6 +250,18 @@ static void editor_readonly(Object *o, int readonly)
      * restore it when unlocked. Logs also need focus for selection/copy. */
     SetAttrs(o, MUIA_TextEditor_ReadOnly, readonly,
              MUIA_TextEditor_ActiveObjectOnClick, TRUE, TAG_DONE);
+}
+static void source_editor_status(void)
+{
+    char title[224];
+    int readonly=value(source,MUIA_TextEditor_ReadOnly);
+    snprintf(title,sizeof(title),"%s%s%s",value(source,MUIA_TextEditor_HasChanged)?"* ":"",
+             *opened?opened:"No file selected",readonly?" (read only)":"");
+    set(filename,MUIA_Text_Contents,title);
+    set(editor_save,MUIA_Disabled,readonly || !source_loaded || !*current || !*opened);
+    set(source,MUIA_ShortHelp,readonly?
+        "Read only while this workspace is busy or the file cannot be loaded.":
+        "Click here to edit code. Save with the floppy icon, F8 or Right-Amiga-S. * marks unsaved changes.");
 }
 static void message(const char *s)
 {
@@ -539,7 +551,7 @@ static void open_file(const char *name)
     join(path, current, name);
     content(source, path, "");
     editor_readonly(source, busy(current) || !source_loaded);
-    set(filename, MUIA_Text_Contents, name);
+    source_editor_status();
 }
 static void profiles_picker_refresh(void);
 static void load_workspace(const char *p)
@@ -1383,7 +1395,7 @@ static int build_ui(void)
     set(prompt,MUIA_ShortHelp,"Task instructions. Agent responses are cyan; worker logs are amber.");
     set(profile_fast,MUIA_ShortHelp,"YOLO mode for the selected agent profile");
     editpage=VGroup,MUIA_Group_Spacing,2,Child,filename=elastic_label("main.c"),Child,editor(&source,0),
-        Child,HGroup,Child,findtext=entry(120),Child,button("Find",FIND),Child,button("Next",FINDNEXT),End,End;
+        Child,HGroup,Child,findtext=entry(120),Child,button("Find",FIND),Child,button("Find next",FINDNEXT),Child,editor_save=button("Save",SAVE),End,End;
     buildpage=VGroup,Child,editor(&output,1),Child,diagnostic_view=list(&diagnostic_list),End;
     set(diagnostic_view,MUIA_Weight,20);set(output,MUIA_ShortHelp,"Build and job output. Double-click a compiler diagnostic to open its source location.");
     changes=VGroup,Child,HGroup,Child,button("Status",GITSTATUS),Child,button("Diff",DIFF),Child,button("Init",GITINIT),End,
@@ -1469,6 +1481,8 @@ static int build_ui(void)
     }
     notify(diagnostic_view,MUIA_Listview_DoubleClick,TRUE,ED_DIAGNOSTIC);
     notify(source,MUIA_TextEditor_ContentsChanged,TRUE,ED_CHANGED);
+    notify(source,MUIA_TextEditor_HasChanged,MUIV_EveryTime,ED_STATUS);
+    notify(source,MUIA_TextEditor_ReadOnly,MUIV_EveryTime,ED_STATUS);
     notify(history_find, MUIA_String_Acknowledge, MUIV_EveryTime, HISTORYNEXT);
     notify(newname, MUIA_String_Acknowledge, MUIV_EveryTime, NEWFILE);
     notify(commit, MUIA_String_Acknowledge, MUIV_EveryTime, GITCOMMIT);
@@ -1648,6 +1662,7 @@ int main(int argc, char **argv)
                 }
                 continue;
             }
+            if(id==ED_STATUS) {source_editor_status();continue;}
             if(id==ED_CHANGED) {
                 set(source,MUIA_TextEditor_ContentsChanged,FALSE);
                 colour_pending=1;colour_delay=1;arm_timer();continue;
