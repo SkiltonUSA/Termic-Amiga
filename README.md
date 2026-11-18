@@ -43,7 +43,7 @@ include verification details.
 - Clickable compiler diagnostics; host Git worktrees and GitHub PR controls.
 - Agent tools for C/header, Python, ARexx and text files, native builds, ARexx/MicroPython/program execution and live hardware queries.
 - Codex, Claude and Cursor host profiles, with model selection and live response/tool feedback on the Amiga.
-- One black Agent activity pane with cyan responses, amber worker logs and a narrower instruction field beside the controls.
+- One black Agent activity pane with cyan responses, amber worker logs and task instructions above a single row of agent controls.
 - Standalone Termic AI Proxy desktop app for macOS and Windows 11.
 - Agents / CLI / Scripts profiles with separate credentials, launch arguments, sessions and access limits.
 - CLI, ARexx and MicroPython script execution, with a pinned native MicroPython runtime.

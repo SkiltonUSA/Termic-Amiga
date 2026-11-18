@@ -69,6 +69,17 @@ static ULONG action_icon_dispatch(__reg("a0") struct IClass *cl,
             x=_mleft(obj)+(_mwidth(obj)-16)/2+!!selected;
             y=_mtop(obj)+(_mheight(obj)-16)/2+!!selected;
             switch(kind&~AI_SMALL) {
+            case AI_SAVE:
+                ai_box(rp,x,y,1,1,14,14);ai_box(rp,x,y,4,1,11,6);
+                ai_box(rp,x,y,4,9,11,14);ai_line(rp,x,y,9,2,9,4);break;
+            case AI_AGENT:
+                ai_line(rp,x,y,1,1,1,14);ai_line(rp,x,y,14,1,14,14);
+                for(i=0;i<10;i++)ai_line(rp,x,y,3+i,2+i/2,3+i,13-i/2);break;
+            case AI_STOP:RectFill(rp,x+3,y+3,x+12,y+12);break;
+            case AI_PROMPT:
+                ai_box(rp,x,y,1,2,14,11);ai_line(rp,x,y,4,11,4,14);
+                ai_line(rp,x,y,4,14,7,11);ai_line(rp,x,y,4,5,11,5);
+                ai_line(rp,x,y,4,8,9,8);break;
             case AI_NEW:
                 ai_box(rp,x,y,2,1,13,14);
                 RectFill(rp,x+4,y+7,x+11,y+8);RectFill(rp,x+7,y+4,x+8,y+11);break;
@@ -167,14 +178,15 @@ static ULONG action_icon_dispatch(__reg("a0") struct IClass *cl,
     }
     return result;
 }
-static Object *action_icon_sized(int kind,const char *help,int small)
+static Object *action_icon_sized(int kind,const char *help,int size)
 {
+    int small=size!=0,inset=size==22?1:2;
     if(!action_icon_class)action_icon_class=__termic_mui_class(MUIMasterBase,NULL,MUIC_Area,NULL,0,(APTR)action_icon_dispatch);
     if(!action_icon_class)return NULL;
     return NewObject(action_icon_class->mcc_Class,NULL,ButtonFrame,
-        MUIA_FixWidth,small?24:32,MUIA_FixHeight,small?24:30,
-        MUIA_InnerLeft,small?2:4,MUIA_InnerRight,small?2:4,
-        MUIA_InnerTop,small?2:3,MUIA_InnerBottom,small?2:3,MUIA_Background,MUII_ButtonBack,
+        MUIA_FixWidth,small?size:32,MUIA_FixHeight,small?size:30,
+        MUIA_InnerLeft,small?inset:4,MUIA_InnerRight,small?inset:4,
+        MUIA_InnerTop,small?inset:3,MUIA_InnerBottom,small?inset:3,MUIA_Background,MUII_ButtonBack,
         MUIA_InputMode,MUIV_InputMode_RelVerify,MUIA_CycleChain,1,
         MUIA_UserData,kind|(small?AI_SMALL:0),MUIA_ShortHelp,help,TAG_DONE);
 }

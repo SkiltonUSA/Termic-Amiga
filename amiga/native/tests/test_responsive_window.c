@@ -38,15 +38,15 @@ static int geometry(Object *window,int width,int height)
  {char p[PATH_SIZE],s[512];snprintf(s,sizeof(s),"wanted=%dx%d actual=%dx%d min=%dx%d max=%dx%d border=%d flags=%08lx mode=%d",width,height,(int)w->Width,(int)w->Height,(int)w->MinWidth,(int)w->MinHeight,(int)w->MaxWidth,(int)w->MaxHeight,(int)w->BorderTop,(unsigned long)w->Flags,layout_compact);join(p,project_root,"geometry.txt");save_text(p,s,512);}
  return w->Width==width && w->Height==height && w->BorderTop>0 && (w->Flags&WFLG_SIZEGADGET);
 }
-static int icon_row_valid(Object *row,Object *pane,int expected)
+static int icon_row_valid(Object *row,Object *pane,int expected,int size)
 {
  struct List *children=(struct List *)value(row,MUIA_Group_ChildList);
  APTR childstate=children->lh_Head;Object *child;int count=0;LONG top=-1,right=-1;
  while((child=NextObject(&childstate)))if(value(child,MUIA_UserData)&AI_SMALL) {
-  if(_mwidth(child)>24 || _mheight(child)>24)return 0;
-  if(count && (_mtop(child)!=top || _mleft(child)<=right))return 0;
+  if(_width(child)!=size || _height(child)!=size)return 0;
+  if(count && (_top(child)!=top || _left(child)<=right))return 0;
   if(!(char *)value(child,MUIA_ShortHelp))return 0;
-  top=_mtop(child);right=_mleft(child)+_mwidth(child)-1;count++;
+  top=_top(child);right=_left(child)+_width(child)-1;count++;
  }
  return count==expected && right<_mleft(pane)+_mwidth(pane);
 }
@@ -104,14 +104,29 @@ int main(int argc,char **argv)
    CHECK(value(workspace_view,MUIA_ShowMe)==layout_compact);
    if(!layout_compact) {
     CHECK(_mleft(workspace_left)<_mleft(workspace_center) && _mleft(workspace_center)<_mleft(workspace_files));
-    if(j==0) {
-     CHECK(_mleft(prompt)<_mleft(profile_picker));
-     if(sizes[i][0]>=1024)
-      CHECK(_mleft(profile_fast)+_mwidth(profile_fast)<=_mleft(workspace_center)+_mwidth(workspace_center));
-    }
    }
-   if(!layout_compact || j==5)CHECK(icon_row_valid(project_actions,project_pane,3));
-   if(!layout_compact || j==6)CHECK(icon_row_valid(task_actions,task_pane,5));
+   if(j==0) {
+    CHECK(_mtop(profile_picker)>=_mtop(prompt)+_mheight(prompt));
+    snprintf(report,sizeof(report),"picker=%ld/%ld fast=%ld/%ld buttons=%ld/%ld",(long)_height(profile_picker),(long)_mheight(profile_picker),(long)_height(profile_fast),(long)_mheight(profile_fast),(long)_height(profile_buttons),(long)_mheight(profile_buttons));
+    join(path,project_root,"profile-height.txt");save_text(path,report,sizeof(report));
+    CHECK(_height(profile_picker)==22 && _height(profile_fast)==22);
+    CHECK(_top(profile_picker)==_top(profile_fast));
+    CHECK(_top(profile_buttons)==_top(profile_fast));
+    CHECK(abs((_mtop(profile_picker)+_mheight(profile_picker)/2)-(_mtop(profile_fast)+_mheight(profile_fast)/2))<=2);
+    CHECK(_mleft(profile_fast)>=_mleft(profile_picker)+_mwidth(profile_picker));
+    if(!icon_row_valid(profile_buttons,workspace_center,4,22)) {
+     struct List *children=(struct List *)value(profile_buttons,MUIA_Group_ChildList);
+     APTR childstate=children->lh_Head;Object *child;int used=0;
+     used+=snprintf(report+used,sizeof(report)-used,"pane=%ld,%ld row=%ld,%ld\n",(long)_mleft(workspace_center),(long)_mwidth(workspace_center),(long)_mleft(profile_actions),(long)_mwidth(profile_actions));
+     while((child=NextObject(&childstate)) && used<1500)
+      used+=snprintf(report+used,sizeof(report)-used,"kind=%lu x=%ld y=%ld w=%ld h=%ld\n",value(child,MUIA_UserData),(long)_mleft(child),(long)_mtop(child),(long)_mwidth(child),(long)_mheight(child));
+     join(path,project_root,"profile-row.txt");save_text(path,report,sizeof(report));
+    }
+    CHECK(icon_row_valid(profile_buttons,workspace_center,4,22));
+    CHECK(_mleft(profile_fast)+_mwidth(profile_fast)<=_mleft(workspace_center)+_mwidth(workspace_center));
+   }
+   if(!layout_compact || j==5)CHECK(icon_row_valid(project_actions,project_pane,3,24));
+   if(!layout_compact || j==6)CHECK(icon_row_valid(task_actions,task_pane,5,24));
    CHECK(value(workspace_center,MUIA_ShowMe)==(!layout_compact || j<5));
    CHECK(value(workspace_files,MUIA_ShowMe)==(!layout_compact || j==7 || j==8));
    CHECK(value(workspace_left,MUIA_ShowMe)==(!layout_compact || j==5 || j==6));

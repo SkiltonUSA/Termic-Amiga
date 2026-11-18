@@ -13,6 +13,7 @@ static int profile_row[PROFILE_MAX], profile_rows, profile_edit = -1, profile_lo
 static int picker_row[PROFILE_MAX], picker_count;
 static const char *picker_names[PROFILE_MAX + 1];
 static const char *yesno[] = {"Off", "On", NULL};
+static const char *launcher_yolo[] = {"YOLO Off", "YOLO On", NULL};
 static const char *kinds[] = {"OpenAI API", "Amiga agent CLI", "Amiga CLI", "ARexx", "MicroPython", "Codex on Mac", "Claude on Mac", "Cursor on Mac", NULL};
 static const char *roles[] = {"Edit, build and run", "Read files and hardware only", NULL};
 static const char *filters[] = {"All", "API / CLI agents", "CLI / Scripts", NULL};
@@ -43,6 +44,12 @@ static Object *cycle(const char **choices)
 {
     return CycleObject, MUIA_Cycle_Entries, choices, MUIA_Font,
            bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal, MUIA_CycleChain, 1, End;
+}
+static Object *launcher_cycle(const char **choices)
+{
+    return CycleObject, MUIA_Cycle_Entries, choices, MUIA_Font,
+           bodyfont ? (ULONG)bodyfont : MUIV_Font_Normal,
+           MUIA_InnerLeft,0,MUIA_InnerRight,0,MUIA_CycleChain,1,End;
 }
 static void profiles_picker_refresh(void)
 {

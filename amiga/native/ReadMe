@@ -61,8 +61,8 @@ Native MUI tabs select Agent, Editor, Build / CLI, Changes and Settings.
 At 340x280 a top selector also offers Projects, Tasks, Files and CLI as
 full-width panes. At 800x500 and above, Projects/Tasks sit on the left,
 the tabbed work page in the centre, and Files above CLI on the right.
-Task instructions sit beside agent controls below the activity log. The
-header shows the version and Build, Run, Settings, About and Quit icons.
+Task instructions sit above a single row of agent controls below the
+activity log. The header shows the version and Build, Run, Settings, About and Quit icons.
 Projects uses one compact icon row: New, Rename and Import Folder.
 Tasks uses one compact icon row: New, Rename, Kanban, Queue and Mark Done.
 Hover over an icon for its full action name. Click inside the source editor
@@ -330,8 +330,9 @@ releasing the selection catches up to the latest line.
 The Agent page combines cyan [Agent] responses and amber [Log] worker
 messages in one black activity pane. Live entries appear in polling order;
 opening a saved task shows its transcript followed by its latest job log.
-Selected text stays stable while updates arrive. The narrower
-instruction box sits beside the profile selector and action buttons.
+Selected text stays stable while updates arrive. The task
+instruction box sits above one row containing the profile selector, YOLO
+control and four action buttons.
 The log comes from local job.log. Mac proxy diagnostics remain in the
 AI Proxy app when the bridge cannot deliver them to the Amiga.
 The direct API profile does not stream tokens.

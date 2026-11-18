@@ -1147,3 +1147,32 @@ acceptance and its screenshots were inspected. The installed executable and
 five matching source/manual files were checksum verified, a rollback copy was
 retained, and Termic reopened successfully. TermicCheck reported zero missing
 dependencies. The version remains 0.1.2 Beta; no release archive was replaced.
+
+## Single agent-control row below task instructions
+
+The Files helper footer and redundant Agent profile caption were removed.
+The profile selector keeps its natural text width on the left. YOLO and
+four action buttons align to the right on the same row below Task Instructions.
+The four buttons are equal 22x22 squares matching the native selectors' height,
+with 16px symbols, equal two-pixel gaps and full hover labels. Projects and
+Tasks retain their existing 24x24 buttons.
+
+The final native size/page matrix passed from 320x240 through 1024x800,
+including repeated compact/wide transitions. Updated geometry checks verify
+selector heights and alignment, button dimensions, row containment and the
+position below the instructions. Existing buffer, cursor, unsaved-state and
+sidebar checks also passed. Compact and wide synthetic screenshots were
+inspected. The native workspace and fixtures cross-built without warnings.
+
+The YOLO selector now contains its label in both states, "YOLO Off" and
+"YOLO On", with no separate caption. A final focused native run repeated
+all workspace views and row/state checks at 320x240, 340x280 and 1024x800.
+All passed, and the compact and wide screenshots were inspected. Horizontal
+selector padding was reduced to retain the full labels and button spacing.
+The guide clarifies that this toggle adds native profile launch arguments
+and has no effect on API or proxy profiles.
+
+The final executable and six source/manual files were installed with CRC32
+verification and a rollback backup. Termic reopened successfully, and
+TermicCheck reported zero missing dependencies. The native version remains
+0.1.2 Beta; the published release archive was not replaced.

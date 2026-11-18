@@ -47,8 +47,9 @@ and Mark Done. Hover over each icon for its action name.
 At small sizes, including 340x280, the selector shows one workspace pane.
 At 800x500 and above, Projects/Tasks sit left, the tabbed work page sits
 in the centre, and Files above CLI sit right. Instructions and agent
-controls sit side by side below the activity log. The header shows the
-version and Build, Run, Settings, About and Quit icons.
+controls sit below the activity log, with the profile selector, YOLO and
+four action icons together on one row beneath the instructions. The header
+shows the version and Build, Run, Settings, About and Quit icons.
 Files remains above CLI; drag its divider to change the height split.
 Column dividers adjust widths. F1-F5 select the five work pages.
 Long forms and tables have native scrollbars when needed. Resizing keeps
@@ -545,7 +546,8 @@ in local Config/ENV files, separate from the profile registry.
 
 Launch / Sessions: native command, default/YOLO/resume arguments, resume
 switch, API step limit (1-32) and output token limit (256-16384).
-YOLO arguments only apply when selected in the launcher. Native arguments
+The launcher shows YOLO Off or YOLO On. On adds the native profile's YOLO
+arguments; API and proxy profiles ignore this toggle. Native arguments
 use AmigaDOS syntax. API sessions are separated by task and profile.
 New conversation resets the selected profile's session.
 
@@ -664,8 +666,9 @@ Select text to hold it for copying. Release selection to catch up to the bottom.
 The Agent page combines cyan [Agent] responses and amber [Log] worker
 messages in one black activity pane. Live entries appear in polling order;
 opening a saved task shows its transcript followed by its latest job log.
-Scrollback and selected text stay stable while updates arrive. The narrower
-instruction box sits beside the profile selector and action buttons.
+Scrollback and selected text stay stable while updates arrive. The task
+instruction box sits above one row containing the profile selector, YOLO
+control and four action buttons.
 The log comes from local job.log. Mac proxy diagnostics remain in the
 AI Proxy app when the bridge cannot deliver them to the Amiga.
 The direct API profile does not stream tokens.

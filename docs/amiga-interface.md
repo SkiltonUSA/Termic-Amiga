@@ -76,8 +76,13 @@ mode is changed. Source and Files retain their black backgrounds.
 Below 800 pixels wide or 500 pixels high, only the selected workspace pane is
 shown. At larger sizes, Projects/Tasks sit on the left, the tabbed work page
 in the centre, and Files above CLI on the right. The Agent page places task
-instructions beside the profile selector and action icons, below the activity
-log. The header shows the version and Build, Run, Settings, About and Quit
+instructions above a single row containing the profile selector, YOLO
+control and four action icons, below the activity log. The profile selector
+keeps its natural text width on the left; YOLO and the action buttons align
+to the right. The YOLO selector labels its states "YOLO Off" and "YOLO On",
+without a separate caption. The redundant profile caption is omitted. Both selectors match
+the 22-pixel action-button height, and the four buttons have equal gaps.
+The header shows the version and Build, Run, Settings, About and Quit
 icons. Files and CLI have a native balance divider; column widths can also
 be adjusted. Resizing changes visibility of existing widgets rather
 than replacing their buffers, so unsaved text and editor position survive.
@@ -125,8 +130,8 @@ management uses new, duplicate, trash, refresh and arrow symbols.
 The Tasks panel has one row of five 24x24 buttons with 16px glyphs: New,
 Rename, Kanban (columns), Queue (list) and Mark Done (tick). Each has a full
 action name in its hover help. Projects uses the same compact size for its
-single row of New, Rename and Import Folder buttons. Other toolbars keep
-their existing size.
+single row of New, Rename and Import Folder buttons. The agent control row
+uses 22x22 action buttons to match its selectors. Other toolbars keep their existing size.
 
 Hover for the action name and applicable shortcut. Native MUI handles focus,
 pressed and disabled states; the menu strip retains descriptive names.

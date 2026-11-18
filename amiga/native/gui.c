@@ -176,9 +176,9 @@ static Object *button(const char *s, int id)
     notify(o, MUIA_Pressed, FALSE, id);
     return o;
 }
-static Object *sidebar_button(const char *help,int id,int kind)
+static Object *compact_button(const char *help,int id,int kind,int size)
 {
-    Object *o=action_icon_sized(kind,help,TRUE);
+    Object *o=action_icon_sized(kind,help,size);
     if(o)notify(o,MUIA_Pressed,FALSE,id);
     return o;
 }
@@ -1358,23 +1358,22 @@ static int build_ui(void)
     project_pane=VGroup,GroupFrame,InnerSpacing(2,2),MUIA_Group_Spacing,2,
         Child,label("Projects"),Child,list(&projects),Child,projectname=entry(120),
         Child,project_actions=HGroup,MUIA_Group_Spacing,2,
-        Child,sidebar_button("New project",NEWPROJECT,AI_NEW),
-        Child,sidebar_button("Rename project",RENAMEPROJECT,AI_RENAME),
-        Child,sidebar_button("Import source drawer...",IMPORTPROJECT,AI_FOLDER),Child,HVSpace,End,End;
+        Child,compact_button("New project",NEWPROJECT,AI_NEW,24),
+        Child,compact_button("Rename project",RENAMEPROJECT,AI_RENAME,24),
+        Child,compact_button("Import source drawer...",IMPORTPROJECT,AI_FOLDER,24),Child,HVSpace,End,End;
     task_pane=VGroup,GroupFrame,InnerSpacing(2,2),MUIA_Group_Spacing,2,
         Child,label("Tasks"),Child,list(&tasks),Child,taskname=entry(120),
         Child,task_actions=HGroup,MUIA_Group_Spacing,2,
-        Child,sidebar_button("New task",NEWTASK,AI_NEW),
-        Child,sidebar_button("Rename task",RENAMETASK,AI_RENAME),
-        Child,sidebar_button("Kanban board",KB_OPEN,AI_KANBAN),
-        Child,sidebar_button("Task queue",Q_OPEN,AI_QUEUE),
-        Child,sidebar_button("Mark task done",MARKDONE,AI_DONE),Child,HVSpace,End,End;
+        Child,compact_button("New task",NEWTASK,AI_NEW,24),
+        Child,compact_button("Rename task",RENAMETASK,AI_RENAME,24),
+        Child,compact_button("Kanban board",KB_OPEN,AI_KANBAN,24),
+        Child,compact_button("Task queue",Q_OPEN,AI_QUEUE,24),
+        Child,compact_button("Mark task done",MARKDONE,AI_DONE,24),Child,HVSpace,End,End;
     workspace_left=mui_viewport(VGroup,Child,project_pane,Child,task_pane,End);
     set(workspace_left,MUIA_Weight,22);
     file_pane=VGroup,GroupFrame,InnerSpacing(2,2),MUIA_Group_Spacing,2,
         Child,label("Files"),Child,list(&files),Child,newname=entry(180),Child,HGroup,
-        Child,button("Create file",NEWFILE),Child,button("Refresh files",REFRESH),Child,HVSpace,End,
-        Child,files_hint=label("C/H, Python, ARexx,\ntext and Markdown.\nSaves keep .bak copies."),End;
+        Child,button("Create file",NEWFILE),Child,button("Refresh files",REFRESH),Child,HVSpace,End,End;
     cli_pane=VGroup,GroupFrame,InnerSpacing(2,2),MUIA_Group_Spacing,2,
         Child,HGroup,Child,label("CLI"),Child,HVSpace,Child,command_mode=cycle(command_modes),End,Child,editor(&cli_output,1),Child,command=entry(1024),
         Child,HGroup,Child,button("Execute",SHELL),Child,button("Cancel job",CANCEL),Child,HVSpace,End,End;
@@ -1386,13 +1385,20 @@ static int build_ui(void)
         Child,editor(&transcript,1),End,
         Child,HGroup,Child,history_find=entry(120),Child,button("Find history",HISTORYNEXT),
         Child,button("Prompts",PL_OPEN),Child,button("Shortcuts",SHORTCUTS),End,
-        Child,agent_compose=ColGroup(1),MUIA_Weight,20,
-        Child,VGroup,MUIA_HorizWeight,35,MUIA_VertWeight,60,Child,instruction_caption=label("Task instructions"),Child,editor(&prompt,0),End,
-        Child,VGroup,MUIA_HorizWeight,65,MUIA_VertWeight,40,Child,profile_caption=label("Agent profile"),Child,profile_picker=cycle(kinds),
-        Child,HGroup,Child,label("YOLO"),Child,profile_fast=cycle(yesno),End,
-        Child,HGroup,Child,button("Save task",SAVETASK),Child,button("Start agent",AGENT),
-        Child,button("Cancel",CANCEL),Child,button("New conversation",NEWSESSION),Child,HVSpace,End,Child,HVSpace,End,End,End;
+        Child,agent_compose=VGroup,MUIA_Weight,20,
+        Child,VGroup,MUIA_Weight,100,Child,instruction_caption=label("Task instructions"),Child,editor(&prompt,0),End,
+        Child,profile_actions=HGroup,MUIA_Weight,0,MUIA_Group_Spacing,0,MUIA_Group_SameHeight,TRUE,
+        Child,profile_picker=launcher_cycle(kinds),Child,HVSpace,
+        Child,profile_fast=launcher_cycle(launcher_yolo),Child,RectangleObject,MUIA_FixWidth,2,End,
+        Child,profile_buttons=HGroup,MUIA_HorizWeight,0,MUIA_Group_Spacing,2,MUIA_Group_SameSize,TRUE,
+        Child,compact_button("Save task",SAVETASK,AI_SAVE,22),
+        Child,compact_button("Start agent (Shift F1)",AGENT,AI_AGENT,22),
+        Child,compact_button("Stop current job (Shift F10)",CANCEL,AI_STOP,22),
+        Child,compact_button("New conversation",NEWSESSION,AI_PROMPT,22),End,End,End,End;
     set(prompt,MUIA_ShortHelp,"Task instructions. Agent responses are cyan; worker logs are amber.");
+    set(profile_picker,MUIA_HorizWeight,0);
+    set(profile_picker,MUIA_ShortHelp,"Agent profile for this task");
+    set(profile_fast,MUIA_HorizWeight,0);
     set(profile_fast,MUIA_ShortHelp,"YOLO mode for the selected agent profile");
     editpage=VGroup,MUIA_Group_Spacing,2,Child,filename=elastic_label("main.c"),Child,editor(&source,0),
         Child,HGroup,Child,findtext=entry(120),Child,button("Find",FIND),Child,button("Find next",FINDNEXT),Child,editor_save=button("Save",SAVE),End,End;
@@ -1434,7 +1440,7 @@ static int build_ui(void)
     /* Start compact so a small screen can open the window before its first
      * layout pass. Native MUI/Intuition controls handle drag, zoom and sizing. */
     set(workspace_brand,MUIA_ShowMe,FALSE);set(workspace_extra,MUIA_ShowMe,FALSE);
-    set(activity_caption,MUIA_ShowMe,FALSE);set(instruction_caption,MUIA_ShowMe,FALSE);set(profile_caption,MUIA_ShowMe,FALSE);set(files_hint,MUIA_ShowMe,FALSE);
+    set(activity_caption,MUIA_ShowMe,FALSE);set(instruction_caption,MUIA_ShowMe,FALSE);
     set(workspace_left,MUIA_ShowMe,FALSE);set(workspace_files,MUIA_ShowMe,FALSE);
     set(workspace_balance_a,MUIA_ShowMe,FALSE);set(workspace_balance_b,MUIA_ShowMe,FALSE);
     win=MUI_NewObject(MUIC_Window,MUIA_Window_Title,"Termic Amiga " TERMIC_VERSION,
