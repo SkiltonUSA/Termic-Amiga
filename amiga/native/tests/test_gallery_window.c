@@ -57,8 +57,9 @@ static int gallery_seed(void)
  set(heading,MUIA_Text_Contents,"Hello Amiga / Offline questions");
  set(projectname,MUIA_String_Contents,"Hello Amiga");set(taskname,MUIA_String_Contents,"Offline questions");
  set(source,MUIA_TextEditor_Contents,demo_source);set(prompt,MUIA_TextEditor_Contents,"what is the capital of peru\n");
- set(transcript,MUIA_TextEditor_Contents,"\33P[79C8FF]Tiny 2.1: offline question answering\n\n\33P[F2B66D]Demo: Tiny is selected for this task.\n\33P[F2B66D]Runs locally on the Amiga 68k CPU.\n\33P[F2B66D]No API key or Mac proxy is required.\n\n\33P[79C8FF]Enter a short question below to start.\n\33P[F2B66D]Maximum: 72 printable ASCII characters.\n\33P[F2B66D]No file/build tools or conversation memory.\n");
+ set(transcript,MUIA_TextEditor_Contents,"\33P[79C8FF]Tiny 2.1: offline question answering\n\n\33P[F2B66D]Demo: Tiny is selected for this task.\n\33P[F2B66D]Runs locally on the Amiga 68k CPU.\n\33P[F2B66D]No API key or Mac proxy is required.\n\n\33P[79C8FF]Enter a short question below to start.\n\33P[F2B66D]Maximum: 72 printable ASCII characters.\n\33P[F2B66D]Use /help for local tools and saved context.\n");
  set(cli_output,MUIA_TextEditor_Contents,"Demo CLI transcript\n\n> Echo Hello Amiga\nHello Amiga\n\nCLI, ARexx and MicroPython\nuse the mode selector above.\n");
+ set(cli_directory,MUIA_Text_Contents,"Work:Projects/HelloAmiga");
  set(command,MUIA_String_Contents,"Echo Hello Amiga");
  set(output,MUIA_TextEditor_Contents,"Demonstration build log\n\nvc +aos68k -cpu=68020 -O1 main.c\n  -o Program.new -lamiga\n\nBuild completed.\nProgram.new promoted to Program.\n");
  set(review,MUIA_TextEditor_Contents,"Demo change summary\n\nModified: main.c\nAdded: ReadMe\n\nOpen Review edits to inspect the diff.\n");

@@ -72,7 +72,7 @@ proxies are unchanged from 0.1.3 and retain their existing download links.
 - Projects/Tasks left, tabbed workspace centre, Files/CLI right; compact panes at 340x280.
 - Source backups, undo/redo, clipboard and search.
 - Native VBCC build/run and explicit AmigaDOS commands with captured output.
-- Persistent CLI panel below Files, with a resizable half-height split, command entry and job output.
+- Persistent CLI panel below Files, with a resizable half-height split, command entry and job output. Commands start in the selected project/task directory, displayed beneath the mode selector.
 - Native Git initialization, status, diffs, source commits and branch controls.
 - Integrated Process Monitor with native column dividers, CPU/memory sorting and pause/resume.
 - Optional ZZ9000 information button, hidden by default; no ARM compute offload is enabled.

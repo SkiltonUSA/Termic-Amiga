@@ -35,7 +35,9 @@ the effective settings and discards unapplied edits. Project-drawer changes need
 an application restart. Worker processes read the same overrides, so subsequent
 jobs use the applied model/key. Already running jobs retain their loaded values.
 API keys remain plaintext local files and are never displayed in the editor.
-Build-command saving is separate workspace data. Preference writes are atomic
+The **Save build command** and **Save preferences** buttons have text labels,
+matching widths and left alignment. Use and Cancel are text buttons with the
+same row spacing. Build-command saving is separate workspace data. Preference writes are atomic
 per file, not a transaction spanning the whole set; a partial failure is reported.
 
 Help opens the locally installed `Termic.guide` in a native MUI 5 window.
@@ -47,6 +49,14 @@ reopening preserves the selected chapter. The reader only follows local node
 links and never executes commands or opens external URLs. MultiView can still
 open the guide file separately. Shift-Help and Project > About show version and credits.
 The local installation-kit builder includes the guide automatically.
+
+The CLI pane has a single mode selector and shows the selected project/task
+path beneath it. Each command starts in that workspace; both AmigaDOS file
+resolution and its CLI directory name are synchronized. A standalone `CD`
+does not persist a different starting drawer for the next command. The worker
+restores its caller's directory name before returning. Physical acceptance
+checks `CD`, relative file reads and caller restoration for a project and a
+nested task, launched from a different drawer.
 
 Native MUI Title tabs select Agent, Editor, Build / CLI, Changes and Settings.
 At compact sizes, a top cycle selector also provides Projects, Tasks, Files

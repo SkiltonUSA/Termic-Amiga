@@ -176,7 +176,10 @@ Choose CLI for
 AmigaDOS commands, or ARexx / MicroPython for a script path and arguments.
 Choose Execute
 or press Return in that field. Shift-F3 focuses it directly. Commands run
-in the selected workspace and their output is captured in the log.
+in the selected project or task directory, shown below the mode selector.
+The CLI directory name and file access use that same directory. Each command
+starts there; a CD command does not change the next command's starting drawer.
+Output is captured in the log.
 The editor or agent tab stays visible while the command runs. The sidebar
 shows the selected workspace's job output; Build / CLI shows the same log
 at full size. The play and stop icons execute and cancel; hover for help.
@@ -285,7 +288,9 @@ previously applied using Use. A failure may leave some settings written;
 check storage and retry if Termic reports a preference write failure.
 
 Build commands have their own Save build command button because they are
-workspace data. Settings > MUI Settings... opens MUI's appearance editor.
+workspace data. Save preferences stores the general settings. These two
+labelled Save buttons share the same width and left alignment.
+Settings > MUI Settings... opens MUI's appearance editor.
 Helvetica 13 controls and Courier 13 source text match the reference UI.
 Missing disk fonts fall back to the corresponding MUI font roles. Framed
 groups and labelled fields organize preferences. MUI supplies colours,

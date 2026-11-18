@@ -42,7 +42,7 @@ const char stack_size[] = "$STACK:262144";
 #define MAX_ITEMS 128
 #define PATH_SIZE 384
 static Object *app, *win, *projects, *tasks, *files, *pages, *source, *prompt, *output, *review,
-    *transcript, *cli_output, *editor_save, *guide_text;
+    *transcript, *cli_output, *cli_directory, *editor_save, *guide_text;
 static Object *prompts_body,*diagnostic_list,*diagnostic_view;
 static struct Diagnostic diagnostic_rows[DIAGNOSTIC_MAX];
 static int diagnostic_count;
@@ -159,7 +159,8 @@ static Object *elastic_label(const char *s)
 #include "action_icons.h"
 static Object *button(const char *s, int id)
 {
-    int kind=action_icon_kind(s,id);
+    int kind=(id==SAVEBUILD || id==SAVECONFIG || id==USECONFIG || id==CANCELCONFIG)
+        ? -1 : action_icon_kind(s,id);
     const char *help=id==CANCEL?"Stop current job (see Keyboard shortcuts)":id==RUN?"Run program (see Keyboard shortcuts)":
         id==BUILD?"Build (see Keyboard shortcuts)":id==SAVE?"Save (Right Amiga S)":id==AGENT?"Start agent (see Keyboard shortcuts)":s;
     Object *o;
@@ -167,6 +168,8 @@ static Object *button(const char *s, int id)
     else o = TextObject, ButtonFrame, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_Button,
            MUIA_InnerTop, 4, MUIA_InnerBottom, 4, MUIA_Background, MUII_ButtonBack, MUIA_InputMode,
            MUIV_InputMode_RelVerify, MUIA_Text_Contents, s, MUIA_Text_PreParse, "\33c",
+           (id==SAVEBUILD || id==SAVECONFIG)?MUIA_FixWidthTxt:TAG_IGNORE,"Save build command",
+           MUIA_Text_SetMax,(id==USECONFIG || id==CANCELCONFIG),
            MUIA_CycleChain, 1, End;
     if (!o) return NULL;
     if (id == SAVECONFIG || id == USECONFIG || id == CANCELCONFIG)
@@ -559,6 +562,8 @@ static void load_workspace(const char *p)
 {
     char path[PATH_SIZE], title[420];
     strcpy(current, p);
+    set(cli_directory,MUIA_Text_Contents,current);
+    set(cli_directory,MUIA_ShortHelp,current);
     attach_job(p);
     profiles_picker_refresh();
     save_text("Termic:Config/last-workspace", p, PATH_SIZE);
@@ -1356,7 +1361,8 @@ static int build_ui(void)
         Child,label("Files"),Child,list(&files),Child,newname=entry(180),Child,HGroup,
         Child,button("Create file",NEWFILE),Child,button("Refresh files",REFRESH),Child,HVSpace,End,End;
     cli_pane=VGroup,GroupFrame,InnerSpacing(2,2),MUIA_Group_Spacing,2,
-        Child,HGroup,Child,label("CLI"),Child,HVSpace,Child,command_mode=cycle(command_modes),End,Child,editor(&cli_output,1),Child,command=entry(1024),
+        Child,command_mode=cycle(command_modes),
+        Child,cli_directory=elastic_label("Select a project or task"),Child,editor(&cli_output,1),Child,command=entry(1024),
         Child,HGroup,Child,button("Execute",SHELL),Child,button("Cancel job",CANCEL),Child,HVSpace,End,End;
     workspace_files=mui_viewport(VGroup,Child,file_pane,Child,files_balance=BalanceObject,End,Child,cli_pane,End);
     set(workspace_files,MUIA_Weight,23);
@@ -1394,8 +1400,8 @@ static int build_ui(void)
         Child,label("Default API model"),Child,model=entry(128),Child,label("API key (blank keeps saved key)"),
         Child,keyfield=StringObject,StringFrame,MUIA_String_Secret,TRUE,MUIA_String_MaxLen,512,MUIA_CycleChain,1,End,
         Child,button("Test verified HTTPS",PROBE),Child,label("Project drawer (restart to apply)"),Child,projectdrawer=entry(180),
-        Child,label("Build command (must produce Program.new)"),Child,buildcommand=entry(512),Child,HGroup,Child,button("Save build command",SAVEBUILD),Child,HVSpace,End,
-        Child,HGroup,Child,button("Save",SAVECONFIG),Child,button("Use",USECONFIG),Child,button("Cancel",CANCELCONFIG),Child,HVSpace,End,Child,HVSpace,End;
+        Child,label("Build command (must produce Program.new)"),Child,buildcommand=entry(512),Child,HGroup,MUIA_Group_Spacing,6,Child,button("Save build command",SAVEBUILD),Child,HVSpace,End,
+        Child,HGroup,MUIA_Group_Spacing,6,Child,button("Save preferences",SAVECONFIG),Child,button("Use",USECONFIG),Child,button("Cancel",CANCELCONFIG),Child,HVSpace,End,Child,HVSpace,End;
     processorpage=termic_monitor_page(app,monitor_fixture);
     if(!processorpage)return 0;
     workspace_tabs=MUI_NewObject("Title.mui",Child,label("Agent"),Child,label("Editor"),

@@ -435,6 +435,8 @@ done: free(mode);free(previous);free(r);return rc;
 int main(int argc, char **argv)
 {
     BPTR lock, old;
+    char old_directory_name[384],directory_name[384];
+    int directory_named=0,have_directory_name;
     int result = 20;
     FILE *f;
     struct MsgPort port;
@@ -466,12 +468,21 @@ int main(int argc, char **argv)
     lock = Lock((STRPTR)path, ACCESS_READ);
     if (!lock)
         return 20;
+    have_directory_name=GetCurrentDirName(old_directory_name,sizeof(old_directory_name));
+    if(!NameFromLock(lock,directory_name,sizeof(directory_name))) {
+        puts("Cannot resolve the workspace directory.");UnLock(lock);return 20;
+    }
     old = CurrentDir(lock);
+    /* CurrentDir changes file resolution; Shell also uses cli_SetName for CD
+     * and its prompt. Keep both in sync, then restore the caller's name. */
+    if(have_directory_name)directory_named=SetCurrentDirName(directory_name);
+    if(!directory_named)puts("CLI directory name could not be set; relative files still use the workspace.");
     lock = CreateDir((STRPTR) ".busy");
     if (!lock)
     {
         puts("Workspace busy or not writable.");
         UnLock(CurrentDir(old));
+        if(directory_named)SetCurrentDirName(old_directory_name);
         return 20;
     }
     UnLock(lock);
@@ -510,6 +521,7 @@ int main(int argc, char **argv)
     else if (!strcmp(action, "--shell") || !strcmp(action, "--rexx") || !strcmp(action, "--python"))
     {
         char *command = read_text("command.txt", 1024);
+        printf("Working directory: %s\n",directory_name);
         if (command && *command)
         {
             size_t n = strlen(command);
@@ -619,5 +631,6 @@ int main(int argc, char **argv)
     {struct MsgPort *ui=FindPort((STRPTR)"TermicWorkspaceUI");if(ui)Signal(ui->mp_SigTask,SIGBREAKF_CTRL_D);}
     Permit();
     UnLock(CurrentDir(old));
+    if(directory_named)SetCurrentDirName(old_directory_name);
     return result;
 }
