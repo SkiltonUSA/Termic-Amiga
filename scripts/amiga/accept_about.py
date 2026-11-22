@@ -1,25 +1,26 @@
 #!/usr/bin/env python3
 """Opt-in physical checks for the native About window and Amiga version tags."""
 
+import argparse
 import asyncio
-import json
 import re
-import subprocess
-import urllib.parse
-import urllib.request
 from pathlib import Path
-from mcp import ClientSession
+from bridge_client import (AcceptanceRun, ClientSession, add_bridge_arguments,
+                           capture_png, workspace_cleanup)
 from mcp.client.streamable_http import streamablehttp_client
 
 
-async def main():
+async def main(args):
     version = re.search(
         r'#define TERMIC_VERSION "([^"]+)"', Path("amiga/native/version.h").read_text()
     ).group(1)
-    out = Path(".context/amiga-about")
-    out.mkdir(exist_ok=True)
-    async with streamablehttp_client("http://127.0.0.1:55010/mcp") as (r, w, _):
-        async with ClientSession(r, w) as session:
+    out = args.output
+    out.mkdir(parents=True, exist_ok=True)
+    async with (
+        AcceptanceRun(out, args.server, args.reservation_file) as run,
+        streamablehttp_client(run.url) as (r, w, _),
+    ):
+        async with ClientSession(r, w, bridge_url=run.url, reservation_path=run.path) as session:
             await session.initialize()
 
             async def call(name, args):
@@ -42,25 +43,7 @@ async def main():
                 await asyncio.sleep(0.7)
 
             async def capture(title, name):
-                with urllib.request.urlopen(
-                    "http://127.0.0.1:55010/api/screenshot?"
-                    + urllib.parse.urlencode({"window": title}),
-                    timeout=60,
-                ) as response:
-                    data = json.load(response)
-                subprocess.run(
-                    [
-                        "sips",
-                        "-s",
-                        "format",
-                        "png",
-                        data["path"],
-                        "--out",
-                        str(out / name),
-                    ],
-                    check=True,
-                    capture_output=True,
-                )
+                await capture_png(session, out / name, title)
 
             for local, remote in [
                 ("TermicNativeMUI", "TermicAbout"),
@@ -90,11 +73,13 @@ async def main():
                     },
                 )
                 assert result.count(version) == 2, result
+            session.cleanup = lambda: workspace_cleanup(session)
             await key("0x59")
             await call(
                 "amiga_run_script",
                 {"script": "Run >NIL: <NIL: Termic:TermicAbout", "timeout": 10},
             )
+            session.cleanup = lambda: workspace_cleanup(session, about=True)
             await asyncio.sleep(2)
             await key("0x51")  # Focus the embedded editor first
             await key("0x5f")  # Help opens About, even from the embedded editor
@@ -113,16 +98,11 @@ async def main():
             await key("0x44", "About Termic Amiga")  # Return closes the reused window
             await key("0x51")
             await capture("Termic Amiga Workspace", "workspace.png")
-            (out / "passed.json").write_text(
-                json.dumps(
-                    {
-                        "version": version,
-                        "open_close_reopen": True,
-                        "version_tags": 3,
-                    }
-                )
-            )
+            run.passed = {"version": version, "open_close_reopen": True, "version_tags": 3}
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output', type=Path, default=Path('.context/amiga-about'))
+    add_bridge_arguments(parser)
+    asyncio.run(main(parser.parse_args()))

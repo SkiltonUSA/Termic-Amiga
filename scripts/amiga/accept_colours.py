@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
 """Opt-in hardware colour/import/export check; only operates on a new fixture."""
 
-import asyncio, json, subprocess, time, urllib.request, urllib.parse
+import argparse
+import asyncio
+import time
 from pathlib import Path
-from mcp import ClientSession
+from bridge_client import (AcceptanceRun, ClientSession, add_bridge_arguments,
+                           capture_png, workspace_cleanup)
 from mcp.client.streamable_http import streamablehttp_client
 
 
-async def main():
-    out = Path(".context/amiga-colours")
-    out.mkdir(exist_ok=True)
-    async with streamablehttp_client("http://127.0.0.1:55010/mcp") as (r, w, _):
-        async with ClientSession(r, w) as s:
+async def main(args):
+    out = args.output
+    out.mkdir(parents=True, exist_ok=True)
+    async with (
+        AcceptanceRun(out, args.server, args.reservation_file) as run,
+        streamablehttp_client(run.url) as (r, w, _),
+    ):
+        async with ClientSession(r, w, bridge_url=run.url, reservation_path=run.path) as s:
             await s.initialize()
 
             async def call(name, args):
@@ -40,6 +46,7 @@ async def main():
                     "amiga_path": "Termic:TermicColour",
                 },
             )
+            s.cleanup = lambda: workspace_cleanup(s)
             await key("0x59")
             fixture = "TMGIT:Projects/colour-" + str(int(time.time()))
             await call(
@@ -90,28 +97,12 @@ async def main():
             )
             await asyncio.sleep(2)
             await key("0x51")
-            url = "http://127.0.0.1:55010/api/screenshot?" + urllib.parse.urlencode(
-                {"window": "Termic Amiga Workspace"}
-            )
-            with urllib.request.urlopen(url, timeout=60) as response:
-                data = json.load(response)
-            subprocess.run(
-                [
-                    "sips",
-                    "-s",
-                    "format",
-                    "png",
-                    data["path"],
-                    "--out",
-                    str(out / "editor.png"),
-                ],
-                check=True,
-                capture_output=True,
-            )
-            (out / "passed.json").write_text(
-                json.dumps({"fixture": fixture, "saved_source_exact": True})
-            )
+            await capture_png(s, out / "editor.png", "Termic Amiga Workspace")
+            run.passed = {"fixture": fixture, "saved_source_exact": True}
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output', type=Path, default=Path('.context/amiga-colours'))
+    add_bridge_arguments(parser)
+    asyncio.run(main(parser.parse_args()))
