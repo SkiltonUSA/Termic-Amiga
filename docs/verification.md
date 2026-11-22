@@ -1306,3 +1306,25 @@ muimaster.library 21.227, TextEditor.mcc 15.56 and AmiSSL 5.27 were detected.
 Termic and its guide were left open. This validates help and installation;
 Tiny inference, cloud execution and fresh AmiPkg installation were not part
 of this follow-up. Automated checks do not replace human interaction testing.
+
+## 0.1.5 Beta package validation (22 November 2026)
+
+The full native kit consolidates the post-0.1.4 CLI, preferences, MUI guide
+and Tiny assistant updates. All six native programs were rebuilt for 68020;
+Hunk headers and 0.1.5 Beta version strings were checked. All 132 host tests
+passed, including new recovery/concurrency checks and the existing proxy/MCP
+suite. Both native-kit and standalone-monitor LHA integrity checks passed.
+
+The pinned AmiPkg entry passed upstream schema validation with zero errors
+and the expected AmigaDOS script-review warning. The upstream C parser,
+dependency resolver and recipe planner passed under ASan/UBSan, including
+version minima/order, missing dependencies, CPU rules and a fresh host copy
+plan. The staged tree contains the original pinned Tiny model and blank
+credentials. SHA-256 values are published with the release.
+
+The CLI screenshot is from the earlier physical 0.1.4 post-release widget
+acceptance; it illustrates the same CLI implementation included in 0.1.5.
+This release packaging run did not install or execute the new package on the
+physical Amiga. Its AmigaDOS pre/post scripts and installed dependencies
+still require target acceptance. The separate Mac/Windows proxy executables
+remain the older published binaries; the new recovery logic is in source.

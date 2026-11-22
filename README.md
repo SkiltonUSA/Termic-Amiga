@@ -1,68 +1,68 @@
 # Termic Amiga
 
-**Native MUI development workspace for AmigaOS. Version 0.1.4 Beta.**
+**Native MUI development workspace for AmigaOS. Version 0.1.5 Beta.**
 
 This repository contains the Amiga implementation, separated from the desktop
 [Termic project](https://github.com/simion/termic). It runs on the Amiga using
 MUI and native 68k tools. It does not require the desktop React/Tauri application.
 
-![Termic Amiga with CLI beneath Files](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/workspace-cli.png)
+![Editable black CLI with a command prompt](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.5-beta/cli-editable.png)
 
-Current screenshots use the 0.1.4 Beta production widgets on the Amiga with
-synthetic demonstration data. [Full screenshot gallery](docs/screenshots.md)
-includes Tiny, Processors, ZZ9000 details and compact layouts.
+The CLI screenshot is from the physical Amiga acceptance of these widgets
+in the post-release 0.1.4 build; 0.1.5 includes that implementation. All images
+use synthetic demonstration data. The [screenshot gallery](docs/screenshots.md)
+shows the other MUI panels, Tiny, Processors and compact layouts.
 
 ## Downloads
 
-- [MUI 5 guide update for an existing installation](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-MUI5-Guide-Update.lha)
-  ([checksum](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-MUI5-Guide-Update.sha256)).
-  Includes the native help window, matching 0.1.4 workers and offline Tiny.
-  Back up first; see `ReadMe-Update` inside. The original kit below predates
-  the MUI help window and remains unchanged.
-
-- [Native Amiga application and SDK kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-Amiga-0.1.4-beta.lha)
-  and [pinned AmiPkg entry](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/termic-amiga.json).
-- [Standalone Process Monitor](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-Process-Monitor-0.1.4-beta.lha),
-  including source and a Workbench icon.
+- [Native application, offline Tiny and SDK kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.5-beta/Termic-Amiga-0.1.5-beta.lha).
+- [AmiPkg entry](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.5-beta/termic-amiga.json), pinned to that LHA with dependency versions and SHA-256.
+- [Standalone Process Monitor](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.5-beta/Termic-Process-Monitor-0.1.5-beta.lha), including source and a Workbench icon.
+- [SHA-256 checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.5-beta/SHA256SUMS).
 - AI Proxy for [Apple Silicon macOS](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-AI-Proxy-macOS.zip)
   or [Windows 11 x64](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-AI-Proxy-Windows11.zip).
+  These companion binaries are unchanged; newer Python bridge-recovery code is
+  supplied in this repository's source, not in those older proxy downloads.
 
-The 0.1.4 Beta package includes offline Tiny 2.1 and the integrated Processors
-tab, retaining the three-column MUI 5 workspace and compact window layout.
-See [interface details](docs/amiga-interface.md). The companion proxies use
-Amiga-MCP at `http://127.0.0.1:55110/mcp`.
-Read the installation requirements below before upgrading an existing drawer.
-[Release notes and checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.1.4-beta)
-include verification details.
+The AmiPkg entry requires a fresh `SYS:Programs/Termic-Amiga` drawer and refuses
+an existing installation. MUI 5 must already be installed. It declares
+TextEditor.mcc 15.56 and AmiSSL 5.27 dependencies. Read the
+[installation and upgrade instructions](docs/amipkg-release.md) to preserve
+existing settings, projects, task memory, prompts and credentials.
+This is a release entry for AmiPkg catalog review, not a public catalog submission.
 
-## New in 0.1.4 Beta
+[Release notes and validation](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.1.5-beta)
+include the fresh-package verification limits.
 
-[Offline Tiny 2.1](docs/tiny.md) is the default agent for tasks without a saved
-selection. Its runtime and model are bundled; inference needs no API key,
-network or host proxy. Tiny answers short questions.
+## New in 0.1.5 Beta
 
-Current source also adds **offline guide lookup, read-only project access,
-persistent task memory and explicit Codex/Claude/Cursor handoff**. Select Tiny
-and enter `/help`, `/docs yolo`, `/files`, `/read main.c` or `/history` in Task
-instructions. See the [command reference and handoff limits](docs/tiny.md#local-commands).
-Install the separate [Tiny assistant update](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-Tiny-Assistant-Update.lha)
-over a complete 0.1.4 Beta installation. The original archives and earlier MUI
-guide update predate these features. See the command reference for installation
-steps, memory limits and exactly what an explicit handoff sends.
-The processor monitor now occupies the main **Processors** tab.
+- Black editable CLI console: type after `>` and press Return. The separate
+  input field remains available; unfinished drafts survive log and history updates.
+  Commands start in the selected project or task directory, shown in the pane.
+- Clear, aligned **Save build command** and **Save preferences** buttons.
+- Native MUI 5 help window and the complete updated guide.
+- [Tiny local assistant](docs/tiny.md): offline guide lookup, read-only project
+  access, persistent task memory and explicit Codex/Claude/Cursor handoff.
+  This full kit includes the fixes previously distributed as separate updates.
+- [Host acceptance recovery](docs/bridge-recovery.md): per-run recovery files,
+  explicit resume, process locks, bounded operations and verified cleanup.
+  Clients use the Amiga-MCP gateway at `http://127.0.0.1:55110/mcp`.
 
-![Tiny offline profile and its documented limits](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/tiny-profile.png)
+Tiny 2.1 remains the default for tasks without a saved agent selection. Its
+original runtime and model are bundled; inference needs no API key, network
+or host proxy. Tiny answers short factual questions and cannot edit or execute
+project code. Enter `/help` for local tools and their limits.
+The integrated **Processors** tab remains part of the application.
 
-The separately downloadable [Termic-trained candidate](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Tiny-Termic-experimental-kit.lha)
+The [experimental documentation-trained model](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Tiny-Termic-experimental-kit.lha)
 and [training checkpoint](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Tiny-Termic-training-checkpoint.zip)
-are experimental and do not replace the bundled model. Unseen-question
-accuracy was 31/71 (43.7%); see the [model report](amiga/tiny-training/candidate/MODEL_CARD.md).
+remain separate research downloads. They do not replace the bundled model.
 
-All 100 host tests and local AmiPkg checks passed. The documentation gallery
-exercises the production widgets with synthetic data on the physical Amiga.
-Installation of the release package, offline inference and live Processors
-sampling still require release acceptance. The companion
-proxies are unchanged from 0.1.3 and retain their existing download links.
+The native programs are rebuilt for 68020. Host tests and AmiPkg checks cover
+archive pins, dependency ordering and minima, missing dependencies, CPU rules
+and a fresh host copy plan. Installation of this exact release on the physical
+Amiga still requires acceptance; earlier physical CLI and Tiny checks are
+recorded separately in [verification](docs/verification.md).
 
 ## Features
 

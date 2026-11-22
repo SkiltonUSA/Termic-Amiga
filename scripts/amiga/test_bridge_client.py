@@ -124,12 +124,12 @@ class ReservationTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ConnectionError): await self.session().initialize()
         self.assertNotIn('amiga_bridge_release', [c[0] for c in self.backend.calls])
 
-    async def test_legacy_server_no_gateway_controls(self):
+    async def test_direct_backend_is_rejected_without_hardware_calls(self):
         self.backend.name = 'fixture-mailbox'
-        async with self.session() as session:
-            await session.initialize()
-            await session.call_tool('amiga_write_file', {})
-        self.assertEqual([c[0] for c in self.backend.calls], ['amiga_write_file'])
+        with self.assertRaisesRegex(ConnectionError, 'reservation gateway'):
+            async with self.session() as session:
+                await session.initialize()
+        self.assertEqual(self.backend.calls, [])
 
     async def test_screenshot_rejects_incomplete_transfer(self):
         from unittest.mock import AsyncMock

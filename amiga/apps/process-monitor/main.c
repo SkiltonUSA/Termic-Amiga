@@ -48,7 +48,7 @@ static char serviceentries[NSERVICES][384];
 /* Native list columns keep headings and separators aligned during resizing. */
 static const char process_format[]=
  "BAR MIW=15 MAW=100 W=200,BAR,BAR,BAR P=\33r,BAR P=\33r,BAR P=\33r,P=\33r";
-static const char version[]="$VER: Termic Process Monitor 0.1.4 Beta (18.11.2026)";
+static const char version[]="$VER: Termic Process Monitor 0.1.5 Beta (22.11.2026)";
 static BOOL synthetic, paused, reorder_only;
 static int displayed_rows, displayed_services, sort_order;
 static struct MsgPort *timerport;
@@ -87,7 +87,7 @@ static void makereport(void)
 {
  int i; char cpu[16];
  snapshot();
- printf("Termic Process Monitor 0.1.4 Beta: statistical VBlank estimate\n");
+ printf("Termic Process Monitor 0.1.5 Beta: statistical VBlank estimate\n");
  printf("CPU: %s detected. TF4060 is the configured board, not independently detected.\n",
   SysBase->AttnFlags & AFF_68060 ? "68060" : "not identified as 68060");
  printf("Window %lu seconds; samples %lu; idle %lu; unassigned %lu\n",ticks,totalhits,idlehits,losthits);
@@ -462,7 +462,7 @@ static int gui(void)
   if(id==2)control(FALSE);
   if(id==3)control(TRUE);
   if(id==4)__termic_mui_request(MUIMasterBase,app,win,0,"About","_OK",
-   "Termic Process Monitor 0.1.4 Beta\nNative AmigaOS 3.2 / MUI 5\nStatistical CPU estimates and partial memory accounting.\nLegacy ZZ9000 ARM telemetry is unavailable.\nSkiltonUSA / Termic-Amiga contributors, AGPL-3.0-or-later\ngithub.com/SkiltonUSA/Termic-Amiga",NULL);
+   "Termic Process Monitor 0.1.5 Beta\nNative AmigaOS 3.2 / MUI 5\nStatistical CPU estimates and partial memory accounting.\nLegacy ZZ9000 ARM telemetry is unavailable.\nSkiltonUSA / Termic-Amiga contributors, AGPL-3.0-or-later\ngithub.com/SkiltonUSA/Termic-Amiga",NULL);
   if(id==6)details();
   if(id==7)toggle_zz9000();
   if(CheckIO((struct IORequest *)timerio)) {

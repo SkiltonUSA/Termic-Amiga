@@ -111,8 +111,10 @@ to stderr. Tokens must not be posted in logs or committed. An uncertain
 failure retains the reservation. Inspect gateway status and finish hardware
 cleanup before resuming with that token and explicitly releasing it. Clients
 never enable a paused gateway or remove another client's reservation.
-Hardware tests remain responsible for stopping any applications they launch;
-closing an MCP session alone does not prove those applications have stopped.
+Hardware tests must verify their documented UI end state before releasing.
+The About, colour and MUI suites leave one workspace open for the next test.
+See [explicit recovery and concurrency rules](bridge-recovery.md).
+Closing an MCP session alone does not prove applications have stopped.
 Screenshot clients use `amiga_screenshot` through MCP; port 55110 does not
 provide DevBench's REST screenshot route.
 

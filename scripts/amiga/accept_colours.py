@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
 """Opt-in hardware colour/import/export check; only operates on a new fixture."""
 
-import asyncio, json, subprocess, time, urllib.request, urllib.parse
+import argparse
+import asyncio
+import time
 from pathlib import Path
-from bridge_client import ClientSession, capture_png
+from bridge_client import (AcceptanceRun, ClientSession, add_bridge_arguments,
+                           capture_png, workspace_cleanup)
 from mcp.client.streamable_http import streamablehttp_client
 
 
-async def main():
-    out = Path(".context/amiga-colours")
-    out.mkdir(exist_ok=True)
-    async with streamablehttp_client("http://127.0.0.1:55110/mcp") as (r, w, _):
-        async with ClientSession(r, w) as s:
+async def main(args):
+    out = args.output
+    out.mkdir(parents=True, exist_ok=True)
+    async with (
+        AcceptanceRun(out, args.server, args.reservation_file) as run,
+        streamablehttp_client(run.url) as (r, w, _),
+    ):
+        async with ClientSession(r, w, bridge_url=run.url, reservation_path=run.path) as s:
             await s.initialize()
 
             async def call(name, args):
@@ -40,6 +46,7 @@ async def main():
                     "amiga_path": "Termic:TermicColour",
                 },
             )
+            s.cleanup = lambda: workspace_cleanup(s)
             await key("0x59")
             fixture = "TMGIT:Projects/colour-" + str(int(time.time()))
             await call(
@@ -51,7 +58,7 @@ async def main():
                     + fixture
                     + "/main.c\nCopy Termic:Template/task.txt "
                     + fixture
-                    + "/task.txt\nProtect Termic:TermicColour +e\nStack 262144\nRun >NIL: <NIL: Termic:TermicColour --workspace "
+                    + "/task.txt\nProtect Termic:TermicColour +e\nRun >NIL: <NIL: Termic:TermicColour --workspace "
                     + fixture,
                     "timeout": 15,
                 },
@@ -86,18 +93,16 @@ async def main():
             await key("0x59")
             await call(
                 "amiga_run_script",
-                {
-                    "script": "Stack 262144\nRun >NIL: <NIL: Termic:TermicColour",
-                    "timeout": 10,
-                },
+                {"script": "Run >NIL: <NIL: Termic:TermicColour", "timeout": 10},
             )
             await asyncio.sleep(2)
             await key("0x51")
             await capture_png(s, out / "editor.png", "Termic Amiga Workspace")
-            (out / "passed.json").write_text(
-                json.dumps({"fixture": fixture, "saved_source_exact": True})
-            )
+            run.passed = {"fixture": fixture, "saved_source_exact": True}
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output', type=Path, default=Path('.context/amiga-colours'))
+    add_bridge_arguments(parser)
+    asyncio.run(main(parser.parse_args()))

@@ -1,4 +1,4 @@
-TERMIC AMIGA WORKSPACE
+TERMIC AMIGA WORKSPACE 0.1.5 BETA
 
 Native MUI development workspace for AmigaOS 3.x: projects and independent
 source-copy tasks, embedded source editing, offline Tiny and cloud agents,
@@ -408,3 +408,9 @@ PR creation requires confirmation and uses host credentials.
 Build / CLI compiler locations open the matching source line on double-click.
 Full usage and limits: docs/task-workflow.md and the linked AmigaGuide topics.
 TermicCheck reports runtime, SDK, Git, ARexx and MicroPython dependencies.
+
+CLI CONSOLE
+Type after the final > prompt in the black CLI pane and press Return.
+The separate command field remains available. Drafts survive output updates.
+Escape restores the prompt after edits to history. Only single-line commands
+are submitted; this is not an interactive stdin terminal.

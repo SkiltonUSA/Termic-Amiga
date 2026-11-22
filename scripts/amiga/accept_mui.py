@@ -2,7 +2,7 @@
 """Opt-in MUI hardware acceptance. Only inject keys into our frontmost window.
 
 Captures actual MUI panels. Does not call a model or read credentials.
-Requires a running DevBench MCP on the same host and a candidate installed.
+Requires the Amiga-MCP reservation gateway and an installed candidate.
 """
 
 import argparse
@@ -10,8 +10,8 @@ import time
 import asyncio
 import json
 from pathlib import Path
-import subprocess
-from bridge_client import ClientSession, capture_png
+from bridge_client import (AcceptanceRun, ClientSession, add_bridge_arguments,
+                           capture_png, workspace_cleanup)
 from mcp.client.streamable_http import streamablehttp_client
 
 TITLE = "Termic Amiga Workspace"
@@ -19,13 +19,16 @@ TITLE = "Termic Amiga Workspace"
 
 async def main(args):
     args.output.mkdir(parents=True, exist_ok=True)
-    evidence = (
-        json.loads((args.output / "acceptance.json").read_text())
-        if args.resume_task
-        else []
-    )
-    async with streamablehttp_client(args.server + "/mcp") as (read, write, _):
-        async with ClientSession(read, write, bridge_url=args.server + "/mcp") as session:
+    async with (
+        AcceptanceRun(args.output, args.server, args.reservation_file, resume=bool(args.resume_task)) as run,
+        streamablehttp_client(run.url) as (read, write, _),
+    ):
+        evidence = (
+            json.loads((args.output / "acceptance.json").read_text())
+            if args.resume_task
+            else []
+        )
+        async with ClientSession(read, write, bridge_url=run.url, reservation_path=run.path) as session:
             await session.initialize()
 
             async def call(name, arguments):
@@ -65,6 +68,8 @@ async def main(args):
                     json.dumps(evidence, indent=2)
                 )
                 return
+
+            session.cleanup = lambda: workspace_cleanup(session)
 
             async def key(code, title=TITLE, delay=1):
                 windows = await call("amiga_list_screen_windows", {})
@@ -167,7 +172,7 @@ async def main(args):
                         + fixture
                         + '/task.txt\nEcho "MUI acceptance" >'
                         + fixture
-                        + "/name.txt\nStack 262144\nRun >NIL: <NIL: "
+                        + "/name.txt\nRun >NIL: <NIL: "
                         + args.binary
                         + " --workspace "
                         + fixture,
@@ -346,10 +351,7 @@ async def main(args):
                 raise RuntimeError("Quit did not close the MUI window")
             await call(
                 "amiga_run_script",
-                {
-                    "script": "Stack 262144\nRun >NIL: <NIL: " + args.binary,
-                    "timeout": 15,
-                },
+                {"script": "Run >NIL: <NIL: " + args.binary, "timeout": 15},
             )
             await asyncio.sleep(2)
             text = await call(
@@ -360,9 +362,7 @@ async def main(args):
                 raise RuntimeError("Last workspace was not restored")
             await key("0x51")
             await capture("mui-final-workspace.png")
-            (args.output / "passed.json").write_text(
-                json.dumps({"project": fixture, "task": task})
-            )
+            run.passed = {"project": fixture, "task": task}
             (args.output / "acceptance.json").write_text(json.dumps(evidence, indent=2))
 
 
@@ -378,7 +378,7 @@ def cli():
         help="Resume after a capture interruption following the fixture commit",
     )
     p.add_argument("--binary", default="Termic:TermicNative")
-    p.add_argument("--server", default="http://127.0.0.1:55110")
+    add_bridge_arguments(p)
     p.add_argument("--output", type=Path, default=Path(".context/amiga-mui"))
     asyncio.run(main(p.parse_args()))
 

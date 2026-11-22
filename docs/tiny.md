@@ -105,6 +105,10 @@ relay cancellation path. If the host is unavailable or the ID is invalid,
 Termic reports failure without selecting another provider. Direct API and local
 CLI profiles are not handoff targets in this implementation.
 
+The complete [0.1.5 Beta kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.1.5-beta)
+includes these local-assistant features and the transcript failure fix.
+The following separate update is only needed for the older 0.1.4 kit.
+
 The original 0.1.4 Beta archives and MUI guide update predate these local-assistant
 features. Install the separate
 [Tiny assistant update](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/Termic-Tiny-Assistant-Update.lha)
