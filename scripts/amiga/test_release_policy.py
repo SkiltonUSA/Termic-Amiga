@@ -68,9 +68,12 @@ class ReleasePolicyTests(unittest.TestCase):
 
     def test_release_manifest_is_downloads_only(self):
         self.assertEqual(len(expected_assets('0.2.0-beta')), 6)
-        assets = expected_assets('0.2.1-beta')
-        self.assertEqual(len(assets), 7)
-        self.assertIn('Termic-Amiga-0.2.1-beta.lha', assets)
+        self.assertEqual(len(expected_assets('0.2.1-beta')), 7)
+        assets = expected_assets('0.2.2-beta')
+        self.assertEqual(len(assets), 9)
+        self.assertIn('Termic-Amiga-0.2.2-beta.lha', assets)
+        self.assertIn('README.txt', assets)
+        self.assertIn('ABOUT-LICENSE.txt', assets)
         self.assertIn('Termic-AI-Proxy-Windows.zip', assets)
         self.assertIn('Termic-AI-Proxy-macOS.zip', assets)
         self.assertIn('Amiga-MCP-MultiClient-macOS-arm64.zip', assets)

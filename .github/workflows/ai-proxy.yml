@@ -8,6 +8,9 @@ on:
       - 'scripts/amiga/*git_service*'
       - 'scripts/amiga/test_bridge_mailbox.py'
       - '.github/workflows/ai-proxy.yml'
+      - 'scripts/amiga/release_docs.py'
+      - 'README.md'
+      - 'LICENSE'
 permissions:
   contents: read
 jobs:
@@ -38,12 +41,17 @@ jobs:
       - if: runner.os == 'Windows'
         run: python scripts/proxy/accept_desktop.py 'dist/proxy/Termic AI Proxy/Termic AI Proxy.exe'
       - if: runner.os == 'macOS'
-        run: ditto -c -k --keepParent 'dist/proxy/Termic AI Proxy.app' 'dist/proxy/Termic-AI-Proxy-macOS.zip'
+        run: |
+          python scripts/proxy/package.py --bundle 'dist/proxy/Termic AI Proxy.app' --output 'dist/release/Termic-AI-Proxy'
+          ditto -c -k --keepParent 'dist/release/Termic-AI-Proxy' 'dist/proxy/Termic-AI-Proxy-macOS.zip'
+      - if: runner.os == 'Windows'
+        run: |
+          python scripts/proxy/package.py --bundle 'dist/proxy/Termic AI Proxy' --output 'dist/release/Termic AI Proxy'
+          Compress-Archive -Path 'dist/release/Termic AI Proxy' -DestinationPath 'dist/proxy/Termic-AI-Proxy-Windows.zip'
       - uses: actions/upload-artifact@v4
         with:
           name: Termic-AI-Proxy-${{ runner.os }}
           path: |
             dist/proxy/Termic-AI-Proxy-macOS.zip
-            dist/proxy/Termic AI Proxy/*.exe
-            dist/proxy/Termic AI Proxy/_internal/
+            dist/proxy/Termic-AI-Proxy-Windows.zip
           retention-days: 30

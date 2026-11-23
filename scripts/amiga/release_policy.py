@@ -45,7 +45,19 @@ def expected_assets(version):
     # Preserve the published 0.2.0 manifest; Windows is a release asset from 0.2.1.
     if version != '0.2.0-beta':
         assets.add('Termic-AI-Proxy-Windows.zip')
+    if version not in ('0.2.0-beta', '0.2.1-beta'):
+        assets.update({'README.txt', 'ABOUT-LICENSE.txt'})
     return assets
+
+
+def check_package_docs(names):
+    """Require both documents beside the app, never hidden in a dependency tree."""
+    names = set(names)
+    for readme in names:
+        if readme.count('/') == 1 and readme.endswith('/README.txt'):
+            if readme.rsplit('/', 1)[0]+'/ABOUT-LICENSE.txt' in names:
+                return
+    raise ValueError('Package must contain README.txt and ABOUT-LICENSE.txt at its top application level')
 
 
 def validate_assets(directory, version, lha):
@@ -69,6 +81,8 @@ def validate_assets(directory, version, lha):
         if path.suffix == '.zip':
             with zipfile.ZipFile(path) as archive:
                 check_names(archive.namelist())
+                if 'README.txt' in expected:
+                    check_package_docs(archive.namelist())
                 if archive.testzip():
                     raise ValueError('Damaged ZIP: ' + name)
         elif path.suffix == '.lha':
@@ -76,6 +90,8 @@ def validate_assets(directory, version, lha):
                 subprocess.run([str(Path(lha).resolve()), 'xq', str(path.resolve())],
                                cwd=temp, check=True, capture_output=True)
                 check_tree(temp)
+                if 'README.txt' in expected:
+                    check_package_docs(p.relative_to(temp).as_posix() for p in Path(temp).rglob('*') if p.is_file())
                 for nested in Path(temp).rglob('*.lha'):
                     check_lha_names(nested, lha)
     entry = json.loads((directory/'termic-amiga.json').read_text())

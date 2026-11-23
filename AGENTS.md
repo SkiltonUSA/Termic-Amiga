@@ -9,6 +9,9 @@ Read docs/releases.md before packaging or publishing.
   screenshots in gitignored local evidence directories outside release staging.
   Reviewed synthetic README images may be committed under docs/screenshots/
   only; that directory must have export-ignore in .gitattributes.
+- Include README.txt and ABOUT-LICENSE.txt beside each packaged application
+  and as standalone release downloads. Generate them from the main README and
+  licence; retain each component's upstream licence and notices.
 - Use the explicit release asset list and SHA256SUMS. Run
   scripts/amiga/release_policy.py on staged downloads before any upload.
 - Publish tested versioned artifacts with an accurate validation statement.

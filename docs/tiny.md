@@ -105,7 +105,7 @@ relay cancellation path. If the host is unavailable or the ID is invalid,
 Termic reports failure without selecting another provider. Direct API and local
 CLI profiles are not handoff targets in this implementation.
 
-The complete [0.2.1 Beta kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.2.1-beta)
+The complete [0.2.2 Beta kit](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.2.2-beta)
 includes these local tools and the transcript failure fix. The separate
 0.1.4 update packages are archived; new users should use the complete kit.
 

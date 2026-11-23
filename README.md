@@ -1,6 +1,6 @@
 # Termic Amiga
 
-**Native MUI development workspace for AmigaOS. Version 0.2.1 Beta.**
+**Native MUI development workspace for AmigaOS. Version 0.2.2 Beta.**
 
 Termic runs on the Amiga using MUI 5 and native 68k tools. It includes an
 editable code workspace, CLI console, offline Tiny assistant and Processors
@@ -11,19 +11,21 @@ panel. Cloud-agent access uses the separately downloadable Mac or Windows AI Pro
 Captured on the Amiga using the production MUI widgets and synthetic
 demonstration data. [More screenshots and capture details](docs/screenshots.md).
 The Amiga screenshots show the 0.2.0 development build with the contrast and
-Guide improvements now included in 0.2.1 Beta.
+Guide improvements now included in 0.2.2 Beta.
 
 ## Downloads
 
 | Download | Where it runs | Purpose |
 | --- | --- | --- |
-| [Termic Amiga 0.2.1 Beta LHA](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.1-beta/Termic-Amiga-0.2.1-beta.lha) | AmigaOS 3.2, 68020+ | Application, source, offline Tiny, MicroPython and SDK kit. |
-| [AmiPkg entry](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.1-beta/termic-amiga.json) | Amiga | Pinned fresh-install recipe and dependency requirements. |
-| [Termic AI Proxy for Mac](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.1-beta/Termic-AI-Proxy-macOS.zip) | Apple Silicon macOS | Standalone 0.2.0 Beta app for Codex, Claude and Cursor. |
-| [Termic AI Proxy for Windows](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.1-beta/Termic-AI-Proxy-Windows.zip) | Windows 11 x64 | Portable 0.2.0 Beta app with Python/Qt included. Extract the complete folder and open Termic AI Proxy.exe. |
-| [Amiga-MCP multi-client bridge](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.1-beta/Amiga-MCP-MultiClient-macOS-arm64.zip) | Apple Silicon macOS | Shared gateway with up to 64 MCP sessions and a 32-request queue. |
-| [Optional standalone Process Monitor](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.1-beta/Termic-Process-Monitor-0.2.1-beta.lha) | Amiga | Process tools outside the integrated Termic window. |
-| [SHA-256 checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.1-beta/SHA256SUMS) | Host | Verify every download. |
+| [Termic Amiga 0.2.2 Beta LHA](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.2-beta/Termic-Amiga-0.2.2-beta.lha) | AmigaOS 3.2, 68020+ | Application, source, offline Tiny, MicroPython and SDK kit. |
+| [AmiPkg entry](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.2-beta/termic-amiga.json) | Amiga | Pinned fresh-install recipe and dependency requirements. |
+| [Termic AI Proxy for Mac](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.2-beta/Termic-AI-Proxy-macOS.zip) | Apple Silicon macOS | Standalone 0.2.0 Beta app for Codex, Claude and Cursor. |
+| [Termic AI Proxy for Windows](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.2-beta/Termic-AI-Proxy-Windows.zip) | Windows 11 x64 | Portable 0.2.0 Beta app with Python/Qt included. Extract the complete folder and open Termic AI Proxy.exe. |
+| [Amiga-MCP multi-client bridge](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.2-beta/Amiga-MCP-MultiClient-macOS-arm64.zip) | Apple Silicon macOS | Shared gateway with up to 64 MCP sessions and a 32-request queue. |
+| [Optional standalone Process Monitor](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.2-beta/Termic-Process-Monitor-0.2.2-beta.lha) | Amiga | Process tools outside the integrated Termic window. |
+| [Offline README](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.2-beta/README.txt) | All platforms | Plain-text edition of this README. |
+| [About and licences](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.2-beta/ABOUT-LICENSE.txt) | All platforms | Credits, component notices and complete Termic licence. |
+| [SHA-256 checksums](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.2-beta/SHA256SUMS) | Host | Verify every download. |
 
 The Mac and Windows Proxy packages include their Python runtimes. The Amiga-MCP gateway is the
 multi-client upstream build, version 0.1.0 Alpha, packaged separately from
@@ -36,14 +38,15 @@ and declares TextEditor.mcc 15.56 and AmiSSL 5.27 dependencies. For existing
 installations, use the [upgrade instructions](docs/amipkg-release.md) to preserve
 projects, preferences, task memory and credentials.
 
-[0.2.1 Beta release notes](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.2.1-beta)
+[0.2.2 Beta release notes](https://github.com/SkiltonUSA/Termic-Amiga/releases/tag/v0.2.2-beta)
 record verification and installation limits. Older release downloads are
 retained as maintainer-only drafts; historical source tags remain public.
 PNG screenshots are not release assets or installed files. See the
 [release policy](docs/releases.md).
 
-## Included in 0.2.1 Beta
+## Included in 0.2.2 Beta
 
+- Offline `README.txt` and `ABOUT-LICENSE.txt` in every application download.
 - Native colour Workbench launcher and `Termic-Amiga` installation drawer.
 - Readable shared-palette text on black, orange Guide links and single-list contents.
 - Separate Windows Proxy download, promoted from the tested Windows CI build.
@@ -77,7 +80,7 @@ assign. `BuildNative` creates the launcher and its native `.info` icon;
 Shared palette colours keep editor, CLI, activity and Guide text readable when
 Workbench has no free exclusive colour pens. Guide links are orange, with
 Contents arranged as one vertical list. These changes were verified on the
-development Amiga and are included in the 0.2.1 Beta archive. The exact fresh-install recipe still needs target acceptance.
+development Amiga and are included in the 0.2.2 Beta archive. The exact fresh-install recipe still needs target acceptance.
 
 ![Offline Tiny profile](docs/screenshots/tiny-profile.png)
 
@@ -139,7 +142,7 @@ Start with [Termic AI Proxy for macOS and Windows 11](docs/ai-proxy.md) for
 Codex, Claude and Cursor setup, downloads and model selection.
 [Codex relay details](docs/codex-relay.md) describe the ChatGPT integration.
 
-![Termic AI Proxy 0.2.1 Beta with demonstration account status](docs/screenshots/ai-proxy.png)
+![Termic AI Proxy 0.2.2 Beta with demonstration account status](docs/screenshots/ai-proxy.png)
 
 See [Agents, CLI, scripts and MCP](docs/agents-and-mcp.md) for setup, client connections
 and differences from desktop Termic.

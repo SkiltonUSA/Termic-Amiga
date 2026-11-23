@@ -1433,3 +1433,37 @@ pre/post scripts have host validation, not a physical fresh-install acceptance.
 Mac packages remain ad-hoc signed; Windows acceptance is from CI, not a manual
 Windows 11 desktop session. Component versions are stated separately in the
 release notes instead of relabelling unchanged proxy or gateway binaries.
+
+## 0.2.2 Beta offline release documents (23 November 2026)
+
+README.txt and ABOUT-LICENSE.txt now accompany all five application archives
+(native workspace, standalone monitor, Mac Proxy, Windows Proxy and gateway),
+and are separate release downloads. README.txt is generated from the main
+GitHub README with image dependencies removed and relative links expanded.
+ABOUT-LICENSE.txt contains credits and the full GNU AGPL text; the gateway's
+copy additionally contains its complete upstream MIT licence. Original
+component notices are retained. Previous setup notes in host archives were
+renamed Proxy-Setup.txt or Gateway-Setup.txt to avoid case-insensitive clashes
+with README.txt. No signed application contents were modified.
+
+All 148 host/native tests passed, including document generation, source-link
+conversion, upstream licence preservation, document placement and proxy
+payload preservation. The seven native binaries were rebuilt with 0.2.2 Beta
+tags. AmiPkg authoring and the upstream C dependency/full-copy-plan checks
+passed, including both newly installed documents. Release policy requires
+nine assets and checks document presence in every ZIP/LHA as well as no PNGs,
+archive integrity, checksums and the AmiPkg pin.
+
+Mac Proxy checks (97 portable tests, packaged GUI/stdio, mailbox and desktop
+lifecycle) and gateway checks (13 upstream tests and the packaged five-client,
+24-call test) passed again. Every pre-existing entry in all three host ZIPs
+was compared byte-for-byte with 0.2.1; only documentation was added or renamed.
+The Windows executable/dependency payload is still from CI run 45086711499;
+the ZIP itself has a new checksum because it now contains the documents.
+
+Native, monitor and gateway build scripts generate the documents automatically.
+The proxy packaging step puts them outside the signed Mac .app and beside the
+Windows executable. CI now produces platform ZIPs containing these files and
+runs the offline-document tests. Exact physical fresh-install acceptance of
+the complete native kit remains outstanding; this packaging update did not
+change the running Amiga or gateway.

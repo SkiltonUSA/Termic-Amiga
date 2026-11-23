@@ -1,6 +1,6 @@
 # Release policy
 
-Termic Amiga releases use versioned Git tags (`v0.2.1-beta`), matching native
+Termic Amiga releases use versioned Git tags (`v0.2.2-beta`), matching native
 version strings, clear release notes, separate platform downloads and SHA-256
 checksums. Beta releases are marked as GitHub prereleases. This is the project's
 packaging policy; the no-PNG rule is a user requirement, not a general GitHub rule.
@@ -37,12 +37,22 @@ A release asset directory contains exactly:
 - `Termic-AI-Proxy-Windows.zip`
 - `Amiga-MCP-MultiClient-macOS-arm64.zip`
 - `termic-amiga.json`
+- `README.txt`
+- `ABOUT-LICENSE.txt`
 - `SHA256SUMS`
 
-The older 0.2.0 Beta manifest has six files and predates the Windows release
-asset; its original bytes and allowlist are preserved. Current releases have
-seven files. Proxy/gateway component versions may differ from the native app
-when reusing unchanged, verified binaries. Record their provenance.
+The original 0.2.0 and 0.2.1 Beta manifests have six and seven files,
+respectively; their bytes and allowlists are preserved. Current releases have
+nine files. Every application ZIP/LHA must also contain README.txt and
+ABOUT-LICENSE.txt beside its application, not buried in dependency folders.
+Generate them with scripts/amiga/release_docs.py from the main README and
+LICENSE; preserve component-specific licences. The gateway includes its full
+MIT licence as well as Termic's project notices. Keep existing SDK/runtime
+notices. Put the Mac documents outside the signed .app bundle.
+
+Proxy/gateway component versions may differ from the native app when reusing
+unchanged, verified binaries. Record payload provenance; adding documents
+changes the archive checksum even when the executable bytes are unchanged.
 
 Build logs, test evidence, credentials, local paths, training checkpoints and
 screenshots do not belong in that directory. Use a clean `assets` subdirectory
@@ -54,7 +64,7 @@ Before upload:
 ```sh
 python3 -m unittest discover -s scripts/amiga -p 'test_*.py'
 python3 scripts/amiga/release_policy.py --repository . \
-  --directory /path/to/assets --version 0.2.1-beta --lha /path/to/lha
+  --directory /path/to/assets --version 0.2.2-beta --lha /path/to/lha
 ```
 
 Also run upstream AmiPkg validation, the packaged Proxy smoke/mailbox/desktop

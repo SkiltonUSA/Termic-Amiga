@@ -4,7 +4,7 @@ The separate `Amiga-MCP-MultiClient-macOS-arm64.zip` download contains the share
 multi-client gateway from [SkiltonUSA/Amiga-MCP](https://github.com/SkiltonUSA/Amiga-MCP),
 not the older direct DevBench server. It uses upstream version 0.1.0 Alpha,
 commit `994292aa2043edb77ff1079bf09de3519fd40225`, unchanged source and MIT license.
-Termic's 0.2.1 Beta version does not rename the gateway's upstream version.
+Termic's 0.2.2 Beta version does not rename the gateway's upstream version.
 
 The gateway supports up to 64 HTTP MCP sessions and 32 queued requests by
 default. Complete hardware transactions are serialized through one persistent
@@ -46,3 +46,12 @@ recovery and multi-session routing. The packaged check uses five clients and
 one backend transaction at a time, and tests pause/reserve/resume/release.
 It never connects to the user's real gateway or Amiga. This is not a new
 physical-Amiga installation test or a throughput benchmark.
+
+## Offline documentation
+
+README.txt contains the main Termic GitHub README in plain text, prefaced by
+gateway startup instructions. Gateway-Setup.txt retains the detailed bridge
+setup and recovery notes. ABOUT-LICENSE.txt includes credits, the complete
+upstream MIT licence and Termic's project licence; the original LICENSE,
+Source and provenance.json remain unchanged. These documents sit beside the
+launcher and executable, with no PNGs in the package.

@@ -16,6 +16,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m unittest discover -s scripts/amiga -p 'test_release_policy.py'
+      - run: python -m unittest discover -s scripts/amiga -p 'test_release_docs.py'
       - run: python scripts/amiga/release_policy.py --repository .
   published-assets:
     if: github.event_name == 'release' && !github.event.release.draft

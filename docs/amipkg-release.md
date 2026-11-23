@@ -43,21 +43,23 @@ MicroPython files under `downloads/MicroPython`, and compiled Hunk binaries
 named TermicNative, TermicAgent, TermicMCP, TermicStorage, TermicCheck and
 TermicLauncher, plus validated `Termic Amiga.info` and `Termic-Amiga.info` icons.
 The archive opens as `Termic-Amiga`, with one visible application icon.
+README.txt and ABOUT-LICENSE.txt are generated from the main GitHub README
+and project licence and installed beside the application.
 The current source also requires the offline Tiny drawer built using
 [the Tiny instructions](tiny.md); older release archives predate Tiny.
 
 ```sh
 python3 scripts/amiga/package_native.py \
   --downloads downloads --binaries binaries --tiny /path/to/Tiny \
-  --output Termic-Amiga-0.2.1-beta.lha --lha /path/to/lha
+  --output Termic-Amiga-0.2.2-beta.lha --lha /path/to/lha
 
 python3 scripts/amiga/package_amipkg.py \
-  --archive Termic-Amiga-0.2.1-beta.lha \
-  --archive-url https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.1-beta/Termic-Amiga-0.2.1-beta.lha \
-  --version 0.2.1-beta --output termic-amiga.json
+  --archive Termic-Amiga-0.2.2-beta.lha \
+  --archive-url https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.2-beta/Termic-Amiga-0.2.2-beta.lha \
+  --version 0.2.2-beta --output termic-amiga.json
 ```
 
-These commands describe the 0.2.1 Beta release. For subsequent builds, select
+These commands describe the 0.2.2 Beta release. For subsequent builds, select
 a new version and its actual archive URL; never reuse a published URL for
 changed bytes.
 The URL must identify the exact bytes uploaded. Use a new output filename for
@@ -69,7 +71,7 @@ Clone the upstream authoring catalog and client separately, then validate:
 
 ```sh
 python3 scripts/amiga/validate_amipkg.py \
-  --archive Termic-Amiga-0.2.1-beta.lha --entry termic-amiga.json \
+  --archive Termic-Amiga-0.2.2-beta.lha --entry termic-amiga.json \
   --catalog /path/to/amiga-pkg --client /path/to/amipkg --lha /path/to/lha
 ```
 

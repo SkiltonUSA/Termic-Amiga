@@ -15,6 +15,7 @@ import tempfile
 import urllib.request
 from fetch_micropython import fetch as fetch_micropython
 from release_policy import check_tree, check_lha_names
+from release_docs import write_docs
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "amiga/native"
@@ -134,6 +135,7 @@ def main():
                     if path.name in ("TermicNative", "TermicAgent", "TermicStorage", "TermicMCP", "TermicCheck", "Termic Amiga")
                     else 0o644
                 )
+        write_docs(stage, "native")
         check_tree(stage)
         for archive in (stage/'SDK').glob('*.lha'):
             check_lha_names(archive, lha)

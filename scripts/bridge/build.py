@@ -16,6 +16,7 @@ import tomllib
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "amiga"))
 from release_policy import check_tree
+from release_docs import write_docs
 
 
 def main():
@@ -52,7 +53,7 @@ printf '%s\\n' 'Amiga-MCP multi-client gateway: http://127.0.0.1:55110/mcp' 'Dev
 exec ./Amiga-MCP --backend http://127.0.0.1:55010/mcp --port 55110 "$@"
 ''')
     launcher.chmod(0o755)
-    (bundle/'ReadMe.txt').write_text('''Amiga-MCP: multi-client gateway for macOS Apple Silicon
+    (bundle/'Gateway-Setup.txt').write_text('''Amiga-MCP: multi-client gateway for macOS Apple Silicon
 
 This is the shared multi-client gateway, not the old direct DevBench server.
 Up to 64 MCP sessions and 32 queued requests are supported by default.
@@ -90,6 +91,7 @@ provenance.json identifies the exact upstream revision and source hashes.
     }, indent=2)+'\n')
     subprocess.run(['codesign', '--verify', '--strict', str(bundle/'Amiga-MCP')], check=True)
     archive = output/('Amiga-MCP-MultiClient-macOS-'+platform.machine()+'.zip')
+    write_docs(bundle, "bridge", upstream_license=source/"LICENSE")
     check_tree(bundle)
     subprocess.run(['ditto', '-c', '-k', '--keepParent', str(bundle), str(archive)], check=True)
     print(archive)
