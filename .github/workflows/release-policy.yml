@@ -1,0 +1,41 @@
+name: Release packaging policy
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  release:
+    types: [published, edited]
+permissions:
+  contents: read
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s scripts/amiga -p 'test_release_policy.py'
+      - run: python scripts/amiga/release_policy.py --repository .
+  published-assets:
+    if: github.event_name == 'release' && !github.event.release.draft
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check published download names
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets > release-assets.json
+          python - <<'PYCODE'
+          import json, os, sys
+          sys.path.insert(0, 'scripts/amiga')
+          from release_policy import check_names, expected_assets
+          names = {asset['name'] for asset in json.load(open('release-assets.json'))['assets']}
+          check_names(names)
+          assert names == expected_assets(os.environ['RELEASE_TAG'].removeprefix('v')), names
+          PYCODE

@@ -1328,3 +1328,25 @@ This release packaging run did not install or execute the new package on the
 physical Amiga. Its AmigaDOS pre/post scripts and installed dependencies
 still require target acceptance. The separate Mac/Windows proxy executables
 remain the older published binaries; the new recovery logic is in source.
+
+## 0.2.0 Beta release packaging (22 November 2026)
+
+Six native programs were rebuilt with 0.2.0 Beta version strings. All 137
+native/host tests passed, including five release-policy cases; the proxy's
+97 portable checks and packaged GUI/stdio, mailbox and desktop lifecycle
+checks passed. The Mac app reports 0.2.0 and its local signature verifies.
+
+The separate Amiga-MCP package uses upstream commit
+`994292aa2043edb77ff1079bf09de3519fd40225` (version 0.1.0 Alpha).
+All 13 upstream tests passed. The packaged executable passed a five-client,
+24-call HTTP MCP check against an isolated synthetic backend, with correct
+reply routing, one hardware transaction at a time, paused startup and
+reservation takeover/release. Defaults remain 64 sessions and 32 queued calls.
+The running gateway and physical Amiga were not changed by these tests.
+
+The native LHA and AmiPkg entry passed upstream validation and the host fresh
+copy/dependency plan. The public staging area contains only the six approved
+downloads/checksums. PNG checks cover the Mac ZIPs, native LHA contents and
+nested SDK archive listings. No screenshot assets are included. The exact
+0.2.0 installation still requires physical-Amiga acceptance. Mac packages
+have ad-hoc signatures and are not Developer ID notarized.

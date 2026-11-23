@@ -14,6 +14,7 @@ import subprocess
 import tempfile
 import urllib.request
 from fetch_micropython import fetch as fetch_micropython
+from release_policy import check_tree, check_lha_names
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "amiga/native"
@@ -126,6 +127,9 @@ def main():
                     if path.name in ("TermicNative", "TermicAgent", "TermicStorage", "TermicMCP", "TermicCheck")
                     else 0o644
                 )
+        check_tree(stage)
+        for archive in (stage/'SDK').glob('*.lha'):
+            check_lha_names(archive, lha)
         subprocess.run(
             [lha, "aq", str(output), "TermicNative"], cwd=directory, check=True
         )

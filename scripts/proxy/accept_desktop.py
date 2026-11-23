@@ -11,7 +11,7 @@ import urllib.request
 
 if len(sys.argv) > 1 and sys.argv[1] == '--server':
     from mcp.server.fastmcp import FastMCP
-    mcp = FastMCP('fixture-bridge', host='127.0.0.1', port=int(sys.argv[2]))
+    mcp = FastMCP('Amiga-MCP', host='127.0.0.1', port=int(sys.argv[2]))
     @mcp.tool()
     def amiga_list_dir(path: str) -> str:
         if (Path(sys.argv[3]) / 'test-bridge-down').exists():

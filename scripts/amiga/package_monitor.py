@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+from release_policy import check_tree
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -28,6 +29,7 @@ def main():
         (stage/'ReadMe').write_text('Open Program from Workbench to launch the monitor.\nFor source builds, enter the Source drawer before using the command below.\n\n'+(ROOT/'amiga/apps/process-monitor/README.md').read_text())
         shutil.copyfile(ROOT/'LICENSE',stage/'LICENSE')
         (stage/'services.txt').write_text('# Opt-in only. See ReadMe. No service starts on load.\n# Example|EXAMPLE.SERVICE|Example:Service|EXAMPLE.REQUIRED\n')
+        check_tree(stage)
         subprocess.run([lha,'aq',str(output),stage.name],cwd=d,check=True)
         subprocess.run([lha,'tq',str(output)],check=True,capture_output=True)
     print(str(output)+'\nSHA256 '+hashlib.sha256(output.read_bytes()).hexdigest())

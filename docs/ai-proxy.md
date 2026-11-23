@@ -5,20 +5,16 @@ Amiga task composer to Codex, Claude Code or Cursor on your host computer.
 It bundles Python, Qt and the MCP client. The three vendor CLIs and the
 DevBench bridge are separate prerequisites.
 
-![Termic AI Proxy with synthetic account status](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.4-beta/ai-proxy.png)
+The [0.2.0 Beta Mac download](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.0-beta/Termic-AI-Proxy-macOS.zip)
+is a separate Apple Silicon application with its own Python and Qt runtime.
+It includes the current gateway reservation/recovery client. The native
+worker and Mac proxy are released together. Windows builds remain available
+through the source build instructions and authenticated CI artifacts; older
+public release downloads have been archived.
 
-Proxy build `11fb72f` includes host Git worktrees, native MicroPython tools and
-a 15-minute native build reply budget. Other tool replies retain a 3-minute
-limit; cancellation stays available and timed-out builds are never replayed.
-Verified bundles are available as
-[macOS Apple Silicon download](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-AI-Proxy-macOS.zip)
-and [Windows 11 x64 download](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.1.3-beta/Termic-AI-Proxy-Windows11.zip).
-Both passed 47 portable tests, packaging, MCP smoke, both mailbox modes and
-desktop lifecycle checks. Update the native worker and proxy together to use
-the new commands. Older peers retain their compatible transport but do not gain
-new native tools from a host-only update. Build the native worker with
-`BuildNative`. Release downloads are public; the separate CI artifacts described
-below require GitHub sign-in and expire after 30 days.
+The proxy retains host Git worktrees, native MicroPython tools and a 15-minute
+native build reply budget. Other tool replies retain a 3-minute limit.
+Cancellation remains available and timed-out builds are never replayed.
 
 ## Start the app
 
@@ -31,9 +27,8 @@ Additional development builds are attached to successful
 [AI Proxy desktop builds](https://github.com/SkiltonUSA/Termic-Amiga/actions/workflows/ai-proxy.yml)
 runs. The macOS artifact contains an app ZIP; the Windows artifact contains
 an executable and its dependencies. GitHub requires sign-in for these artifacts,
-and retains them for 30 days. Builds are unsigned development builds, not
-notarized releases. The release Mac app is ARM64 (Apple Silicon); build locally
-on Intel macOS for an Intel bundle. The Windows download is x64.
+and retains them for 30 days. Mac builds have local ad-hoc signatures, not Developer ID notarization. The release Mac app is ARM64 (Apple Silicon); build locally
+on Intel macOS for an Intel bundle. Build Windows packages on Windows; they are not part of the current Mac release assets.
 
 The window provides:
 
@@ -41,7 +36,7 @@ The window provides:
 - Automatic reconnection after temporary bridge failures, with a visible
   Reconnecting status and retries capped at one every 30 seconds.
 - Automatic connection when the app opens (enabled initially).
-- A configurable DevBench MCP URL.
+- A configurable Amiga-MCP gateway URL.
 - Executable paths, Browse, Check and Sign in for each provider.
 
 Closing the app stops its relay and requests cancellation of the active host

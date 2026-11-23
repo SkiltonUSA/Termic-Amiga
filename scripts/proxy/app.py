@@ -13,7 +13,7 @@ import codex_relay
 from bridge_client import DEFAULT_BRIDGE
 from host_process import executable_command
 
-VERSION = '0.1.0 Beta'
+VERSION = '0.2.0 Beta'
 PROVIDERS = ('codex', 'claude', 'cursor')
 
 
