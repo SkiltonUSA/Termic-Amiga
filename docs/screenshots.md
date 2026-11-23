@@ -31,8 +31,8 @@ capture transfer alone does not prove text is visible or the layout is useful.
 
 These Amiga captures were made on 22 November 2026 after the 0.2.0 Beta
 release, including the shared-palette contrast fix. The Guide also shows the
-new orange link labels and single-column contents. Published release archives
-have not been replaced by these documentation changes. The Mac image shows
+new orange link labels and single-column contents. These features are included in 0.2.1 Beta; the captures retain the earlier
+0.2.0 development-build title. The Mac image shows
 the packaged 0.2.0 Beta proxy in demonstration mode.
 
 ### Editor, Files and CLI

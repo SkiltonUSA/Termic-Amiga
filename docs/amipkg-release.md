@@ -16,7 +16,7 @@ The fresh-install destination is `SYS:Programs/Termic-Amiga`. The preflight
 refuses an existing drawer so that a reinstall cannot overwrite configuration
 or tasks. The post-install script assigns `Termic:`, extracts the pinned SDK
 archives, installs the bundled native Git/MicroPython tools and runs
-`TermicCheck`. Post-script failure is a warning in AmiPkg; read its output and
+`TermicCheck`, then generates native Workbench icons using the launcher. Post-script failure is a warning in AmiPkg; read its output and
 run `Termic:TermicCheck` again before launching. No User-Startup line is added;
 TermicNative assigns its own program drawer when launched.
 
@@ -29,7 +29,9 @@ login or API access. `TermicCheck --gui` checks only CPU, OS, MUI and TextEditor
 
 For an existing installation, close Termic and finish workers, back up the
 installation, and replace only program binaries, Source, ReadMe, Termic.guide
-and build/install scripts. Copy the bundled Tools/Tiny drawer as well when
+and build/install scripts. Include `Termic Amiga`, its `.info` icon, and the
+matching `Termic-Amiga.info` drawer icon. Back up the legacy
+`TermicNative.info` to avoid duplicate launch icons. Copy the bundled Tools/Tiny drawer as well when
 upgrading from a version without Tiny. Preserve Config, Projects, task drawers, Prompts,
 ENV settings and keys. Run the dependency checker afterwards. The fresh-install
 recipe intentionally does not automate upgrades into a populated drawer.
@@ -38,22 +40,24 @@ recipe intentionally does not automate upgrades into a populated drawer.
 
 Supply original archives matching `amiga/native/sdk-lock.json`, the pinned
 MicroPython files under `downloads/MicroPython`, and compiled Hunk binaries
-named TermicNative, TermicAgent, TermicMCP, TermicStorage and TermicCheck.
+named TermicNative, TermicAgent, TermicMCP, TermicStorage, TermicCheck and
+TermicLauncher, plus validated `Termic Amiga.info` and `Termic-Amiga.info` icons.
+The archive opens as `Termic-Amiga`, with one visible application icon.
 The current source also requires the offline Tiny drawer built using
 [the Tiny instructions](tiny.md); older release archives predate Tiny.
 
 ```sh
 python3 scripts/amiga/package_native.py \
   --downloads downloads --binaries binaries --tiny /path/to/Tiny \
-  --output Termic-Amiga-0.2.0-beta.lha --lha /path/to/lha
+  --output Termic-Amiga-0.2.1-beta.lha --lha /path/to/lha
 
 python3 scripts/amiga/package_amipkg.py \
-  --archive Termic-Amiga-0.2.0-beta.lha \
-  --archive-url https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.0-beta/Termic-Amiga-0.2.0-beta.lha \
-  --version 0.2.0-beta --output termic-amiga.json
+  --archive Termic-Amiga-0.2.1-beta.lha \
+  --archive-url https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.1-beta/Termic-Amiga-0.2.1-beta.lha \
+  --version 0.2.1-beta --output termic-amiga.json
 ```
 
-These commands describe the 0.2.0 Beta release. For subsequent builds, select
+These commands describe the 0.2.1 Beta release. For subsequent builds, select
 a new version and its actual archive URL; never reuse a published URL for
 changed bytes.
 The URL must identify the exact bytes uploaded. Use a new output filename for
@@ -65,7 +69,7 @@ Clone the upstream authoring catalog and client separately, then validate:
 
 ```sh
 python3 scripts/amiga/validate_amipkg.py \
-  --archive Termic-Amiga-0.2.0-beta.lha --entry termic-amiga.json \
+  --archive Termic-Amiga-0.2.1-beta.lha --entry termic-amiga.json \
   --catalog /path/to/amiga-pkg --client /path/to/amipkg --lha /path/to/lha
 ```
 

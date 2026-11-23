@@ -51,7 +51,8 @@ int main(int argc,char **argv)
     assert(!arun_plan_build(&recipe,entries,dirs,n,plan) && !plan->overflow && plan->count==n);
     for(i=0;i<plan->count;i++) {
         assert(plan->ops[i].kind==ARUN_COPY);
-        assert(!strncmp(plan->ops[i].dest,"Programs/Termic-Amiga/",21));
+        assert(!strncmp(plan->ops[i].dest,"Programs/Termic-Amiga/",21) ||
+               !strcmp(plan->ops[i].dest,"Programs/Termic-Amiga.info"));
         printf("COPY\t%s\t%s\n",plan->ops[i].src,plan->ops[i].dest);
     }
     puts("AmiPkg parser, dependency order/minima, CPU floor, missing-dependency rejection and file plan: PASS");

@@ -1396,3 +1396,40 @@ including archive contents, checksums and the AmiPkg pin. Documentation PNGs
 are allowed only under `docs/screenshots/`; `.gitattributes` excludes that
 directory from source archives. Installers and release assets still reject
 all PNGs.
+
+## 0.2.1 Beta packages and Windows download (22 November 2026)
+
+Seven native programs, including the new Workbench launcher, were rebuilt with
+0.2.1 Beta version tags. The kit now extracts as `Termic-Amiga` and contains the
+64x56 transparent colour launcher icon, updated Guide and contrast fixes.
+The old `TermicNative.info` launch icon is omitted. The AmiPkg recipe copies
+the application and drawer icon, preserves its fresh-install preflight, then
+regenerates icons at the actual installation path.
+
+All 143 host/native tests passed. Upstream AmiPkg authoring validation reported
+zero errors and the expected AmigaDOS-script review warning. Its C parser,
+dependency resolver and complete file-copy plan passed ASan/UBSan, including
+the new launcher and parent drawer icon. LHA integrity and the seven-asset
+release policy passed, covering all ZIP/LHA contents, nested SDK listings,
+checksums and the exact AmiPkg archive pin. PNGs remain documentation-only.
+
+The separate Mac Proxy is the unchanged 0.2.0 Beta binary. Its 97 portable
+checks and packaged GUI/stdio, mailbox and reconnect/Start/Stop/close tests
+passed again. The Windows x64 Proxy is the unmodified artifact from successful
+[CI run 45086711499](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/45086711499)
+at `a2e518adf2776eeca8f475d66c43db6798870d25`, which ran those checks on
+Windows. Its artifact SHA-256 was compared with GitHub's recorded digest
+before promotion to `Termic-AI-Proxy-Windows.zip`; it includes the executable
+and complete `_internal` directory.
+
+The separate multi-client gateway remains upstream 0.1.0 Alpha at
+`994292aa2043edb77ff1079bf09de3519fd40225`, with unchanged package bytes.
+All 13 upstream tests and the packaged five-session/24-call test passed again
+against an isolated synthetic backend. The live bridge was not restarted.
+
+The UI changes and icon were verified on the physical Amiga in the preceding
+development build. This exact 0.2.1 kit's full fresh install and AmigaDOS
+pre/post scripts have host validation, not a physical fresh-install acceptance.
+Mac packages remain ad-hoc signed; Windows acceptance is from CI, not a manual
+Windows 11 desktop session. Component versions are stated separately in the
+release notes instead of relabelling unchanged proxy or gateway binaries.

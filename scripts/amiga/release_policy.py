@@ -39,9 +39,13 @@ def check_lha_names(path, lha):
 
 
 def expected_assets(version):
-    return {f'Termic-Amiga-{version}.lha', f'Termic-Process-Monitor-{version}.lha',
+    assets = {f'Termic-Amiga-{version}.lha', f'Termic-Process-Monitor-{version}.lha',
             'Termic-AI-Proxy-macOS.zip', 'Amiga-MCP-MultiClient-macOS-arm64.zip',
             'termic-amiga.json', 'SHA256SUMS'}
+    # Preserve the published 0.2.0 manifest; Windows is a release asset from 0.2.1.
+    if version != '0.2.0-beta':
+        assets.add('Termic-AI-Proxy-Windows.zip')
+    return assets
 
 
 def validate_assets(directory, version, lha):

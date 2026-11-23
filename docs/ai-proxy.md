@@ -5,12 +5,14 @@ Amiga task composer to Codex, Claude Code or Cursor on your host computer.
 It bundles Python, Qt and the MCP client. The three vendor CLIs and the
 DevBench bridge are separate prerequisites.
 
-The [0.2.0 Beta Mac download](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.0-beta/Termic-AI-Proxy-macOS.zip)
-is a separate Apple Silicon application with its own Python and Qt runtime.
-It includes the current gateway reservation/recovery client. The native
-worker and Mac proxy are released together. Windows builds remain available
-through the source build instructions and authenticated CI artifacts; older
-public release downloads have been archived.
+The current release provides separate [Mac](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.1-beta/Termic-AI-Proxy-macOS.zip)
+and [Windows](https://github.com/SkiltonUSA/Termic-Amiga/releases/download/v0.2.1-beta/Termic-AI-Proxy-Windows.zip)
+downloads, each with its own Python and Qt runtime. Both proxy applications
+remain version 0.2.0 Beta; Termic Amiga 0.2.1 changes the native UI and packaging.
+The Windows x64 download is the exact artifact from successful CI run
+[45086711499](https://github.com/SkiltonUSA/Termic-Amiga/actions/runs/45086711499),
+which passed portable, packaged GUI/stdio, mailbox and desktop lifecycle checks.
+It includes the current gateway reservation/recovery client.
 
 The proxy retains host Git worktrees, native MicroPython tools and a 15-minute
 native build reply budget. Other tool replies retain a 3-minute limit.
@@ -28,7 +30,8 @@ Additional development builds are attached to successful
 runs. The macOS artifact contains an app ZIP; the Windows artifact contains
 an executable and its dependencies. GitHub requires sign-in for these artifacts,
 and retains them for 30 days. Mac builds have local ad-hoc signatures, not Developer ID notarization. The release Mac app is ARM64 (Apple Silicon); build locally
-on Intel macOS for an Intel bundle. Build Windows packages on Windows; they are not part of the current Mac release assets.
+on Intel macOS for an Intel bundle. Build Windows packages on Windows. The public release ZIP extracts to
+`Termic AI Proxy/`, containing the executable and its `_internal` dependencies.
 
 The window provides:
 

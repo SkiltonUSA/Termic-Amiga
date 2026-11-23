@@ -1,7 +1,7 @@
 @DATABASE Termic.guide
 @INDEX Index
 @NODE MAIN "Termic Amiga - User Guide"
-@{b}Termic Amiga 0.2.0 Beta@{ub}
+@{b}Termic Amiga 0.2.1 Beta@{ub}
 Current source: offline Tiny and integrated Processors tab.
 Native MUI development workspace for AmigaOS 3.2 / 68020+.
 
@@ -523,7 +523,7 @@ Classic AmigaOS has no process isolation: review code before running it.
 @ENDNODE
 
 @NODE About "Version, support and credits"
-Termic Amiga 0.2.0 Beta. Native version source: Source/version.h.
+Termic Amiga 0.2.1 Beta. Native version source: Source/version.h.
 Project > About... and the About toolbar button show version and credits.
 AmigaDOS can inspect all three executable version tags:
 

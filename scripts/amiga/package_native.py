@@ -79,7 +79,7 @@ def main():
         raise ValueError("Supply an LHA executable with --lha")
     lha = str(Path(lha).resolve())
     with tempfile.TemporaryDirectory() as directory:
-        stage = Path(directory) / "TermicNative"
+        stage = Path(directory) / "Termic-Amiga"
         stage.mkdir()
         for name in ("TermicNative", "TermicAgent", "TermicStorage", "TermicMCP", "TermicCheck"):
             binary = args.binaries / name
@@ -87,16 +87,15 @@ def main():
                 raise ValueError(f"Not an Amiga Hunk executable: {name}")
             shutil.copyfile(binary, stage / name)
         launcher = args.binaries / "TermicLauncher"
-        if launcher.exists():
-            if launcher.read_bytes()[:4] != b"\x00\x00\x03\xf3":
-                raise ValueError("Not an Amiga Hunk executable: TermicLauncher")
-            shutil.copyfile(launcher, stage / "Termic Amiga")
-            launcher_icon = args.binaries / "Termic Amiga.info"
-            if launcher_icon.exists():
-                shutil.copyfile(launcher_icon, stage / launcher_icon.name)
-        icon = args.binaries / "TermicNative.info"
-        if icon.exists():
-            shutil.copyfile(icon, stage / icon.name)
+        if launcher.read_bytes()[:4] != b"\x00\x00\x03\xf3":
+            raise ValueError("Not an Amiga Hunk executable: TermicLauncher")
+        shutil.copyfile(launcher, stage / "Termic Amiga")
+        for name, destination in (("Termic Amiga.info", stage / "Termic Amiga.info"),
+                                  ("Termic-Amiga.info", Path(directory) / "Termic-Amiga.info")):
+            icon = args.binaries / name
+            if icon.read_bytes()[:2] != b"\xe3\x10":
+                raise ValueError("Not a Workbench DiskObject: " + name)
+            shutil.copyfile(icon, destination)
         for script in SCRIPTS:
             shutil.copyfile(SOURCE / script, stage / script)
         (stage / "Source").mkdir()
@@ -139,7 +138,7 @@ def main():
         for archive in (stage/'SDK').glob('*.lha'):
             check_lha_names(archive, lha)
         subprocess.run(
-            [lha, "aq", str(output), "TermicNative"], cwd=directory, check=True
+            [lha, "aq", str(output), stage.name, "Termic-Amiga.info"], cwd=directory, check=True
         )
         subprocess.run([lha, "tq", str(output)], check=True, capture_output=True)
     print(f"{output}\nSHA256 {hashlib.sha256(output.read_bytes()).hexdigest()}")

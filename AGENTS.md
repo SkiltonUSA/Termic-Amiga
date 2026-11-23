@@ -13,7 +13,7 @@ Read docs/releases.md before packaging or publishing.
   scripts/amiga/release_policy.py on staged downloads before any upload.
 - Publish tested versioned artifacts with an accurate validation statement.
   Check uploaded bytes and the public AmiPkg archive URL before declaring success.
-- Keep the Mac Proxy and multi-client Amiga-MCP gateway as separate downloads.
+- Keep the Mac and Windows Proxies and multi-client Amiga-MCP gateway as separate downloads.
   Verify the gateway's source revision and packaged multi-client behavior.
 - Do not change an upstream gateway's version to match Termic's application version.
 - Older releases may be retained as drafts at the user's request. Preserve source

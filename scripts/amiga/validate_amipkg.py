@@ -50,8 +50,11 @@ def main():
             assert target.read_bytes()==(extract/src).read_bytes()
         installed=work/'fresh/Programs/Termic-Amiga'
         assert (installed/'Config/api-key').read_bytes()==b''
-        for name in ('TermicNative','TermicAgent','TermicMCP','TermicCheck','TermicStorage'):
+        for name in ('TermicNative','TermicAgent','TermicMCP','TermicCheck','TermicStorage','Termic Amiga'):
             assert (installed/name).read_bytes()[:4]==b'\0\0\x03\xf3'
+        assert (installed/'Termic Amiga.info').read_bytes()[:2] == b'\xe3\x10'
+        assert not (installed/'TermicNative.info').exists()
+        assert (work/'fresh/Programs/Termic-Amiga.info').read_bytes() == (extract/'Termic-Amiga.info').read_bytes()
         tiny = installed/'Tools/Tiny'
         assert (tiny/'tiny68k').read_bytes()[:4] == b'\0\0\3\xf3'
         lock = json.loads((ROOT/'amiga/native/tiny-lock.json').read_text())

@@ -4,7 +4,7 @@ The separate `Amiga-MCP-MultiClient-macOS-arm64.zip` download contains the share
 multi-client gateway from [SkiltonUSA/Amiga-MCP](https://github.com/SkiltonUSA/Amiga-MCP),
 not the older direct DevBench server. It uses upstream version 0.1.0 Alpha,
 commit `994292aa2043edb77ff1079bf09de3519fd40225`, unchanged source and MIT license.
-Termic's 0.2.0 Beta version does not rename the gateway's upstream version.
+Termic's 0.2.1 Beta version does not rename the gateway's upstream version.
 
 The gateway supports up to 64 HTTP MCP sessions and 32 queued requests by
 default. Complete hardware transactions are serialized through one persistent

@@ -28,7 +28,7 @@ def entry(archive, url, version):
         'archive': {'url': url, 'mirrors': [], 'sha256': hashlib.sha256(raw).hexdigest(), 'sizeBytes': len(raw)},
         'requirements': {'minCPU': '68020', 'minKS': '3.2', 'network': True, 'amiSSL': True},
         'deps': [{'id': 'texteditormcc', 'min': '15.56'}, {'id': 'amissl', 'min': '5.27'}],
-        'requiredCapabilities': ['copy-tree-v1', 'pre-post-script-v1', 'make-assign-v1'],
+        'requiredCapabilities': ['copy-tree-v1', 'place-file-v1', 'pre-post-script-v1', 'make-assign-v1'],
         'recipe': {'recipeSchema': 2, 'ops': [
             {'op': 'preScript', 'lines': [
                 'FailAt 10',
@@ -39,12 +39,14 @@ def entry(archive, url, version):
                 'If EXISTS SYS:Programs/Termic-Amiga',
                 ' Echo "Existing Termic drawer: back it up and use the documented upgrade procedure."',
                 ' Quit 20', 'EndIf']},
-            {'op': 'copyTree', 'src': 'TermicNative', 'dest': 'Programs/Termic-Amiga'},
+            {'op': 'copyTree', 'src': 'Termic-Amiga', 'dest': 'Programs/Termic-Amiga'},
+            {'op': 'placeFile', 'src': 'Termic-Amiga.info', 'dest': 'Programs'},
             {'op': 'makeAssign', 'name': 'Termic', 'path': 'SYS:Programs/Termic-Amiga'},
             {'op': 'postScript', 'lines': [
                 'FailAt 10', 'Stack 262144', 'Assign Termic: SYS:Programs/Termic-Amiga',
                 'Execute Termic:InstallSDK', 'Execute Termic:InstallUI', 'Termic:TermicCheck',
-                'Echo "Termic installed. Run Termic:TermicNative."']}
+                '"Termic:Termic Amiga" --make-icons',
+                'Echo "Termic installed. Open the Termic Amiga Workbench icon."']}
         ]}
     }
 

@@ -67,9 +67,11 @@ class ReleasePolicyTests(unittest.TestCase):
                 check_lha_names('sdk.lha', 'lha')
 
     def test_release_manifest_is_downloads_only(self):
-        assets = expected_assets('0.2.0-beta')
-        self.assertEqual(len(assets), 6)
-        self.assertIn('Termic-Amiga-0.2.0-beta.lha', assets)
+        self.assertEqual(len(expected_assets('0.2.0-beta')), 6)
+        assets = expected_assets('0.2.1-beta')
+        self.assertEqual(len(assets), 7)
+        self.assertIn('Termic-Amiga-0.2.1-beta.lha', assets)
+        self.assertIn('Termic-AI-Proxy-Windows.zip', assets)
         self.assertIn('Termic-AI-Proxy-macOS.zip', assets)
         self.assertIn('Amiga-MCP-MultiClient-macOS-arm64.zip', assets)
         check_names(assets)
