@@ -1,0 +1,2 @@
+# README artwork is documentation only; omit it from downloadable source archives.
+/docs/screenshots export-ignore

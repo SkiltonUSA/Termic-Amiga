@@ -8,7 +8,7 @@ from bridge_client import DEFAULT_BRIDGE
 
 async def main(args):
     out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
-    fixture='SD032G:Dev/Termic/Acceptance/cli-directory-'+str(int(time.time()))
+    fixture='SD032G:Termic-Amiga/Acceptance/cli-directory-'+str(int(time.time()))
     (out/'fixture.json').write_text(json.dumps({'fixture':fixture}))
     async with Bridge(DEFAULT_BRIDGE,fixture) as b:
         assert 'TermicJob.' not in await b.call('amiga_list_ports',{})
@@ -24,7 +24,7 @@ async def main(args):
             await put(sub+'/marker.txt',marker+'\n')
             for index,command in enumerate(['CD','Type marker.txt']):
                 await put(sub+'/command.txt',command)
-                launch=('CD "SD032G:Dev/Termic"\nStack 262144\n'+fixture+'/TermicAgent --shell --project "'+root+'" >'+root+'/job.log\n'
+                launch=('CD "SD032G:Termic-Amiga"\nStack 262144\n'+fixture+'/TermicAgent --shell --project "'+root+'" >'+root+'/job.log\n'
                         'CD >'+root+'/caller-directory.txt\nEcho complete >'+root+'/done\n')
                 await put(sub+'/launch',launch)
                 await b.shell('If EXISTS '+root+'/done\n Delete '+root+'/done\nEndIf\nRun >NIL: <NIL: Execute '+root+'/launch')

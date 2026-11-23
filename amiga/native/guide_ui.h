@@ -8,11 +8,9 @@ static const char *guide_names[GUIDE_NODES+1],*guide_link_names[GUIDE_LINKS+1];
 static int guide_current=-1,guide_link_count,guide_history[64],guide_history_count;
 static int guide_show(int chapter,int remember)
 {
- char *plain,*styled;int i;
- plain=guide_render(&guide_doc,chapter,guide_targets,&guide_link_count);
- if(!plain){set(guide_note,MUIA_Text_Contents,"Cannot display this chapter: invalid local guide markup or link.");return 0;}
- styled=syntax_colours(plain,0);
- if(!styled){free(plain);set(guide_note,MUIA_Text_Contents,"Not enough memory to display this chapter.");return 0;}
+ char *styled;int i;
+ styled=guide_render_colours(&guide_doc,chapter,guide_targets,&guide_link_count);
+ if(!styled){set(guide_note,MUIA_Text_Contents,"Cannot display this chapter: invalid guide markup or insufficient memory.");return 0;}
  if(remember && guide_current>=0 && guide_current!=chapter) {
   if(guide_history_count==64){memmove(guide_history,guide_history+1,63*sizeof(int));guide_history_count--;}
   guide_history[guide_history_count++]=guide_current;
@@ -20,7 +18,7 @@ static int guide_show(int chapter,int remember)
  guide_current=chapter;
  set(guide_title,MUIA_Text_Contents,guide_doc.nodes[chapter].title);
  SetAttrs(guide_chapters,MUIA_NoNotify,TRUE,MUIA_Cycle_Active,chapter,TAG_DONE);
- set(guide_text,MUIA_TextEditor_Contents,styled);free(styled);free(plain);
+ set(guide_text,MUIA_TextEditor_Contents,styled);free(styled);
  SetAttrs(guide_text,MUIA_TextEditor_CursorX,0,MUIA_TextEditor_CursorY,0,MUIA_TextEditor_Prop_First,0,TAG_DONE);
  for(i=0;i<guide_link_count;i++)guide_link_names[i]=guide_targets[i].title;
  if(!guide_link_count)guide_link_names[i++]="No related topics";
@@ -28,7 +26,7 @@ static int guide_show(int chapter,int remember)
  SetAttrs(guide_links,MUIA_Cycle_Entries,guide_link_names,MUIA_Cycle_Active,0,MUIA_Disabled,!guide_link_count,TAG_DONE);
  set(guide_go,MUIA_Disabled,!guide_link_count);set(guide_back,MUIA_Disabled,!guide_history_count);
  set(guide_prev,MUIA_Disabled,chapter==0);set(guide_next,MUIA_Disabled,chapter==guide_doc.count-1);
- set(guide_note,MUIA_Text_Contents,"Local manual. Choose a chapter or a related topic. Search applies to this chapter.");
+ set(guide_note,MUIA_Text_Contents,"Orange text marks related topics. Choose a topic below and press Open.");
  return 1;
 }
 static void open_help(void)

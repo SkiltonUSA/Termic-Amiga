@@ -23,7 +23,7 @@ async def main(options):
     (out/'agent-passed.json').unlink(missing_ok=True)
     evidence=json.loads((base/'passed.json').read_text())
     fixture=evidence['fixture']
-    assert fixture.startswith('SD032G:Dev/Termic/Acceptance/execution-') and fixture.rsplit('-',1)[-1].isdigit()
+    assert fixture.startswith('SD032G:Termic-Amiga/Acceptance/execution-') and fixture.rsplit('-',1)[-1].isdigit()
     lock=RelayLock(default_state())
     try:
         async with Bridge('http://127.0.0.1:55110/mcp') as bridge:

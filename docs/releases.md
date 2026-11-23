@@ -11,15 +11,20 @@ PNG files must never be uploaded as release assets, copied to release staging,
 or included in an installable archive or application distribution. Do not add
 screenshots to the native kit, SDK input staging, Mac app distribution or
 bridge package. Keep synthetic visual test evidence outside release directories,
-under a gitignored local screenshots directory. Never use personal projects,
+under a gitignored local screenshots directory. Reviewed synthetic captures for
+the README may be copied to `docs/screenshots/` in the repository. That directory
+is excluded from Git source archives using `.gitattributes` (`export-ignore`).
+This documentation exception never applies to installable packages or release
+assets. Never use personal projects,
 credentials or real activity logs as screenshots.
 
 The native, monitor, proxy and gateway packaging scripts check their staged
 file trees. Release validation also opens the ZIP/LHA archives and checks their
 contents. The release-policy CI job tests these checks and rejects documentation
-that depends on release PNG assets. It also rejects tracked PNG files, so
-automatic GitHub source downloads stay free of screenshots. A release-event
-job checks the published download names against the same allowlist. Documentation uses text and source diagrams;
+that depends on release PNG assets. It permits tracked PNG files only
+under `docs/screenshots/` and requires that directory to be excluded from Git
+source archives. A release-event job checks published download names against
+the same allowlist. README images use repository-relative documentation paths;
 PNG release download links are not allowed.
 
 ## Public download list

@@ -16,7 +16,7 @@ BROKEN = '#include <stdio.h>\nint main(void) { this is not valid C; }\n'
 
 
 async def stage(root, out, fixture, shell, push, call):
-    sdk = 'SD032G:Dev/Termic/SDK'
+    sdk = 'SD032G:Termic-Amiga/SDK'
     binpath = sdk + '/vbcc_bin_amigaos68k/bin/'
     target = sdk + '/vbcc_target_m68k-amigaos/targets/m68k-amigaos/'
     config = '\n'.join([

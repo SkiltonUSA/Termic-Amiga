@@ -40,13 +40,18 @@ Git repositories require long filenames (PFS3/SFS or FFS with long names).
 
 INSTALL
 Unpack into a new drawer. In an Amiga Shell:
-  Assign Termic: Work:TermicNative
+  Assign Termic: SD032G:Termic-Amiga
   Execute Termic:InstallSDK
   Execute Termic:InstallUI
   Execute Termic:BuildNative
-  Termic:TermicNative --icon Termic:TermicNative
-Replace Work:TermicNative with your chosen drawer, then double-click the
-TermicNative icon. The application assigns Termic: to its own drawer.
+  "Termic:Termic Amiga" --make-icons
+Replace SD032G:Termic-Amiga with your chosen drawer. BuildNative builds the
+Termic Amiga Workbench launcher and creates its native .info icon. Double-click
+Termic Amiga to start the workspace; the launcher finds TermicNative in its own
+drawer, without relying on an existing Termic: assign. The application then
+assigns Termic: to that drawer. PNG screenshots are never installed.
+Text editors use shared screen-colour pens, so code, CLI and activity text
+remain readable even when other applications have exhausted exclusive pens.
 For a Shell launch, set Stack 262144 before running Termic:TermicNative.
 The Workbench icon already requests this stack. MUI 5 is supported; its
 Title class provides the workspace tabs with the restored application font.
@@ -414,3 +419,10 @@ Type after the final > prompt in the black CLI pane and press Return.
 The separate command field remains available. Drafts survive output updates.
 Escape restores the prompt after edits to history. Only single-line commands
 are submitted; this is not an interactive stdin terminal.
+
+Guide presentation
+------------------
+The built-in MUI 5 Guide shows link labels in orange and the Contents page as
+one vertical list. Body text stays light on black. Choose the related topic
+below the text and press Open to navigate; chapter history and search remain
+available. MultiView uses its own AmigaGuide display preferences.

@@ -21,7 +21,7 @@ async def stage(root,out,fixture,kit,shell,push,call):
     expected=[];sources={}
     import hashlib
     for name in lock:
-        remote='SD032G:Dev/Termic/SDK/'+name
+        remote='SD032G:Termic-Amiga/SDK/'+name
         raw=(downloads/name).read_bytes()
         assert hashlib.sha256(raw).hexdigest()==lock[name]['sha256']
         if 'ARCHIVE_PRESENT' not in await shell('If EXISTS '+remote+'\n Echo ARCHIVE_PRESENT\nEndIf'):

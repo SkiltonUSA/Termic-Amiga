@@ -312,7 +312,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gui", type=Path, required=True)
     parser.add_argument("--probe", type=Path, required=True)
-    parser.add_argument("--install", default="SD032G:Dev/Termic")
+    parser.add_argument("--install", default="SD032G:Termic-Amiga")
     parser.add_argument(
         "--mui-custom-menus",
         action="store_true",

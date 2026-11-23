@@ -47,4 +47,16 @@ If EXISTS Termic:TermicMCP
 EndIf
 Rename Termic:TermicMCP.new Termic:TermicMCP
 Protect Termic:TermicMCP +e
-Echo "Termic native applications built on this Amiga."
+vc +aos68k -cpu=68020 -O1 workbench.c -o Termic:TermicLauncher.new -lamiga
+If WARN
+  Quit 20
+EndIf
+If EXISTS "Termic:Termic Amiga"
+  Delete "Termic:Termic Amiga"
+EndIf
+Rename Termic:TermicLauncher.new "Termic:Termic Amiga"
+Protect "Termic:Termic Amiga" +e
+If NOT EXISTS "Termic:Termic Amiga.info"
+  "Termic:Termic Amiga" --make-icons
+EndIf
+Echo "Termic native applications and Workbench launcher built on this Amiga."

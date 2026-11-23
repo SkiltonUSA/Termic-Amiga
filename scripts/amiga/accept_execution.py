@@ -28,7 +28,7 @@ async def main(args):
     for binary in (args.worker, args.stop_probe):
         assert binary.is_file() and binary.read_bytes()[:4] == b'\0\0\3\xf3', 'Missing or invalid Hunk: '+str(binary)
     lock = RelayLock(default_state())
-    fixture = 'SD032G:Dev/Termic/Acceptance/execution-' + str(int(time.time()))
+    fixture = 'SD032G:Termic-Amiga/Acceptance/execution-' + str(int(time.time()))
     try:
         async with EvidenceBridge(args.bridge) as bridge:
             async def call(name, fields):
@@ -59,7 +59,7 @@ async def main(args):
             await write('main.c', 'int main(void) { return 0; }\n')
             await write('task.txt', 'Isolated execution framework acceptance. No cloud inference.')
             # Keep compiler settings local to the fixture.
-            sdk='SD032G:Dev/Termic/SDK'; binpath=sdk+'/vbcc_bin_amigaos68k/bin/'
+            sdk='SD032G:Termic-Amiga/SDK'; binpath=sdk+'/vbcc_bin_amigaos68k/bin/'
             target=sdk+'/vbcc_target_m68k-amigaos/targets/m68k-amigaos/'
             config='\n'.join([
                 '-cc='+binpath+'vbccm68k -quiet %s -o= %s %s -O=%ld -I'+target+'include -I'+sdk+'/NDK/Include_H',

@@ -17,7 +17,7 @@ async def main(options):
     out.mkdir(parents=True, exist_ok=True)
     (out / 'passed.json').unlink(missing_ok=True)
     parent = json.loads((out.parent / 'passed.json').read_text())['fixture']
-    assert parent.startswith('SD032G:Dev/Termic/Acceptance/execution-')
+    assert parent.startswith('SD032G:Termic-Amiga/Acceptance/execution-')
     assert parent.rsplit('-', 1)[-1].isdigit()
     fixture = parent + '/stop-build-' + str(int(time.time()))
     lock = RelayLock(default_state())

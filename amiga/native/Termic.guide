@@ -5,25 +5,38 @@
 Current source: offline Tiny and integrated Processors tab.
 Native MUI development workspace for AmigaOS 3.2 / 68020+.
 
-  @{"Getting started" LINK Start}       @{"Installation" LINK Install}
-  @{"Projects and tasks" LINK Projects}    @{"Source editor" LINK Editor}
-  @{"Build and run" LINK Build}         @{"AmigaDOS commands" LINK Shell}
-  @{"Git review" LINK Git}            @{"Cloud agent" LINK Agent}
-  @{"Preferences" LINK Prefs}           @{"Menus and keys" LINK Menus}
-  @{"Clipboard sharing" LINK Sharing}     @{"Storage and backup" LINK Storage}
-  @{"Troubleshooting" LINK Trouble}       @{"Limits and hardware" LINK Limits}
-  @{"Workbench launchers" LINK Workbench}  @{"Version and credits" LINK About}
-  @{"Agent profiles" LINK Profiles}     @{"MCP and CLI access" LINK MCP}
-  @{"Codex on Mac" LINK Codex}          @{"Prompts" LINK Prompts}
-  @{"Kanban and queue" LINK TaskFlow}    @{"Review and notes" LINK ReviewNotes}
+  @{"Getting started" LINK Start}
+  @{"Installation" LINK Install}
+  @{"Projects and tasks" LINK Projects}
+  @{"Source editor" LINK Editor}
+  @{"Build and run" LINK Build}
+  @{"AmigaDOS commands" LINK Shell}
+  @{"Git review" LINK Git}
+  @{"Cloud agent" LINK Agent}
+  @{"Preferences" LINK Prefs}
+  @{"Menus and keys" LINK Menus}
+  @{"Clipboard sharing" LINK Sharing}
+  @{"Storage and backup" LINK Storage}
+  @{"Troubleshooting" LINK Trouble}
+  @{"Limits and hardware" LINK Limits}
+  @{"Workbench launchers" LINK Workbench}
+  @{"Version and credits" LINK About}
+  @{"Agent profiles" LINK Profiles}
+  @{"MCP and CLI access" LINK MCP}
+  @{"Codex on Mac" LINK Codex}
+  @{"Prompts" LINK Prompts}
+  @{"Kanban and queue" LINK TaskFlow}
+  @{"Review and notes" LINK ReviewNotes}
   @{"Branches and worktrees" LINK HostGit}
-  @{"Offline Tiny" LINK TINY}          @{"Process monitor" LINK activitymonitor}
+  @{"Offline Tiny" LINK TINY}
+  @{"Process monitor" LINK activitymonitor}
   @{"Alphabetical index" LINK Index}
 
 Help opens this manual inside Termic in a native MUI 5 window.
 Use Chapter to select a topic, Contents to return here, Index for topics,
 and Back to retrace your navigation. Previous and Next browse chapters.
-Choose a Related topic and press Open to follow a link from this chapter.
+Orange text marks links in the MUI viewer. Choose a Related topic
+and press Open to follow a link from this chapter.
 Find and Find next search the displayed chapter. Escape closes help.
 Resize the window as needed; small windows have native scrollbars.
 The same file can also be opened separately in MultiView.
@@ -39,7 +52,7 @@ A compact selector also offers Projects, Tasks, Files and CLI panes.
 Hover over an icon for its action name.
 The source editor and Files retain light text on black.
 
-1. Start TermicNative from its Workbench icon or the Shell.
+1. Open the Termic-Amiga drawer and double-click Termic Amiga.
 2. Type a name in the project field; choose New project. A clean
    template is copied into a managed project drawer.
 3. Select main.c in Files, or press F2 for the Editor.
@@ -80,14 +93,15 @@ contains source; GitHub releases include kits and pinned AmiPkg entries.
 
 Unpack a kit into a new drawer. In an Amiga Shell, for example:
 
-  Assign Termic: Work:TermicNative
+  Assign Termic: SD032G:Termic-Amiga
   Execute Termic:InstallSDK
   Execute Termic:InstallUI
   Execute Termic:BuildNative
-  Termic:TermicNative --icon Termic:TermicNative
+  "Termic:Termic Amiga" --make-icons
 
-Replace Work:TermicNative with your installation drawer. Double-click
-TermicNative afterwards. It assigns Termic: to its own program drawer.
+Replace SD032G:Termic-Amiga with your installation drawer. Double-click
+Termic Amiga afterwards. The Workbench launcher finds TermicNative beside
+it without needing an existing Termic: assign; the app sets that assign.
 Use one installation at a time. InstallUI does not replace the MUI core.
 Source files belong in Source; Termic.guide belongs beside TermicNative.
 

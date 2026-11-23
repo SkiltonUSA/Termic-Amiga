@@ -40,7 +40,7 @@ async def main(options):
         raise ValueError('Supply an editable native profile with --profile')
     evidence_dir = ROOT / '.context/execution-acceptance'
     parent = json.loads((evidence_dir / 'passed.json').read_text())['fixture']
-    assert parent.startswith('SD032G:Dev/Termic/Acceptance/execution-')
+    assert parent.startswith('SD032G:Termic-Amiga/Acceptance/execution-')
     assert parent.rsplit('-', 1)[-1].isdigit()
     out = evidence_dir / ('build-agent' if provider == 'codex' else 'build-agent-' + provider)
     out.mkdir(exist_ok=True)
@@ -77,7 +77,7 @@ async def main(options):
                 await write('agent-profile', options.profile)
             await write('main.c', '#include <stdio.h>\n#error intentional_build_failure\n'
                         'int main(void) { puts("' + MARKER + '"); return 0; }\n')
-            await write('build-command.txt', 'SD032G:Dev/Termic/SDK/vbcc_bin_amigaos68k/bin/vc +'
+            await write('build-command.txt', 'SD032G:Termic-Amiga/SDK/vbcc_bin_amigaos68k/bin/vc +'
                         + fixture + '/native-build.config -cpu=68020 -O1 main.c -o Program.new -lamiga\n')
             await write('task.txt', 'Read main.c. Build it unchanged once so you receive actual compiler '
                         'diagnostics. After that failure, repair the source while preserving its greeting '

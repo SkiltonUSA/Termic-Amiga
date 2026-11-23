@@ -169,5 +169,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--close-at-end", action="store_true")
     parser.add_argument("--probe", type=Path, required=True)
-    parser.add_argument("--install", default="SD032G:Dev/Termic")
+    parser.add_argument("--install", default="SD032G:Termic-Amiga")
     asyncio.run(main(parser.parse_args()))

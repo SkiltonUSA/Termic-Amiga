@@ -6,6 +6,13 @@ Termic runs on the Amiga using MUI 5 and native 68k tools. It includes an
 editable code workspace, CLI console, offline Tiny assistant and Processors
 panel. Cloud-agent access uses the separately downloadable Mac AI Proxy.
 
+![Termic Amiga 0.2.0 Beta editor, Files and CLI](docs/screenshots/workspace-cli.png)
+
+Captured on the Amiga using the production MUI widgets and synthetic
+demonstration data. [More screenshots and capture details](docs/screenshots.md).
+The screenshots show current source, including contrast and Guide improvements
+made after the published 0.2.0 Beta archives.
+
 ## Downloads
 
 | Download | Where it runs | Purpose |
@@ -51,6 +58,23 @@ The bundled Tiny model is the original pinned Tiny 2.1 model. Experimental
 training material remains in source; older experimental downloads are archived.
 The complete release package has host validation; physical installation of
 this exact version still requires target acceptance.
+
+![Tiny selected in the Agent pane, with coloured demonstration activity](docs/screenshots/live-feedback.png)
+
+## Current-source desktop improvements
+
+The Workbench launcher is named **Termic Amiga**, inside **Termic-Amiga**.
+On the development Amiga the drawer is `SD032G:Termic-Amiga`. The launcher
+finds the application beside itself without requiring an existing `Termic:`
+assign. `BuildNative` creates the launcher and its native `.info` icon;
+`"Termic:Termic Amiga" --make-icons` regenerates the tool and drawer icons.
+
+Shared palette colours keep editor, CLI, activity and Guide text readable when
+Workbench has no free exclusive colour pens. Guide links are orange, with
+Contents arranged as one vertical list. These changes are installed on the
+development Amiga and available in source; published 0.2.0 archives are unchanged.
+
+![Offline Tiny profile](docs/screenshots/tiny-profile.png)
 
 ## Features
 
@@ -102,13 +126,15 @@ and recovers lost acknowledgements without repeating builds or executions.
 A real Codex task passed native generation, compilation, execution, review and
 Kanban completion on the A4000TX. These proxy changes are available in the
 [desktop build workflow](https://github.com/SkiltonUSA/Termic-Amiga/actions/workflows/ai-proxy.yml);
-the linked 0.1.3 proxy downloads include them. See
+the current 0.2.0 Mac proxy download includes them. See
 [verification](docs/verification.md#proxy-reliability-and-real-agent-workflow-15-november-2026)
 for the tested scope.
 
 Start with [Termic AI Proxy for macOS and Windows 11](docs/ai-proxy.md) for
 Codex, Claude and Cursor setup, downloads and model selection.
 [Codex relay details](docs/codex-relay.md) describe the ChatGPT integration.
+
+![Termic AI Proxy 0.2.0 Beta with demonstration account status](docs/screenshots/ai-proxy.png)
 
 See [Agents, CLI, scripts and MCP](docs/agents-and-mcp.md) for setup, client connections
 and differences from desktop Termic.
@@ -141,6 +167,8 @@ The TF4060 target is detected as a 68060 through Exec. ZZ9000 graphics/shared
 RAM boards and an optional ARM debug owner are reported. The installed legacy
 firmware does not expose ARM processes or per-process telemetry; the app labels
 those values unavailable. It does not reset or replace ARM firmware.
+
+![Integrated Processors panel with synthetic task and load values](docs/screenshots/processors.png)
 
 ## Requirements and installation
 

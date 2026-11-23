@@ -120,7 +120,7 @@ async def accept(args):
                 'any compiler errors. After a successful build, execute Program exactly once with '
                 'run_program. Report the actual output and exit code. Only edit main.c. Do not ask the '
                 'user to run anything. Do not simulate success or use host shell/file tools.\n',
-            'build-command.txt': 'SD032G:Dev/Termic/SDK/vbcc_bin_amigaos68k/bin/vc +'
+            'build-command.txt': 'SD032G:Termic-Amiga/SDK/vbcc_bin_amigaos68k/bin/vc +'
                 + task + '/native-build.config -cpu=68020 -O1 main.c -o Program.new -lamiga\n',
         }
         for name, text in files.items():
@@ -193,7 +193,7 @@ async def accept(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--server', default='http://127.0.0.1:55110/mcp')
-    parser.add_argument('--drawer', default='SD032G:Dev/Termic/Acceptance')
+    parser.add_argument('--drawer', default='SD032G:Termic-Amiga/Acceptance')
     parser.add_argument('--binary', type=Path, required=True)
     parser.add_argument('--probe', type=Path, required=True)
     parser.add_argument('--compiler-config', type=Path, required=True)

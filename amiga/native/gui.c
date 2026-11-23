@@ -200,7 +200,7 @@ static Object *list(Object **o)
            *o = ListObject, InputListFrame, MUIA_Font, bodyfont ? (ULONG)bodyfont : MUIV_Font_List,
            o == &files ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
            o == &files ? MUIA_List_Format : TAG_IGNORE,
-           MUIMasterBase->lib_Version >= 21 ? "P=\33P[EEEEEE]" : "P=\33" "3",
+           "P=\33" "3", /* Workbench shine pen stays readable without an RGB allocation. */
            MUIA_List_ConstructHook, MUIV_List_ConstructHook_String, MUIA_List_DestructHook,
            MUIV_List_DestructHook_String, End, End;
 }
@@ -209,20 +209,51 @@ static Object *list(Object **o)
  * Each class owns its handler; unhandled events pass to TextEditor's node. */
 static Object *change_text,*broadcast_text;
 static struct MUI_CustomClass *keyeditor_class;
-struct KeyEditorData { struct MUI_EventHandlerNode events; };
+#include "editor_palette_ui.h"
 static ULONG keyeditor_dispatch(__reg("a0") struct IClass *cl,
                                 __reg("a2") Object *obj, __reg("a1") Msg msg)
 {
     struct KeyEditorData *d=obj?INST_DATA(cl,obj):NULL;
     switch(msg->MethodID) {
+    case OM_NEW:
+        obj=(Object *)DoSuperMethodA(cl,obj,msg);
+        if(obj) {
+            struct TagItem *scan=((struct opSet *)msg)->ops_AttrList,*t;unsigned i;
+            d=INST_DATA(cl,obj);memset(d,0,sizeof(*d));
+            while((t=editor_next_tag(&scan))!=NULL)if(t->ti_Tag==MUIA_Termic_DarkEditor)d->dark=!!t->ti_Data;
+            for(i=0;i<EDITOR_COLOR_COUNT;i++)d->pens[i]=2;
+            SetAttrs(obj,MUIA_TextEditor_ColorMap,d->pens,MUIA_TextEditor_RGBMode,FALSE,TAG_DONE);
+        }
+        return (ULONG)obj;
+    case OM_SET:
+        return editor_palette_set(cl,obj,(struct opSet *)msg,d);
+    case MUIM_TextEditor_InsertText:
+        {
+            struct MUIP_TextEditor_InsertText copy=*(struct MUIP_TextEditor_InsertText *)msg;
+            char *text=editor_color_text(copy.text,d->dark);ULONG result;
+            if(!text)return FALSE;
+            copy.text=text;result=DoSuperMethodA(cl,obj,(Msg)&copy);free(text);return result;
+        }
+    case MUIM_TextEditor_SetBlock:
+        {
+            struct MUIP_TextEditor_SetBlock copy=*(struct MUIP_TextEditor_SetBlock *)msg;
+            if((copy.operation&MUIF_TextEditor_SetBlock_Color) && (copy.value&0xff000000UL)==0xff000000UL)
+                copy.value=editor_color_index(copy.value);
+            return DoSuperMethodA(cl,obj,(Msg)&copy);
+        }
     case MUIM_Setup:
         if(!DoSuperMethodA(cl,obj,msg))return FALSE;
-        memset(d,0,sizeof(*d));
+        editor_palette_setup(obj,d);
+        memset(&d->events,0,sizeof(d->events));
         d->events.ehn_Object=obj;d->events.ehn_Class=cl;
         d->events.ehn_Priority=20;d->events.ehn_Events=IDCMP_RAWKEY;
         DoMethod(_win(obj),MUIM_Window_AddEventHandler,&d->events);return TRUE;
     case MUIM_Cleanup:
-        DoMethod(_win(obj),MUIM_Window_RemEventHandler,&d->events);break;
+        {
+            ULONG result;
+            DoMethod(_win(obj),MUIM_Window_RemEventHandler,&d->events);
+            result=DoSuperMethodA(cl,obj,msg);editor_palette_cleanup(d);return result;
+        }
     case MUIM_HandleEvent:
         {
             struct IntuiMessage *im=((struct MUIP_HandleEvent *)msg)->imsg;
@@ -241,6 +272,7 @@ static Object *editor(Object **o, int readonly)
     g = HGroup, Child, *o = NewObject(keyeditor_class->mcc_Class, NULL, InputListFrame, MUIA_Font,
            codefont ? (ULONG)codefont : MUIV_Font_Fixed,
            (o == &cli_output || o == &source || o == &prompts_body || o == &transcript || o == &change_text || o == &broadcast_text || o == &guide_text) ? MUIA_Background : TAG_IGNORE, "2:r00000000,00000000,00000000",
+           MUIA_Termic_DarkEditor, o == &cli_output || o == &source || o == &prompts_body || o == &transcript || o == &change_text || o == &broadcast_text || o == &guide_text,
            MUIA_TextEditor_ReadOnly, readonly, MUIA_TextEditor_ActiveObjectOnClick, TRUE,
            MUIA_TextEditor_ImportHook,
            MUIV_TextEditor_ImportHook_Plain, MUIA_TextEditor_ExportHook,

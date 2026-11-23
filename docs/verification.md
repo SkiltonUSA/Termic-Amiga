@@ -387,9 +387,8 @@ Production reopened at 1920x789. Installed GUI: 123340 bytes, CRC32
 `C4EC0264`; worker: 69284 bytes, CRC32 `820A3498`. The backup is
 `SD032G:Dev/Termic/Backup/cli-panel-1794624848`.
 
-![Files above CLI in the windowed acceptance fixture](screenshots/workspace-cli.png)
-
-![Files above CLI at full desktop width](screenshots/workspace-cli-wide.png)
+The historical CLI captures are archived locally. See the
+[current documentation gallery](screenshots.md) for the current UI.
 
 ## Live host-agent feedback
 
@@ -423,7 +422,8 @@ marker successfully and rejected further text. Production settings, assign,
 clipboard and window geometry were restored. The refreshed Mac bundle passed
 GUI/MCP smoke and Start/Stop/reconnect/restart/close checks.
 
-![Synthetic response and tool activity while the task is still running](screenshots/live-feedback.png)
+The historical live-feedback capture is archived locally. See the
+[current documentation gallery](screenshots.md) for the current UI.
 
 The final GUI and worker were installed with matching source files, ReadMe
 and AmigaGuide, after staging and checksum verification. Installed GUI:
@@ -1350,3 +1350,47 @@ downloads/checksums. PNG checks cover the Mac ZIPs, native LHA contents and
 nested SDK archive listings. No screenshot assets are included. The exact
 0.2.0 installation still requires physical-Amiga acceptance. Mac packages
 have ad-hoc signatures and are not Developer ID notarized.
+
+## Readable colours, Workbench launcher and Guide (22 November 2026)
+
+Current source was cross-compiled and installed on the development Amiga after
+0.2.0 Beta publication. The existing release archives were not replaced.
+All 142 host/native tests passed, including shared-palette conversion, guide
+link styling and single-column contents, missing-assign preflight and source
+archive exclusion of documentation images.
+
+The target's 24-bit Workbench screen reported no available exclusive colour
+pen. The editor now uses shared screen pens, with readable fallback colours,
+instead of depending on TextEditor's exclusive RGB pen allocation. Native
+captures confirm visible source syntax, CLI output, Files and agent activity
+on black. Colours may approximate the requested RGB values when the screen
+palette is full; the orange Guide link colour appears amber/yellow on this
+screen. The parser styles only validated local link labels and restores body
+text colour afterwards; Tiny's plain documentation lookup is unchanged.
+
+The production-widget gallery passed on the physical Amiga using synthetic
+projects, tasks and process rows. CLI acceptance exercised both command input
+methods, protected history and unsent drafts. Guide acceptance exercised
+Contents, Index, Back, related-topic navigation, chapter selection, search,
+close and reopen. Captures were inspected for readable text; reviewed images
+are in the [documentation gallery](screenshots.md), outside release staging.
+
+The development installation moved to `SD032G:Termic-Amiga`, with matching
+`Termic:` assignment. Configuration files were checksum-compared across the
+move; the previous application files are backed up on the target. The native
+`Termic Amiga` launcher resolves its sibling executable without requiring that
+assign beforehand. Its 48x40 Workbench tool icon and drawer icon passed native
+validation, including the 262144-byte launch stack. The updated application
+opened without a volume requester and `TermicCheck --gui` passed with zero
+missing dependencies (MUI 21.227 / TextEditor 15.56).
+
+A CLI acceptance attempt initially encountered an unassigned `Termic:` volume.
+The assignment was restored and the requester cleared before rerunning the
+successful test. The runner now checks `Assign LIST` before starting CLI jobs
+and fails early when the installed assignment is absent.
+
+Release-policy validation passed for the six unchanged 0.2.0 downloads,
+including archive contents, checksums and the AmiPkg pin. Documentation PNGs
+are allowed only under `docs/screenshots/`; `.gitattributes` excludes that
+directory from source archives. Installers and release assets still reject
+all PNGs.

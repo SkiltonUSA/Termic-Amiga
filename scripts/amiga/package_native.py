@@ -86,6 +86,14 @@ def main():
             if binary.read_bytes()[:4] != b"\x00\x00\x03\xf3":
                 raise ValueError(f"Not an Amiga Hunk executable: {name}")
             shutil.copyfile(binary, stage / name)
+        launcher = args.binaries / "TermicLauncher"
+        if launcher.exists():
+            if launcher.read_bytes()[:4] != b"\x00\x00\x03\xf3":
+                raise ValueError("Not an Amiga Hunk executable: TermicLauncher")
+            shutil.copyfile(launcher, stage / "Termic Amiga")
+            launcher_icon = args.binaries / "Termic Amiga.info"
+            if launcher_icon.exists():
+                shutil.copyfile(launcher_icon, stage / launcher_icon.name)
         icon = args.binaries / "TermicNative.info"
         if icon.exists():
             shutil.copyfile(icon, stage / icon.name)
@@ -124,7 +132,7 @@ def main():
             if path.is_file():
                 path.chmod(
                     0o755
-                    if path.name in ("TermicNative", "TermicAgent", "TermicStorage", "TermicMCP", "TermicCheck")
+                    if path.name in ("TermicNative", "TermicAgent", "TermicStorage", "TermicMCP", "TermicCheck", "Termic Amiga")
                     else 0o644
                 )
         check_tree(stage)

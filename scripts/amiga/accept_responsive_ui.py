@@ -11,9 +11,9 @@ TITLES={'main':'Termic: MUI scaling demo','agents':'Termic: Agents, CLI and Scri
  'review':'Termic: Review agent changes','scratchpad':'Termic: Scratchpads','git':'Termic: Git branches and worktrees'}
 async def main(args):
  out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
- stage='SD032G:Dev/Termic/Acceptance/scaling-'+str(int(time.time()))
+ stage='SD032G:Termic-Amiga/Acceptance/scaling-'+str(int(time.time()))
  (out/'stage.json').write_text(json.dumps({'stage':stage}))
- async with Bridge(args.server,'SD032G:Dev/Termic/Relay') as b:
+ async with Bridge(args.server,'SD032G:Termic-Amiga/Relay') as b:
   assert 'TermicJob.' not in await b.call('amiga_list_ports',{}),'Worker active'
   assert await b.read('request.json') is None,'Relay busy'
   root=Bridge(args.server,stage);root.session=b.session

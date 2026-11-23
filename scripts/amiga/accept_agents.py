@@ -11,7 +11,7 @@ import accept_workflow
 from bridge_client import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 ROOT=Path(__file__).resolve().parents[2]
-PROD='SD032G:Dev/Termic'
+PROD='SD032G:Termic-Amiga'
 async def main(args):
     for name in ('gui', 'worker', 'mcp', 'probe', 'micropython'):
         if not getattr(args, name).is_file():

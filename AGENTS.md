@@ -7,6 +7,8 @@ Read docs/releases.md before packaging or publishing.
 - PNG files and screenshots must never be release assets, appear in release
   staging, or be copied into an installer or installable package. Keep synthetic
   screenshots in gitignored local evidence directories outside release staging.
+  Reviewed synthetic README images may be committed under docs/screenshots/
+  only; that directory must have export-ignore in .gitattributes.
 - Use the explicit release asset list and SHA256SUMS. Run
   scripts/amiga/release_policy.py on staged downloads before any upload.
 - Publish tested versioned artifacts with an accurate validation statement.

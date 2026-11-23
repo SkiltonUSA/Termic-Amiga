@@ -63,13 +63,13 @@ static int guide_parse(struct GuideDocument *doc,const char *text)
  guide_free(doc);*doc=next;return 1;
 fail:guide_free(&next);return 0;
 }
-/* The rendered body is at most as long as its source. Formatting directives
- * disappear; local link labels remain, with targets exposed separately. */
-static char *guide_render(const struct GuideDocument *doc,int node,struct GuideLink *links,int *count)
+/* Plain rendering is used by offline lookup; styled rendering marks only
+ * validated local link labels, restoring the readable body colour afterwards. */
+static char *guide_render_mode(const struct GuideDocument *doc,int node,struct GuideLink *links,int *count,int styled)
 {
  const char *p,*end;char *result,*out;int n=0;
  *count=0;if(node<0 || node>=doc->count)return NULL;
- p=doc->nodes[node].body;result=malloc(strlen(p)+1);if(!result)return NULL;out=result;
+ p=doc->nodes[node].body;result=malloc(strlen(p)+1+(styled?20*GUIDE_LINKS:0));if(!result)return NULL;out=result;
  while(*p) {
   if(p[0]=='@' && p[1]=='{') {
    char tag[256],title[128],kind[32],target[64];const char *s;size_t size;
@@ -81,7 +81,9 @@ static char *guide_render(const struct GuideDocument *doc,int node,struct GuideL
        !guide_equal(kind,"LINK") || !guide_token(&s,target,sizeof(target)) || (index=guide_find(doc,target))<0 || n==GUIDE_LINKS)goto fail;
     while(isspace((unsigned char)*s))s++;if(*s)goto fail;
     strcpy(links[n].title,title);links[n++].target=index;
+    if(styled){memcpy(out,"\033P[FFB86C]",10);out+=10;}
     size=strlen(title);memcpy(out,title,size);out+=size;
+    if(styled){memcpy(out,"\033P[E6EDF3]",10);out+=10;}
    } else if(!guide_equal(tag,"b") && !guide_equal(tag,"ub") &&
              !guide_equal(tag,"i") && !guide_equal(tag,"ui") &&
              !guide_equal(tag,"u") && !guide_equal(tag,"uu"))goto fail;
@@ -94,4 +96,6 @@ static char *guide_render(const struct GuideDocument *doc,int node,struct GuideL
  *out=0;*count=n;return result;
 fail:free(result);return NULL;
 }
+#define guide_render(doc,node,links,count) guide_render_mode(doc,node,links,count,0)
+#define guide_render_colours(doc,node,links,count) guide_render_mode(doc,node,links,count,1)
 #endif

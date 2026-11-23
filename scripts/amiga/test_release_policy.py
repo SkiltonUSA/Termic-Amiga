@@ -1,9 +1,12 @@
 """No screenshots may enter release downloads or installable packages."""
 from pathlib import Path
 import tempfile
+import subprocess
+import tarfile
+import io
 import unittest
 from unittest.mock import patch
-from release_policy import check_documentation, check_names, check_tree, check_lha_names, expected_assets
+from release_policy import check_documentation, check_names, check_tree, check_lha_names, expected_assets, check_repository_names, check_repository
 
 
 class ReleasePolicyTests(unittest.TestCase):
@@ -12,6 +15,33 @@ class ReleasePolicyTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 check_names([name])
         check_names(['TermicNative', 'Program.info', 'ReadMe', 'LICENSE', 'termic-amiga.json'])
+
+    def test_repository_allows_only_documentation_pngs(self):
+        check_repository_names(['README.md', 'docs/screenshots/workspace.png'])
+        for name in ('docs/screen.png', 'amiga/native/screen.png', 'release/screen.PNG'):
+            with self.assertRaises(ValueError):
+                check_repository_names([name])
+
+    def test_documentation_png_is_excluded_from_source_archive(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            def git(*args):
+                return subprocess.check_output(['git', *args], cwd=root, stderr=subprocess.DEVNULL)
+            git('init', '-q')
+            (root/'docs/screenshots').mkdir(parents=True)
+            (root/'docs/screenshots/workspace.png').write_bytes(b'synthetic fixture')
+            (root/'README.md').write_text('![Workspace](docs/screenshots/workspace.png)')
+            (root/'.gitattributes').write_text('/docs/screenshots export-ignore\n')
+            git('add', '.')
+            check_repository(root)
+            git('-c', 'user.name=Fixture', '-c', 'user.email=user@example.com',
+                '-c', 'commit.gpgsign=false', 'commit', '-qm', 'Synthetic documentation fixture')
+            with tarfile.open(fileobj=io.BytesIO(git('archive', 'HEAD'))) as archive:
+                self.assertIn('README.md', archive.getnames())
+                self.assertNotIn('docs/screenshots/workspace.png', archive.getnames())
+            (root/'.gitattributes').write_text('')
+            with self.assertRaises(ValueError):
+                check_repository(root)
 
     def test_install_tree_rejects_png(self):
         with tempfile.TemporaryDirectory() as directory:

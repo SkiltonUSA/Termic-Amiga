@@ -7,13 +7,20 @@ profiles or projects; no AI requests or process controls are issued.
 import argparse,asyncio,json,re,shutil,subprocess,time
 from pathlib import Path
 from codex_relay import Bridge,PublicationUncertain
+def require_cli_assign(assigns):
+ if not re.search(r'^Termic[ \t]+\S+',assigns,re.I|re.M):
+  raise RuntimeError('CLI acceptance needs the installed Termic: assign. Open Termic first; no test job was launched.')
+
 async def main(args):
  out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
- stage='SD032G:Dev/Termic/Acceptance/gallery-'+str(int(time.time()))
+ stage='SD032G:Termic-Amiga/Acceptance/gallery-'+str(int(time.time()))
  (out/'stage.json').write_text(json.dumps({'stage':stage}))
- async with Bridge(args.server,'SD032G:Dev/Termic/Relay',reservation_path=args.reservation_file) as b:
+ async with Bridge(args.server,'SD032G:Termic-Amiga/Relay',reservation_path=args.reservation_file) as b:
   assert 'TermicJob.' not in await b.call('amiga_list_ports',{}),'Worker active'
   assert await b.read('request.json') is None,'Relay busy'
+  if not args.only or 'cli-editable.png' in args.only:
+   assigns=await b.shell('Assign LIST')
+   require_cli_assign(assigns)
   root=Bridge(args.server,stage);root.session=b.session
   await b.shell('MakeDir '+stage)
   try:await b.call('amiga_push_file',{'local_path':str(args.binary.resolve()),'amiga_path':stage+'/GalleryCheck'})
@@ -90,7 +97,7 @@ async def main(args):
     ('guide',900,650,0,'guide.png'),('guide-tiny',900,650,0,'guide-tiny.png'),
     ('guide',340,280,0,'guide-340x280.png')]:
     if shot==args.start_at:started=True
-    if not started or (args.only and shot!=args.only):continue
+    if not started or (args.only and shot not in args.only):continue
     frame=dict(panel=panel,width=width,height=height,view=view)
     await control(frame)
     raw=await wait('state.json',lambda s:all(json.loads(s).get(k)==v for k,v in frame.items()))
@@ -111,7 +118,7 @@ async def main(args):
 if __name__=='__main__':
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--binary',type=Path,required=True)
  p.add_argument('--probe',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--server',default='http://127.0.0.1:55110/mcp')
- p.add_argument('--only',help='Capture just this screenshot filename')
+ p.add_argument('--only',action='append',help='Capture this screenshot filename; repeat to select several')
  p.add_argument('--start-at',help='Start at this screenshot filename after a completed/closed earlier fixture')
  p.add_argument('--reservation-file',type=Path,help='Private recovery file from this runner only')
  asyncio.run(main(p.parse_args()))
