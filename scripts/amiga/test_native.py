@@ -11,6 +11,14 @@ SOURCE = ROOT / "amiga/native"
 
 
 class NativeProtocolTests(unittest.TestCase):
+    def test_workbench_artwork(self):
+        with tempfile.TemporaryDirectory() as directory:
+            binary = Path(directory) / 'workbench-art'
+            subprocess.run(['cc', '-std=c99', '-Wall', '-Wextra', '-Werror',
+                '-fsanitize=address,undefined', str(SOURCE/'tests/test_workbench_art.c'),
+                '-o', str(binary)], check=True)
+            subprocess.run([str(binary)], check=True)
+
     def test_editor_shared_colors(self):
         with tempfile.TemporaryDirectory() as directory:
             binary = Path(directory) / 'editor-colors'

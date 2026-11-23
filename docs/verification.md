@@ -1355,7 +1355,7 @@ have ad-hoc signatures and are not Developer ID notarized.
 
 Current source was cross-compiled and installed on the development Amiga after
 0.2.0 Beta publication. The existing release archives were not replaced.
-All 142 host/native tests passed, including shared-palette conversion, guide
+All 143 host/native tests passed, including shared-palette conversion, guide
 link styling and single-column contents, missing-assign preflight and source
 archive exclusion of documentation images.
 
@@ -1379,8 +1379,10 @@ The development installation moved to `SD032G:Termic-Amiga`, with matching
 `Termic:` assignment. Configuration files were checksum-compared across the
 move; the previous application files are backed up on the target. The native
 `Termic Amiga` launcher resolves its sibling executable without requiring that
-assign beforehand. Its 48x40 Workbench tool icon and drawer icon passed native
-validation, including the 262144-byte launch stack. The updated application
+assign beforehand. Its 64x56 transparent Workbench ColorIcon and drawer icon passed native
+validation, including colour-image metadata, transparency, frameless rendering
+and the 262144-byte launch stack. The normal and selected artwork passed host
+bounds checks under ASan/UBSan; the installed icon was inspected on Workbench. The updated application
 opened without a volume requester and `TermicCheck --gui` passed with zero
 missing dependencies (MUI 21.227 / TextEditor 15.56).
 

@@ -65,7 +65,8 @@ this exact version still requires target acceptance.
 
 The Workbench launcher is named **Termic Amiga**, inside **Termic-Amiga**.
 On the development Amiga the drawer is `SD032G:Termic-Amiga`. The launcher
-finds the application beside itself without requiring an existing `Termic:`
+uses a frameless colour icon with an Amiga checker-ball badge and a distinct
+selected state. It finds the application beside itself without requiring an existing `Termic:`
 assign. `BuildNative` creates the launcher and its native `.info` icon;
 `"Termic:Termic Amiga" --make-icons` regenerates the tool and drawer icons.
 
